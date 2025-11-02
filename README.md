@@ -3,7 +3,6 @@
 An offline-first, persistent reminders system designed specifically for ADHD workflows. Voice input is the primary interaction method, with visual persistence across multiple devices (desktop, mobile, e-ink displays).
 
 **Developer:** Autumn Brown
-**Location:** Smyrna, GA
 **Version:** 1.0 MVP
 **Status:** 🏗️ In Development
 
@@ -119,7 +118,8 @@ cp ClaudeUsage/templates/secrets_template.json secrets.json
 python server/database.py  # Creates reminders.db with schema
 
 # 5. Start local API server
-uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn server.main:app --reload --host 0.0.0.0 --port 8000 OR
+uv run uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
 
 # 6. Open web UI
 open public/index.html
