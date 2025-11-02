@@ -108,13 +108,13 @@ const API = (function() {
             priority: data.priority || 'chill',
             category: data.category || null,
             status: 'pending',
-            time_required: data.time_required || null,
-            location_name: data.location_name || null,
-            location_address: data.location_address || null,
+            time_required: data.time_required || false,
+            location_text: data.location_text || null,
             location_lat: data.location_lat || null,
             location_lng: data.location_lng || null,
             location_radius: data.location_radius || null,
-            notes: data.notes || null,
+            // TODO: Notes field (Phase 4+)
+            // notes: data.notes || null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
         };

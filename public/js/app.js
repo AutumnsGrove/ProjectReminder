@@ -141,18 +141,18 @@ const App = (function() {
         }
 
         // Add location if present
-        if (reminder.location_name) {
+        if (reminder.location_text) {
             const locationItem = document.createElement('span');
             locationItem.className = 'meta-item location-badge';
-            locationItem.innerHTML = `<span class="meta-icon">📍</span>${reminder.location_name}`;
+            locationItem.innerHTML = `<span class="meta-icon">📍</span>${reminder.location_text}`;
             meta.appendChild(locationItem);
         }
 
-        // Add time required if present
+        // Add time required if present (boolean: true = time-sensitive task)
         if (reminder.time_required) {
             const timeReqItem = document.createElement('span');
             timeReqItem.className = 'meta-item';
-            timeReqItem.innerHTML = `<span class="meta-icon">⏱</span>${reminder.time_required}min`;
+            timeReqItem.innerHTML = `<span class="meta-icon">⏱</span>Time-sensitive`;
             meta.appendChild(timeReqItem);
         }
 
@@ -374,10 +374,10 @@ const App = (function() {
         }
 
         // Add location if present
-        if (reminder.location_name) {
+        if (reminder.location_text) {
             const locationItem = document.createElement('span');
             locationItem.className = 'meta-item location-badge';
-            locationItem.innerHTML = `<span class="meta-icon">📍</span>${reminder.location_name}`;
+            locationItem.innerHTML = `<span class="meta-icon">📍</span>${reminder.location_text}`;
             meta.appendChild(locationItem);
         }
 
@@ -479,9 +479,10 @@ const App = (function() {
             document.getElementById('category').value = reminder.category || '';
             document.getElementById('dueDate').value = reminder.due_date || '';
             document.getElementById('dueTime').value = reminder.due_time || '';
-            document.getElementById('timeRequired').value = reminder.time_required || '';
-            document.getElementById('location').value = reminder.location_name || '';
-            document.getElementById('notes').value = reminder.notes || '';
+            document.getElementById('timeRequired').checked = reminder.time_required || false;
+            document.getElementById('location').value = reminder.location_text || '';
+            // TODO: Notes field (Phase 4+)
+            // document.getElementById('notes').value = reminder.notes || '';
 
             // Set priority
             const priorityRadio = document.querySelector(`input[name="priority"][value="${reminder.priority}"]`);
@@ -510,9 +511,10 @@ const App = (function() {
             category: formData.get('category') || null,
             due_date: formData.get('due_date') || null,
             due_time: formData.get('due_time') || null,
-            time_required: formData.get('time_required') ? parseInt(formData.get('time_required')) : null,
-            location_name: formData.get('location_name') || null,
-            notes: formData.get('notes') || null
+            time_required: formData.get('time_required') === 'on' ? true : false,
+            location_text: formData.get('location_text') || null
+            // TODO: Notes field (Phase 4+)
+            // notes: formData.get('notes') || null
         };
 
         const reminderId = formData.get('id');

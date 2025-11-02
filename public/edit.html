@@ -102,16 +102,15 @@
 
                 <!-- Time Required -->
                 <div class="form-group">
-                    <label for="timeRequired" class="form-label">Time Required (minutes)</label>
-                    <input
-                        type="number"
-                        id="timeRequired"
-                        name="time_required"
-                        class="form-control"
-                        min="1"
-                        placeholder="e.g., 30"
-                    >
-                    <small class="form-hint">How long will this take?</small>
+                    <label for="timeRequired" class="form-label">
+                        <input
+                            type="checkbox"
+                            id="timeRequired"
+                            name="time_required"
+                        >
+                        Time-sensitive task
+                    </label>
+                    <small class="form-hint">Check if this task must be done at a specific time</small>
                 </div>
 
                 <!-- Location (Simple text input for Phase 2) -->
@@ -120,15 +119,15 @@
                     <input
                         type="text"
                         id="location"
-                        name="location_name"
+                        name="location_text"
                         class="form-control"
                         placeholder="e.g., Home Depot, Gym, Office"
                     >
                     <small class="form-hint">Location-based reminders (map picker coming in Phase 6)</small>
                 </div>
 
-                <!-- Notes -->
-                <div class="form-group">
+                <!-- Notes - TODO: Phase 4+ -->
+                <!-- <div class="form-group">
                     <label for="notes" class="form-label">Notes</label>
                     <textarea
                         id="notes"
@@ -137,7 +136,7 @@
                         rows="2"
                         placeholder="Additional details..."
                     ></textarea>
-                </div>
+                </div> -->
 
                 <!-- Form Actions -->
                 <div class="form-actions">
