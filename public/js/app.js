@@ -29,26 +29,9 @@ const App = (function() {
         console.log('Initializing Today view...');
 
         try {
-            // Get today's reminders from API (mock data)
-            const reminders = await API.getTodayReminders();
-            console.log('Today reminders:', reminders);
-
-            // Group by category
-            const overdue = [];
-            const today = [];
-            const floating = [];
-
-            const todayDate = new Date().toISOString().split('T')[0];
-
-            reminders.forEach(reminder => {
-                if (!reminder.due_date) {
-                    floating.push(reminder);
-                } else if (reminder.due_date < todayDate) {
-                    overdue.push(reminder);
-                } else {
-                    today.push(reminder);
-                }
-            });
+            // Get today's reminders from API (already categorized)
+            const {overdue, today, floating} = await API.getTodayReminders();
+            console.log('Today reminders:', {overdue, today, floating});
 
             // Render sections
             renderTodaySection('overdueList', 'overdueSection', overdue, true);
