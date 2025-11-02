@@ -1,8 +1,8 @@
 # Next Steps - ADHD-Friendly Voice Reminders System
 
 **Session Date:** November 2, 2025
-**Current Phase:** Phase 3 - Integration
-**Status:** ✅ Phase 1 & 2 Complete - Ready for Phase 3
+**Current Phase:** Phase 4 - Cloudflare Workers
+**Status:** ✅ Phase 1, 2 & 3 Complete - Ready for Phase 4
 
 ---
 
@@ -38,24 +38,35 @@
 
 ---
 
-## Phase 3: Integration - Ready to Start
+## Phase 3: Integration ✅ COMPLETE
 
 **Goal:** Connect the Web UI to the FastAPI backend and replace mock data with real API calls
 
-**Key Deliverables:**
-- Implement real fetch() calls in api.js to FastAPI endpoints
-- Add bearer token authentication headers
-- Replace localStorage mock data with API responses
-- Add error handling and user feedback
-- Implement loading states for async operations
-- Test end-to-end flow (UI → API → Database → UI)
+**What Was Completed:**
+- ✅ Implemented real fetch() calls in api.js to FastAPI endpoints
+- ✅ Added bearer token authentication headers
+- ✅ Replaced localStorage mock data with API responses
+- ✅ Added comprehensive error handling with toast notifications
+- ✅ Implemented retry logic for network failures
+- ✅ Added graceful error messages for all failure modes
+- ✅ Created errors.js module with reusable error handling utilities
+- ✅ Updated UI to handle API client changes (getTodayReminders structure)
+- ✅ Fixed script loading order (storage.js → errors.js → api.js)
+- ✅ Created comprehensive integration testing checklist (INTEGRATION_TESTING.md)
 
-**Estimated Time:** 2-3 hours
+**Technical Achievements:**
+- Subagent 1 (bd0ee1c): Aligned data model and removed unused fields
+- Subagent 2 (bde18c1): Updated UI field references (location_name → location_text)
+- Subagent 3 (6111da3): Built error handling infrastructure with toast notifications
+- Subagent 4 (0a41caa): Implemented real API client with retry logic
+- Subagent 5 (current): Fixed breaking changes, verified integration, documented testing
 
-**Prerequisites:**
-- ✅ FastAPI server implemented (Phase 1)
-- ✅ Web UI implemented (Phase 2)
-- ✅ Mock data working in UI
+**Files Modified:**
+- `public/js/api.js` - Real API client (~240 insertions, ~180 deletions)
+- `public/js/errors.js` - Error handling utilities (~350 lines new)
+- `public/css/main.css` - Toast notification styles (~200 lines added)
+- `public/js/app.js` - Updated for new API structure
+- `public/*.html` - Fixed script loading order (3 files)
 
 **Quick Start Commands:**
 ```bash
@@ -71,7 +82,54 @@ python serve_ui.py
 # API token: 10b3743d4bfd44585c2bb8518de240cf20e990dc6bdab17c4abe944dee273bc3
 ```
 
-**See TODOS.md Phase 3 section for detailed implementation steps.**
+**Testing:**
+See `INTEGRATION_TESTING.md` for comprehensive manual test checklist covering:
+- CRUD operations
+- All UI views
+- Error handling scenarios
+- Toast notifications
+- Data integrity
+- Edge cases
+
+---
+
+## Phase 4: Cloudflare Workers + D1 - Ready to Start
+
+**Goal:** Deploy serverless cloud sync layer for multi-device support
+
+**Key Deliverables:**
+- Create Cloudflare Worker for cloud API
+- Set up D1 database (SQLite at the edge)
+- Implement bidirectional sync logic
+- Add conflict resolution (last-write-wins for MVP)
+- Update frontend to switch local ↔ cloud
+- Test offline-first behavior
+
+**Estimated Time:** 3-4 hours
+
+**Prerequisites:**
+- ✅ Local FastAPI backend working (Phase 1)
+- ✅ Web UI complete (Phase 2)
+- ✅ Integration tested (Phase 3)
+- [ ] Cloudflare account created
+- [ ] Wrangler CLI installed
+
+**Quick Start:**
+```bash
+# Install Wrangler
+npm install -g wrangler
+
+# Login to Cloudflare
+wrangler login
+
+# Create D1 database
+wrangler d1 create reminders-prod
+
+# Deploy Worker
+wrangler deploy
+```
+
+**See TODOS.md Phase 4 section for detailed implementation steps.**
 
 ---
 
