@@ -1,0 +1,155 @@
+/* ========================================
+   Upcoming View - Specific Styles
+   ======================================== */
+
+/* ===== Date Groups ===== */
+.date-group {
+    margin-bottom: var(--spacing-xl);
+}
+
+.date-group:last-child {
+    margin-bottom: 0;
+}
+
+.date-header {
+    position: sticky;
+    top: 105px; /* Header + Nav height */
+    background-color: var(--color-bg-secondary);
+    padding: var(--spacing-sm) 0;
+    margin-bottom: var(--spacing-md);
+    z-index: 10;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.date-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.date-subtitle {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin-top: 2px;
+}
+
+/* Tomorrow highlight */
+.date-header.tomorrow .date-title {
+    color: var(--color-primary);
+}
+
+/* This week */
+.date-header.this-week .date-title {
+    color: var(--color-text-primary);
+}
+
+/* Next week */
+.date-header.next-week .date-subtitle {
+    font-style: italic;
+}
+
+/* ===== Reminder Cards in Upcoming View ===== */
+.date-group .reminders-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+/* Reuse reminder-card styles from today.css */
+.date-group .reminder-card {
+    background-color: var(--color-bg-primary);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    gap: var(--spacing-md);
+    transition: all var(--transition-normal);
+    cursor: pointer;
+    position: relative;
+}
+
+.date-group .reminder-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+/* Priority Border Indicator */
+.date-group .reminder-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+
+.date-group .reminder-card.priority-chill::before {
+    background-color: var(--color-chill);
+}
+
+.date-group .reminder-card.priority-important::before {
+    background-color: var(--color-important);
+}
+
+.date-group .reminder-card.priority-urgent::before {
+    background-color: var(--color-urgent);
+}
+
+/* ===== Reminder Content ===== */
+.date-group .reminder-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.date-group .reminder-text {
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-xs);
+    word-wrap: break-word;
+}
+
+.date-group .reminder-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    align-items: center;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+/* ===== Count Badge ===== */
+.count-badge {
+    display: inline-block;
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    margin-left: var(--spacing-sm);
+}
+
+/* ===== Responsive Adjustments ===== */
+@media (min-width: 768px) {
+    .date-header {
+        padding: var(--spacing-md) 0;
+    }
+
+    .date-title {
+        font-size: var(--font-size-xl);
+    }
+
+    .date-group .reminder-card {
+        padding: var(--spacing-lg);
+    }
+
+    .date-group .reminder-text {
+        font-size: var(--font-size-lg);
+    }
+}
+
+/* ===== Empty State ===== */
+#upcomingContainer .empty-state {
+    margin-top: var(--spacing-xl);
+}

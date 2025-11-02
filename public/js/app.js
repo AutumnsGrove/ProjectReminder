@@ -1,0 +1,585 @@
+/**
+ * Main Application Logic
+ * Phase 2: Using mock data from Storage
+ * Handles all view rendering and user interactions
+ */
+
+const App = (function() {
+    'use strict';
+
+    let config = null;
+
+    /**
+     * Initialize the application
+     */
+    async function init() {
+        try {
+            // Load configuration
+            config = await API.init();
+            console.log('App initialized with config:', config);
+        } catch (error) {
+            console.error('Failed to initialize app:', error);
+        }
+    }
+
+    /**
+     * Initialize Today View
+     */
+    async function initTodayView() {
+        console.log('Initializing Today view...');
+
+        try {
+            // Get today's reminders from API (mock data)
+            const reminders = await API.getTodayReminders();
+            console.log('Today reminders:', reminders);
+
+            // Group by category
+            const overdue = [];
+            const today = [];
+            const floating = [];
+
+            const todayDate = new Date().toISOString().split('T')[0];
+
+            reminders.forEach(reminder => {
+                if (!reminder.due_date) {
+                    floating.push(reminder);
+                } else if (reminder.due_date < todayDate) {
+                    overdue.push(reminder);
+                } else {
+                    today.push(reminder);
+                }
+            });
+
+            // Render sections
+            renderTodaySection('overdueList', 'overdueSection', overdue, true);
+            renderTodaySection('todayList', 'todaySection', today, false);
+            renderTodaySection('floatingList', 'floatingSection', floating, false);
+
+        } catch (error) {
+            console.error('Error loading today view:', error);
+            showError('Failed to load reminders');
+        }
+    }
+
+    /**
+     * Render a section in Today view
+     */
+    function renderTodaySection(listId, sectionId, reminders, isOverdue) {
+        const list = document.getElementById(listId);
+        const section = document.getElementById(sectionId);
+
+        if (!list || !section) return;
+
+        if (reminders.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = 'block';
+        list.innerHTML = '';
+
+        reminders.forEach(reminder => {
+            const card = createReminderCard(reminder, isOverdue);
+            list.appendChild(card);
+        });
+    }
+
+    /**
+     * Create a reminder card element
+     */
+    function createReminderCard(reminder, isOverdue = false) {
+        const card = document.createElement('div');
+        card.className = `reminder-card priority-${reminder.priority}`;
+        if (isOverdue) {
+            card.classList.add('overdue');
+        }
+        card.dataset.id = reminder.id;
+
+        // Checkbox
+        const checkboxContainer = document.createElement('div');
+        checkboxContainer.className = 'reminder-checkbox-container';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'reminder-checkbox';
+        checkbox.setAttribute('aria-label', 'Complete reminder');
+
+        checkbox.addEventListener('change', async (e) => {
+            e.stopPropagation();
+            if (checkbox.checked) {
+                await handleReminderComplete(reminder.id, card);
+            }
+        });
+
+        checkboxContainer.appendChild(checkbox);
+
+        // Content
+        const content = document.createElement('div');
+        content.className = 'reminder-content';
+
+        const text = document.createElement('div');
+        text.className = 'reminder-text';
+        text.textContent = reminder.text;
+
+        const meta = document.createElement('div');
+        meta.className = 'reminder-meta';
+
+        // Add time if present
+        if (reminder.due_time) {
+            const timeItem = document.createElement('span');
+            timeItem.className = 'meta-item time-badge';
+            timeItem.innerHTML = `<span class="meta-icon">🕐</span>${formatTime(reminder.due_time)}`;
+            meta.appendChild(timeItem);
+        }
+
+        // Add category if present
+        if (reminder.category) {
+            const categoryItem = document.createElement('span');
+            categoryItem.className = 'meta-item category-badge';
+            categoryItem.textContent = reminder.category;
+            meta.appendChild(categoryItem);
+        }
+
+        // Add location if present
+        if (reminder.location_name) {
+            const locationItem = document.createElement('span');
+            locationItem.className = 'meta-item location-badge';
+            locationItem.innerHTML = `<span class="meta-icon">📍</span>${reminder.location_name}`;
+            meta.appendChild(locationItem);
+        }
+
+        // Add time required if present
+        if (reminder.time_required) {
+            const timeReqItem = document.createElement('span');
+            timeReqItem.className = 'meta-item';
+            timeReqItem.innerHTML = `<span class="meta-icon">⏱</span>${reminder.time_required}min`;
+            meta.appendChild(timeReqItem);
+        }
+
+        content.appendChild(text);
+        content.appendChild(meta);
+
+        // Priority badge
+        const priority = document.createElement('div');
+        priority.className = 'reminder-priority';
+        priority.innerHTML = createPriorityBadge(reminder.priority);
+
+        // Assemble card
+        card.appendChild(checkboxContainer);
+        card.appendChild(content);
+        card.appendChild(priority);
+
+        // Click to edit
+        card.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('reminder-checkbox')) {
+                window.location.href = `edit.html?id=${reminder.id}`;
+            }
+        });
+
+        // Setup swipe-to-delete on mobile
+        Animations.setupSwipeToDelete(card, async () => {
+            await handleReminderDelete(reminder.id);
+        });
+
+        return card;
+    }
+
+    /**
+     * Create priority badge HTML
+     */
+    function createPriorityBadge(priority) {
+        const badges = {
+            chill: '<span class="priority-badge chill">🟢 Chill</span>',
+            important: '<span class="priority-badge important">🟡 Important</span>',
+            urgent: '<span class="priority-badge urgent">🔴 Urgent</span>'
+        };
+        return badges[priority] || badges.chill;
+    }
+
+    /**
+     * Format time for display (24h to 12h)
+     */
+    function formatTime(time24) {
+        if (!time24) return '';
+        const [hours, minutes] = time24.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const hour12 = hour % 12 || 12;
+        return `${hour12}:${minutes} ${ampm}`;
+    }
+
+    /**
+     * Handle reminder completion
+     */
+    async function handleReminderComplete(id, cardElement) {
+        try {
+            // Animate completion
+            await Animations.animateCompletion(cardElement);
+
+            // Update via API
+            await API.completeReminder(id);
+
+            console.log('Reminder completed:', id);
+        } catch (error) {
+            console.error('Error completing reminder:', error);
+            showError('Failed to complete reminder');
+        }
+    }
+
+    /**
+     * Handle reminder deletion
+     */
+    async function handleReminderDelete(id) {
+        try {
+            await API.deleteReminder(id);
+            console.log('Reminder deleted:', id);
+        } catch (error) {
+            console.error('Error deleting reminder:', error);
+            showError('Failed to delete reminder');
+        }
+    }
+
+    /**
+     * Initialize Upcoming View
+     */
+    async function initUpcomingView() {
+        console.log('Initializing Upcoming view...');
+
+        try {
+            const reminders = await API.getUpcomingReminders();
+            console.log('Upcoming reminders:', reminders);
+
+            const container = document.getElementById('upcomingContainer');
+            if (!container) return;
+
+            if (reminders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>No upcoming reminders</p>
+                        <p class="empty-subtitle">Tap + to add one</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Group by date
+            const groupedByDate = groupRemindersByDate(reminders);
+
+            // Render date groups
+            container.innerHTML = '';
+            groupedByDate.forEach(group => {
+                const dateGroup = createDateGroup(group);
+                container.appendChild(dateGroup);
+            });
+
+        } catch (error) {
+            console.error('Error loading upcoming view:', error);
+            showError('Failed to load upcoming reminders');
+        }
+    }
+
+    /**
+     * Group reminders by date
+     */
+    function groupRemindersByDate(reminders) {
+        const groups = {};
+
+        reminders.forEach(reminder => {
+            const date = reminder.due_date;
+            if (!groups[date]) {
+                groups[date] = [];
+            }
+            groups[date].push(reminder);
+        });
+
+        // Convert to array and sort by date
+        return Object.keys(groups)
+            .sort()
+            .map(date => ({
+                date: date,
+                reminders: groups[date]
+            }));
+    }
+
+    /**
+     * Create a date group element
+     */
+    function createDateGroup(group) {
+        const container = document.createElement('div');
+        container.className = 'date-group';
+
+        // Date header
+        const header = document.createElement('div');
+        header.className = 'date-header';
+
+        const title = document.createElement('div');
+        title.className = 'date-title';
+        title.textContent = formatDate(group.date);
+
+        const subtitle = document.createElement('div');
+        subtitle.className = 'date-subtitle';
+        subtitle.textContent = formatDateSubtitle(group.date);
+
+        header.appendChild(title);
+        header.appendChild(subtitle);
+
+        // Reminders list
+        const list = document.createElement('div');
+        list.className = 'reminders-list';
+
+        group.reminders.forEach(reminder => {
+            const card = createUpcomingReminderCard(reminder);
+            list.appendChild(card);
+        });
+
+        container.appendChild(header);
+        container.appendChild(list);
+
+        return container;
+    }
+
+    /**
+     * Create upcoming reminder card (without checkbox)
+     */
+    function createUpcomingReminderCard(reminder) {
+        const card = document.createElement('div');
+        card.className = `reminder-card priority-${reminder.priority}`;
+        card.dataset.id = reminder.id;
+
+        // Content
+        const content = document.createElement('div');
+        content.className = 'reminder-content';
+
+        const text = document.createElement('div');
+        text.className = 'reminder-text';
+        text.textContent = reminder.text;
+
+        const meta = document.createElement('div');
+        meta.className = 'reminder-meta';
+
+        // Add time if present
+        if (reminder.due_time) {
+            const timeItem = document.createElement('span');
+            timeItem.className = 'meta-item time-badge';
+            timeItem.innerHTML = `<span class="meta-icon">🕐</span>${formatTime(reminder.due_time)}`;
+            meta.appendChild(timeItem);
+        }
+
+        // Add category if present
+        if (reminder.category) {
+            const categoryItem = document.createElement('span');
+            categoryItem.className = 'meta-item category-badge';
+            categoryItem.textContent = reminder.category;
+            meta.appendChild(categoryItem);
+        }
+
+        // Add location if present
+        if (reminder.location_name) {
+            const locationItem = document.createElement('span');
+            locationItem.className = 'meta-item location-badge';
+            locationItem.innerHTML = `<span class="meta-icon">📍</span>${reminder.location_name}`;
+            meta.appendChild(locationItem);
+        }
+
+        content.appendChild(text);
+        content.appendChild(meta);
+
+        // Priority badge
+        const priority = document.createElement('div');
+        priority.className = 'reminder-priority';
+        priority.innerHTML = createPriorityBadge(reminder.priority);
+
+        // Assemble card
+        card.appendChild(content);
+        card.appendChild(priority);
+
+        // Click to edit
+        card.addEventListener('click', () => {
+            window.location.href = `edit.html?id=${reminder.id}`;
+        });
+
+        return card;
+    }
+
+    /**
+     * Format date for display
+     */
+    function formatDate(dateStr) {
+        const date = new Date(dateStr + 'T00:00:00');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        if (date.getTime() === tomorrow.getTime()) {
+            return 'Tomorrow';
+        }
+
+        const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
+        const month = date.toLocaleDateString('en-US', { month: 'short' });
+        const day = date.getDate();
+
+        return `${dayOfWeek}, ${month} ${day}`;
+    }
+
+    /**
+     * Format date subtitle
+     */
+    function formatDateSubtitle(dateStr) {
+        const date = new Date(dateStr + 'T00:00:00');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const diffTime = date - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) return 'Tomorrow';
+        if (diffDays <= 7) return `In ${diffDays} days`;
+        return `${diffDays} days from now`;
+    }
+
+    /**
+     * Initialize Edit View
+     */
+    async function initEditView() {
+        console.log('Initializing Edit view...');
+
+        // Check if editing existing reminder
+        const urlParams = new URLSearchParams(window.location.search);
+        const reminderId = urlParams.get('id');
+
+        if (reminderId) {
+            // Load existing reminder
+            await loadReminderForEdit(reminderId);
+        }
+    }
+
+    /**
+     * Load reminder data for editing
+     */
+    async function loadReminderForEdit(id) {
+        try {
+            const reminder = await API.getReminder(id);
+
+            if (!reminder) {
+                showError('Reminder not found');
+                return;
+            }
+
+            // Update page title
+            document.getElementById('pageTitle').textContent = 'Edit Reminder';
+
+            // Show delete button
+            document.getElementById('deleteBtn').style.display = 'flex';
+
+            // Populate form
+            document.getElementById('reminderId').value = reminder.id;
+            document.getElementById('reminderText').value = reminder.text || '';
+            document.getElementById('category').value = reminder.category || '';
+            document.getElementById('dueDate').value = reminder.due_date || '';
+            document.getElementById('dueTime').value = reminder.due_time || '';
+            document.getElementById('timeRequired').value = reminder.time_required || '';
+            document.getElementById('location').value = reminder.location_name || '';
+            document.getElementById('notes').value = reminder.notes || '';
+
+            // Set priority
+            const priorityRadio = document.querySelector(`input[name="priority"][value="${reminder.priority}"]`);
+            if (priorityRadio) {
+                priorityRadio.checked = true;
+            }
+
+        } catch (error) {
+            console.error('Error loading reminder:', error);
+            showError('Failed to load reminder');
+        }
+    }
+
+    /**
+     * Handle reminder form submit
+     */
+    async function handleReminderSubmit(event) {
+        event.preventDefault();
+
+        const form = event.target;
+        const formData = new FormData(form);
+
+        const data = {
+            text: formData.get('text'),
+            priority: formData.get('priority'),
+            category: formData.get('category') || null,
+            due_date: formData.get('due_date') || null,
+            due_time: formData.get('due_time') || null,
+            time_required: formData.get('time_required') ? parseInt(formData.get('time_required')) : null,
+            location_name: formData.get('location_name') || null,
+            notes: formData.get('notes') || null
+        };
+
+        const reminderId = formData.get('id');
+
+        try {
+            if (reminderId) {
+                // Update existing
+                await API.updateReminder(reminderId, data);
+                console.log('Reminder updated:', reminderId);
+            } else {
+                // Create new
+                const newReminder = await API.createReminder(data);
+                console.log('Reminder created:', newReminder);
+            }
+
+            // Redirect to today view
+            window.location.href = 'index.html';
+
+        } catch (error) {
+            console.error('Error saving reminder:', error);
+            showError('Failed to save reminder');
+        }
+    }
+
+    /**
+     * Handle reminder delete from edit view
+     */
+    async function handleReminderDelete() {
+        const reminderId = document.getElementById('reminderId').value;
+
+        if (!reminderId) return;
+
+        if (!confirm('Are you sure you want to delete this reminder?')) {
+            return;
+        }
+
+        try {
+            await API.deleteReminder(reminderId);
+            console.log('Reminder deleted:', reminderId);
+            window.location.href = 'index.html';
+        } catch (error) {
+            console.error('Error deleting reminder:', error);
+            showError('Failed to delete reminder');
+        }
+    }
+
+    /**
+     * Show error message
+     */
+    function showError(message) {
+        // Simple alert for now, can be enhanced with custom UI
+        alert(message);
+    }
+
+    // Initialize on load
+    init();
+
+    // Public API
+    return {
+        init,
+        initTodayView,
+        initUpcomingView,
+        initEditView,
+        handleReminderSubmit,
+        handleReminderDelete
+    };
+})();
+
+// Make available globally
+window.App = App;

@@ -1,0 +1,21 @@
+{
+  "api": {
+    "local_endpoint": "http://localhost:8000/api",
+    "cloud_endpoint": "",
+    "use_cloud": false,
+    "token": "10b3743d4bfd44585c2bb8518de240cf20e990dc6bdab17c4abe944dee273bc3"
+  },
+  "sync": {
+    "enabled": false,
+    "interval_minutes": 5
+  },
+  "ui": {
+    "theme": "light",
+    "animations_enabled": true
+  },
+  "location": {
+    "enabled": false,
+    "mapbox_token": ""
+  },
+  "_comment": "Configuration for the reminders app. Edit as needed for your setup."
+}

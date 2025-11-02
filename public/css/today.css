@@ -1,0 +1,268 @@
+/* ========================================
+   Today View - Specific Styles
+   ======================================== */
+
+/* ===== Reminder Sections ===== */
+.reminder-section {
+    margin-bottom: var(--spacing-lg);
+}
+
+.section-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--color-border);
+}
+
+.section-title.overdue {
+    color: var(--color-urgent);
+    border-bottom-color: var(--color-urgent);
+}
+
+/* ===== Reminders List ===== */
+.reminders-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+/* ===== Reminder Card ===== */
+.reminder-card {
+    background-color: var(--color-bg-primary);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    gap: var(--spacing-md);
+    transition: all var(--transition-normal);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.reminder-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.reminder-card:active {
+    transform: scale(0.98);
+}
+
+/* Touch feedback for mobile */
+@media (hover: none) {
+    .reminder-card:hover {
+        transform: none;
+    }
+    .reminder-card:active {
+        background-color: var(--color-bg-secondary);
+    }
+}
+
+/* Priority Border Indicator */
+.reminder-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+
+.reminder-card.priority-chill::before {
+    background-color: var(--color-chill);
+}
+
+.reminder-card.priority-important::before {
+    background-color: var(--color-important);
+}
+
+.reminder-card.priority-urgent::before {
+    background-color: var(--color-urgent);
+}
+
+/* Overdue styling */
+.reminder-card.overdue {
+    border: 1px solid var(--color-urgent-light);
+    background-color: var(--color-urgent-light);
+}
+
+/* ===== Reminder Card - Checkbox ===== */
+.reminder-checkbox-container {
+    display: flex;
+    align-items: flex-start;
+    padding-top: 2px;
+}
+
+.reminder-checkbox {
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    position: relative;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.reminder-checkbox:hover {
+    border-color: var(--color-success);
+}
+
+.reminder-checkbox:checked {
+    background-color: var(--color-success);
+    border-color: var(--color-success);
+}
+
+.reminder-checkbox:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* ===== Reminder Card - Content ===== */
+.reminder-content {
+    flex: 1;
+    min-width: 0; /* Allow text truncation */
+}
+
+.reminder-text {
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-xs);
+    word-wrap: break-word;
+}
+
+.reminder-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    align-items: center;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.meta-icon {
+    opacity: 0.7;
+}
+
+/* Category Badge */
+.category-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background-color: var(--color-bg-tertiary);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+}
+
+/* Time Badge */
+.time-badge {
+    font-weight: 500;
+    color: var(--color-text-primary);
+}
+
+/* Location Badge */
+.location-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-primary);
+}
+
+/* ===== Reminder Card - Priority Badge ===== */
+.reminder-priority {
+    align-self: flex-start;
+}
+
+/* ===== Swipe Actions (Mobile) ===== */
+.reminder-card {
+    touch-action: pan-y;
+}
+
+.reminder-card.swiping {
+    transition: none;
+}
+
+.reminder-card.swipe-left {
+    transform: translateX(-80px);
+}
+
+.swipe-action {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-danger);
+    color: white;
+    font-size: var(--font-size-lg);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.reminder-card.swipe-left .swipe-action {
+    opacity: 1;
+}
+
+/* ===== Completion Animation States ===== */
+.reminder-card.completing {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.reminder-card.fade-out {
+    opacity: 0;
+    transform: scale(0.9);
+}
+
+.reminder-card.slide-up {
+    max-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* ===== Responsive Adjustments ===== */
+@media (min-width: 768px) {
+    .reminder-card {
+        padding: var(--spacing-lg);
+    }
+
+    .reminder-text {
+        font-size: var(--font-size-lg);
+    }
+
+    .reminder-checkbox {
+        width: 28px;
+        height: 28px;
+    }
+
+    /* Hide swipe actions on desktop */
+    .swipe-action {
+        display: none;
+    }
+}
+
+/* ===== Empty State (Override from main.css if needed) ===== */
+.reminder-section .empty-state {
+    padding: var(--spacing-lg);
+}

@@ -1,0 +1,217 @@
+/* ========================================
+   Edit/Create Form - Specific Styles
+   ======================================== */
+
+/* ===== Form Container ===== */
+.reminder-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* ===== Form Groups ===== */
+.form-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-label {
+    display: block;
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.form-hint {
+    display: block;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin-top: var(--spacing-xs);
+    font-style: italic;
+}
+
+/* ===== Form Controls ===== */
+.form-control {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-base);
+    font-family: var(--font-family);
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-primary);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+    min-height: 44px; /* Touch target */
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--color-border-focus);
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+.form-control::placeholder {
+    color: var(--color-text-disabled);
+}
+
+/* Textarea specific */
+textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+    line-height: var(--line-height-relaxed);
+}
+
+/* Select specific */
+select.form-control {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23757575' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+/* Input validation states */
+.form-control:invalid {
+    border-color: var(--color-danger);
+}
+
+.form-control:valid {
+    border-color: var(--color-success);
+}
+
+/* Don't show validation colors until user interacts */
+.form-control:not(:focus):placeholder-shown {
+    border-color: var(--color-border);
+}
+
+/* ===== Priority Selector ===== */
+.priority-selector {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.priority-option {
+    flex: 1;
+    min-width: 100px;
+    cursor: pointer;
+}
+
+.priority-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.priority-option .priority-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 2px solid transparent;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+    min-height: 44px;
+}
+
+.priority-option input[type="radio"]:checked + .priority-badge {
+    border-color: currentColor;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+    font-weight: 600;
+}
+
+.priority-option:hover .priority-badge {
+    transform: scale(1.05);
+}
+
+/* ===== Form Actions ===== */
+.form-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-xl);
+    border-top: 1px solid var(--color-border);
+}
+
+.form-actions .btn {
+    flex: 1;
+    min-height: 48px;
+    font-size: var(--font-size-lg);
+}
+
+/* ===== Back Button ===== */
+.btn-back {
+    margin-right: auto;
+}
+
+/* ===== Delete Button ===== */
+#deleteBtn {
+    color: var(--color-danger);
+}
+
+#deleteBtn:hover {
+    background-color: var(--color-urgent-light);
+}
+
+/* ===== Form Validation Messages ===== */
+.validation-message {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    color: var(--color-danger);
+}
+
+.validation-message.success {
+    color: var(--color-success);
+}
+
+/* ===== Loading State ===== */
+.form-control:disabled {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-disabled);
+    cursor: not-allowed;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ===== Responsive Adjustments ===== */
+@media (min-width: 768px) {
+    .reminder-form {
+        padding: var(--spacing-lg);
+    }
+
+    .form-group {
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .priority-selector {
+        gap: var(--spacing-md);
+    }
+
+    .priority-option {
+        min-width: 120px;
+    }
+}
+
+/* ===== Focus Within for Form Groups ===== */
+.form-group:focus-within .form-label {
+    color: var(--color-primary);
+}
+
+/* ===== Error State ===== */
+.form-group.has-error .form-control {
+    border-color: var(--color-danger);
+}
+
+.form-group.has-error .form-label {
+    color: var(--color-danger);
+}
+
+/* ===== Success State ===== */
+.form-group.has-success .form-control {
+    border-color: var(--color-success);
+}

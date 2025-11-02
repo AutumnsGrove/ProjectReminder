@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ADHD-friendly reminders app - Upcoming view">
+    <title>Upcoming - Reminders</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/upcoming.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <h1 class="page-title">Upcoming</h1>
+            <div class="header-actions">
+                <button class="btn-icon" id="refreshBtn" aria-label="Refresh" title="Refresh">
+                    <span class="icon">↻</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="app-nav">
+            <a href="index.html" class="nav-link">Today</a>
+            <a href="upcoming.html" class="nav-link active" aria-current="page">Upcoming</a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div id="upcomingContainer">
+                <div class="empty-state">
+                    <p>No upcoming reminders</p>
+                    <p class="empty-subtitle">Tap + to add one</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Floating Action Button -->
+        <a href="edit.html" class="fab" aria-label="Add new reminder">
+            <span class="fab-icon">+</span>
+        </a>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/animations.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        // Initialize Upcoming view
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof App !== 'undefined' && App.initUpcomingView) {
+                App.initUpcomingView();
+            }
+        });
+
+        // Refresh button handler
+        document.getElementById('refreshBtn')?.addEventListener('click', () => {
+            if (typeof App !== 'undefined' && App.initUpcomingView) {
+                App.initUpcomingView();
+            }
+        });
+    </script>
+</body>
+</html>
