@@ -1,0 +1,63 @@
+"""
+config.py - Configuration management
+
+Loads secrets from secrets.json with fallback to environment variables.
+"""
+
+import os
+import json
+from pathlib import Path
+
+
+def load_secrets():
+    """
+    Load API keys and secrets from secrets.json.
+
+    Falls back to environment variables if file not found.
+
+    Returns:
+        Dictionary of secrets
+    """
+    secrets_path = Path(__file__).parent.parent / "secrets.json"
+    try:
+        with open(secrets_path, 'r') as f:
+            secrets = json.load(f)
+        print(f"SUCCESS: Loaded secrets from {secrets_path}")
+        return secrets
+    except FileNotFoundError:
+        print(f"WARNING: secrets.json not found at {secrets_path}. Using environment variables as fallback.")
+        return {}
+    except json.JSONDecodeError as e:
+        print(f"ERROR: Failed to parse secrets.json: {e}. Using environment variables as fallback.")
+        return {}
+
+
+# Load secrets at module import
+SECRETS = load_secrets()
+
+# Database
+DB_PATH = Path(__file__).parent.parent / "reminders.db"
+
+# Authentication
+API_TOKEN = SECRETS.get("api_token", os.getenv("API_TOKEN", ""))
+
+# MapBox
+MAPBOX_ACCESS_TOKEN = SECRETS.get("mapbox_access_token", os.getenv("MAPBOX_ACCESS_TOKEN", ""))
+
+# CORS (allow local development)
+CORS_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:8080",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:8080",
+    "null"  # For file:// protocol during development
+]
+
+# Server
+HOST = "0.0.0.0"
+PORT = 8000
+DEBUG = True
+
+# API Configuration
+API_VERSION = "v1"
+API_PREFIX = "/api"

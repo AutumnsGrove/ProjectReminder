@@ -1,5 +1,8 @@
 secrets.json
+reminders.db
 *.log
 __pycache__/
 .DS_Store
 .claude/
+.venv/
+*.pyc

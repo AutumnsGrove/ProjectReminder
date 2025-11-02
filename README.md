@@ -1,381 +1,401 @@
-# BaseProject - Claude Code Template
+# ADHD-Friendly Voice Reminders System
 
-A comprehensive project template with built-in Claude Code workflows, best practices, and extensive documentation for rapid development setup.
+An offline-first, persistent reminders system designed specifically for ADHD workflows. Voice input is the primary interaction method, with visual persistence across multiple devices (desktop, mobile, e-ink displays).
 
-## 🚀 Quick Start
-
-### Option 1: New Project Setup
-
-**One-liner in Claude Code:**
-```
-Clone https://github.com/AutumnsGrove/BaseProject (main branch) to /tmp, copy to ~/Projects/[ASK ME PROJECT NAME] excluding (.git/), rename TEMPLATE_CLAUDE.md to CLAUDE.md, customize CLAUDE.md sections (Project Purpose, Tech Stack, API Keys List, Architecture Notes) and README.md (title, description, features) with my project details [ASK ME: name, description, tech stack, API keys needed], init language-specific dependencies (uv init for Python creates pyproject.toml, npm init for JS creates package.json, go mod init for Go creates go.mod), create proper directory structure (src/ with __init__.py or index.js, tests/ with __init__.py), generate secrets_template.json with my API key placeholders, write TODOS.md with 3-5 initial tasks derived from project description, git init with user.name and user.email from global git config, ask if I want to install git hooks [ASK ME: Install git hooks for code quality and security? Recommended: yes], if yes then run ./ClaudeUsage/pre_commit_hooks/install_hooks.sh (auto-detects from pyproject.toml/package.json/go.mod created above, installs language-appropriate hooks), make initial commit "feat: initialize [PROJECT] from BaseProject template", display project summary and next steps including reminder about installed hooks
-```
-
-Claude will interactively:
-- Ask for project name, tech stack, and requirements
-- Copy BaseProject template to your chosen location
-- Customize CLAUDE.md with your project details
-- Set up language-specific dependencies (pyproject.toml, package.json, etc.)
-- Create proper project structure (src/, tests/)
-- Generate secrets_template.json with your needed API keys
-- Initialize git with proper configuration
-- **Install git hooks (recommended)** - auto-detects your language and installs:
-  - Code quality checks (Black/Ruff for Python, Prettier/ESLint for JS, gofmt for Go)
-  - Security scanner (prevents committing API keys/secrets)
-  - Test runner (blocks push if tests fail)
-  - Dependency auto-updater (runs on branch switch)
-- Create initial commit following our standards
+**Developer:** Autumn Brown
+**Location:** Smyrna, GA
+**Version:** 1.0 MVP
+**Status:** 🏗️ In Development
 
 ---
 
-### Option 2: Add to Existing Project
+## Key Features
 
-**For projects already in progress with existing code, documentation, and git history:**
+### Core Philosophy: Persistent Visibility
+- **Tasks don't disappear** - They stay visible until explicitly completed
+- **Offline-first** - Works without internet, syncs when available
+- **Voice-native** - Natural language input ("remind me to call mom tomorrow at 3pm")
+- **Location-aware** - Context-based reminders ("when I'm at Home Depot")
+- **Multi-device** - Desktop, mobile, e-ink dashboard synchronization
 
-```
-Clone https://github.com/AutumnsGrove/BaseProject (main branch) to /tmp/bp, analyze my project: read existing README.md/CLAUDE.md, scan git history for commit patterns, detect tech stack and package managers, identify project architecture (monorepo/single package/etc), read TODOS.md if exists, copy ClaudeUsage/ to my project (preserve any existing ClaudeUsage/ files, only add new guides), intelligently merge CLAUDE.md: if exists parse sections and merge BaseProject sections using markers like "<!-- BaseProject: Git Workflow -->", if new create from template with detected project details, enhance .gitignore by merging entries (preserve existing, add missing), analyze commit messages and suggest adopting BaseProject style if inconsistent, check if using branches like dev/main and suggest workflow if not, ask if I want to install git hooks [ASK ME: Install git hooks for code quality and security? They auto-detect your language], if yes run ./ClaudeUsage/pre_commit_hooks/install_hooks.sh interactively (installs appropriate hooks based on detected tech stack, backs up any existing hooks first), generate/update TODOS.md with project-aware tasks, create integration-summary.md report showing what was added/merged/skipped, backup modified files to ./.baseproject-backup-[TIMESTAMP]/, cleanup temp directory, display next steps
-```
-
-Claude will intelligently:
-- Analyze your existing project structure and conventions
-- Detect tech stack from package files (package.json, pyproject.toml, etc.)
-- Copy ClaudeUsage/ guides without overwriting existing files
-- Merge CLAUDE.md sections with clear markers (preserves your content)
-- Append missing .gitignore entries without removing existing ones
-- Compare your commit style to BaseProject standards and offer suggestions
-- **Optionally install git hooks** - backs up existing hooks, auto-detects language, installs appropriate quality/security hooks
-- Create backup of all modified files before making changes
-- Generate integration-summary.md showing exactly what was changed
-- Respect your existing README.md (won't overwrite)
-- Adapt to your project's existing structure
-
-### Manual Setup
-
-For full control over the setup process, see [NEW_PROJECT_SETUP.md](https://github.com/AutumnsGrove/BaseProject/blob/dev/TemplateDocs/NEW_PROJECT_SETUP.md) in the dev branch for detailed step-by-step instructions.
+### ADHD-Optimized Design
+- **Object permanence support** - Out of sight ≠ out of mind
+- **Low friction** - Voice input removes typing barrier
+- **Flexible timing** - "Today" vs "Tuesday at 3pm exactly"
+- **Priority vibes** - "chill/important/urgent" not numeric scales
+- **No notification fatigue** - Persistent display instead of aggressive pings
 
 ---
 
-## 📁 What's Included
+## Architecture
+
+### Three-Tier System
 
 ```
-BaseProject/
-├── TEMPLATE_CLAUDE.md          # Main project instructions (rename to CLAUDE.md)
-├── ClaudeUsage/                # Comprehensive workflow guides
-│   ├── README.md               # Guide index
-│   ├── git_guide.md            # Unified git workflow and conventional commits
-│   ├── db_usage.md             # SQLite database with database.py interface
-│   ├── secrets_management.md  # API key handling
-│   ├── code_style_guide.md    # Code style principles
-│   ├── project_setup.md       # Project initialization patterns
-│   ├── uv_usage.md            # Python UV package manager
-│   ├── testing_strategies.md  # Test patterns
-│   ├── docker_guide.md        # Containerization
-│   ├── ci_cd_patterns.md      # GitHub Actions
-│   ├── house_agents.md        # Claude subagent usage
-│   ├── pre_commit_hooks/      # Git hooks for code quality
-│   ├── templates/             # Template files for common configs
-│   └── ... (18 total guides)
-└── .gitignore                  # Comprehensive gitignore
+┌─────────────────────────────────────────────────────┐
+│                   Web UI (Client)                   │
+│              HTML/CSS/Vanilla JavaScript            │
+│         MapBox GL JS | LocalStorage Config          │
+└──────────────┬─────────────────┬────────────────────┘
+               │                 │
+       ┌───────┴────────┐   ┌────┴──────────────┐
+       │                │   │                    │
+┌──────▼──────┐   ┌────▼──────────────┐   ┌────▼────────┐
+│   Local     │   │   Cloudflare      │   │   E-ink     │
+│   FastAPI   │   │   Workers API     │   │   Clients   │
+│   Server    │   │   (TypeScript)    │   │  (Android)  │
+└──────┬──────┘   └────┬──────────────┘   └─────────────┘
+       │               │
+┌──────▼──────┐   ┌────▼──────────────┐
+│   SQLite    │   │  Cloudflare D1    │
+│   Local DB  │◄──┤  (Cloud SQLite)   │
+└─────────────┘   └───────────────────┘
+       │                 │
+       └────────┬────────┘
+                │
+         Background Sync
+       (Bidirectional)
 ```
+
+**1. Cloud Layer** - Cloudflare Workers + D1 for backup & multi-device sync
+**2. Local Layer** - FastAPI + SQLite for offline-first primary operation
+**3. Client Layer** - Web UI connects to local (first) or cloud (fallback)
 
 ---
 
-## 🏠 House Agents Integration
+## Tech Stack
 
-This template works seamlessly with [house-agents](https://github.com/houseworthe/house-agents) - specialized Claude Code sub-agents that keep your context clean.
+### Backend
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| Local API | FastAPI (Python 3.11+) | REST API server |
+| Local DB | SQLite 3 | Local data storage |
+| Cloud API | Cloudflare Workers | Serverless edge API |
+| Cloud DB | Cloudflare D1 | Cloud SQLite |
+| Auth | Bearer Token | Simple auth (MVP) |
 
-### What Are House Agents?
+### Frontend
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| UI | HTML5 + CSS3 + Vanilla JS | No framework overhead |
+| Maps | MapBox GL JS | Location picker |
+| Storage | LocalStorage | Settings/config |
+| Requests | Fetch API | HTTP client |
 
-Specialized sub-agents that run heavy operations in separate context windows:
-- **house-research** - Search 70k+ tokens across files, return 3k summary (95% savings)
-- **house-git** - Analyze 43k token diffs, return 500 token summary (98% savings)
-- **house-bash** - Process 21k+ command output, return 700 token summary (97% savings)
-
-### Quick Install
-
-**Project-Level (this project only):**
-```bash
-git clone https://github.com/houseworthe/house-agents.git /tmp/house-agents
-cp -r /tmp/house-agents/.claude .
-```
-
-**User-Wide (all projects):**
-```bash
-git clone https://github.com/houseworthe/house-agents.git /tmp/house-agents
-mkdir -p ~/.claude/agents
-cp /tmp/house-agents/.claude/agents/*.md ~/.claude/agents/
-```
-
-**Test Installation:**
-```
-Use house-research to find all TODO comments in the codebase
-```
-
-See [ClaudeUsage/house_agents.md](ClaudeUsage/house_agents.md) for usage patterns and examples.
-
-**Credit:** House Agents by [@houseworthe](https://github.com/houseworthe/house-agents) (v0.2.0-beta)
+### Future Additions
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| Voice STT | Whisper.cpp / Vosk | Local speech-to-text |
+| NLP | Llama 3.2 1B / Phi-3 Mini | Intent parsing |
+| Mobile | React Native / Native Android | Phone app |
+| E-ink | Android app | Car dashboard |
 
 ---
 
-## 🎯 What You Get
+## Getting Started
 
-### Instant Best Practices
-- **Git workflow patterns** - Conventional commits, unified git guide
-- **Database architecture** - SQLite with isolated database.py interface
-- **Security by default** - API key management, secrets scanning hooks
-- **Code quality hooks** - 8 production-ready git hooks for Python, JS, Go, multi-language
-  - `pre-commit-secrets-scanner` - Prevents committing API keys (15+ patterns)
-  - Language-specific formatters (Black, Prettier, gofmt) and linters
-  - Auto-run tests before push, auto-update deps on branch switch
-  - Interactive installer with auto-detection
-- **Testing strategies** - Unit, integration, and E2E test patterns
-- **CI/CD templates** - GitHub Actions workflows
-- **Documentation standards** - Consistent, scannable docs
+### Prerequisites
+- Python 3.11+
+- Node.js 18+ (for Cloudflare Workers)
+- MapBox account (free tier)
+- UV package manager (`pip install uv`)
 
-### Claude-Optimized Workflows
-- **House agents** - Specialized agents for research, coding, git analysis
-- **Context7 integration** - Automatic library documentation fetching
-- **TODO management** - Task tracking integrated into workflow
-- **Subagent patterns** - Breaking down complex tasks
-
-### Multi-Language Support
-Guides and patterns for:
-- Python (with UV package manager)
-- JavaScript/TypeScript
-- Go
-- Rust
-- Docker containerization
-
----
-
-## 📚 Documentation Structure
-
-All guides follow a consistent, scannable format:
-
-1. **Overview** - What the guide covers
-2. **When to Use** - Specific triggers and scenarios
-3. **Core Concepts** - Key principles
-4. **Practical Examples** - Real-world code
-5. **Common Pitfalls** - What to avoid
-6. **Related Guides** - Cross-references
-
-See [ClaudeUsage/README.md](ClaudeUsage/README.md) for the complete index.
-
----
-
-## 🛠️ Customization Workflow
-
-After running setup:
-
-1. **Edit CLAUDE.md** - Fill in your project specifics
-   - Project purpose
-   - Tech stack
-   - Architecture notes
-
-2. **Create secrets files** (if needed)
-   ```bash
-   # For Python projects
-   cp ClaudeUsage/templates/secrets_template.json secrets_template.json
-   cp secrets_template.json secrets.json
-   # Edit secrets.json with real API keys
-   ```
-
-3. **Set up dependencies**
-   ```bash
-   # Python with UV
-   uv init
-
-   # JavaScript/Node
-   npm init -y
-
-   # Go
-   go mod init yourproject
-   ```
-
-4. **Install git hooks** (recommended)
-   ```bash
-   # Interactive installer (auto-detects your language)
-   ./ClaudeUsage/pre_commit_hooks/install_hooks.sh
-
-   # This installs:
-   # - Code quality checks (formatters + linters)
-   # - Security scanner (prevents API key leaks)
-   # - Test runner (blocks push if tests fail)
-   # - Dependency auto-updater
-   ```
-
-5. **Update TODOS.md** - Add your specific tasks
-
----
-
-## 💡 Key Workflows
-
-### Starting a New Feature
-1. Check `TODOS.md` for pending tasks
-2. Use Context7 to fetch relevant library docs
-3. Follow git workflow for commits
-4. Update TODOS.md as you progress
-
-### Managing Secrets
-1. Read `ClaudeUsage/secrets_management.md`
-2. Create `secrets.json` (gitignored)
-3. Provide `secrets_template.json` for team
-4. Use environment variable fallbacks
-
-### Large Codebase Search
-1. Use house-research agent for 20+ file searches
-2. Check `ClaudeUsage/house_agents.md` for patterns
-3. Use subagents for complex multi-step tasks
-
-### Writing Tests
-1. Review `ClaudeUsage/testing_strategies.md`
-2. Follow framework-specific patterns
-3. Use test-strategist agent for planning
-
----
-
-## 🔐 Security Defaults
-
-This template includes security best practices by default:
-
-- ✅ `secrets.json` in `.gitignore`
-- ✅ **Pre-commit secrets scanner** - Detects 15+ secret patterns before commit
-  - Anthropic, OpenAI, AWS, GitHub, Google API keys
-  - JWT tokens, bearer tokens, private keys
-  - Hardcoded passwords and database credentials
-  - Actionable fix instructions when secrets detected
-- ✅ Environment variable fallback patterns
-- ✅ Security audit guides in `secrets_advanced.md`
-
----
-
-## 🤝 Working with Claude Code
-
-This template is optimized for Claude Code CLI. Key features:
-
-- **CLAUDE.md** triggers automatic context loading
-- **Structured guides** for quick reference without token bloat
-- **Subagent workflows** for complex tasks
-- **Git commit standards** with auto-formatting
-
-### Example Session
-```bash
-cd ~/Projects/MyNewProject/
-
-# Claude automatically reads CLAUDE.md and knows your project context
-claude "Add user authentication with JWT tokens"
-
-# Claude will:
-# 1. Check TODOS.md
-# 2. Use Context7 to fetch JWT library docs
-# 3. Implement following your git commit standards
-# 4. Update TODOS.md
-# 5. Commit with proper message format
-```
-
----
-
-## 📖 Learning Path
-
-Recommended reading order for new projects:
-
-1. [project_structure.md](ClaudeUsage/project_structure.md) - Directory layouts
-2. [git_guide.md](ClaudeUsage/git_guide.md) - Version control and conventional commits
-3. [db_usage.md](ClaudeUsage/db_usage.md) - Database setup (if using databases)
-4. [secrets_management.md](ClaudeUsage/secrets_management.md) - API keys
-5. [uv_usage.md](ClaudeUsage/uv_usage.md) - Python dependencies (if applicable)
-6. [testing_strategies.md](ClaudeUsage/testing_strategies.md) - Test setup
-7. [house_agents.md](ClaudeUsage/house_agents.md) - Advanced workflows
-
----
-
-## 🆘 Troubleshooting
-
-### "Git not initialized"
-```bash
-git init
-git add .
-git commit -m "Initial commit"
-```
-
-### "CLAUDE.md not found"
-```bash
-# Rename the template
-mv TEMPLATE_CLAUDE.md CLAUDE.md
-
-# Customize it
-nano CLAUDE.md
-```
-
-### "Pre-commit hooks not working"
-```bash
-chmod +x ClaudeUsage/pre_commit_hooks/*
-cp ClaudeUsage/pre_commit_hooks/* .git/hooks/
-```
-
----
-
-## 🔄 Keeping BaseProject Updated
-
-To get updates from BaseProject while preserving your customizations:
+### Quick Start (Local Development)
 
 ```bash
-# In your project directory
-# Option 1: Manual merge of specific guides
-cp /path/to/BaseProject/ClaudeUsage/new_guide.md ClaudeUsage/
+# 1. Clone the repository
+git clone <repo-url>
+cd ProjectReminder
 
-# Option 2: Update all guides (careful - review diffs first)
-rsync -av --exclude='CLAUDE.md' /path/to/BaseProject/ClaudeUsage/ ClaudeUsage/
+# 2. Set up Python environment
+uv init
+uv add fastapi uvicorn sqlalchemy pydantic
 
-# Review changes
-git diff
+# 3. Create secrets file
+cp ClaudeUsage/templates/secrets_template.json secrets.json
+# Edit secrets.json with your MapBox token and generate API token
 
-# Commit updates
-git add ClaudeUsage/
-git commit -m "Update ClaudeUsage guides from BaseProject"
+# 4. Initialize database
+python server/database.py  # Creates reminders.db with schema
+
+# 5. Start local API server
+uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+
+# 6. Open web UI
+open public/index.html
+# Or serve with: python -m http.server 8080 --directory public
+```
+
+### Configuration
+
+**secrets.json** (create from template, never commit):
+```json
+{
+  "mapbox_access_token": "pk.eyJ1...",
+  "api_token": "your-strong-random-token-here"
+}
+```
+
+**Web UI settings** (configured in settings.html):
+- API endpoint: `http://localhost:8000` (local) or cloud URL
+- Sync interval: 5 minutes (default)
+- Location settings: Auto-detect, default radius 100m
+
+---
+
+## Implementation Roadmap
+
+### Phase 1: Core Backend ✅
+- FastAPI REST API
+- SQLite database with schema
+- CRUD endpoints
+- Bearer token auth
+
+### Phase 2: Web UI ✅
+- Today/Upcoming views
+- Create/edit reminder form
+- Mobile-responsive design
+- Completion animations
+
+### Phase 3: Integration ✅
+- Connect UI to local API
+- Full CRUD functionality
+- Error handling
+
+### Phase 4: Cloudflare Workers 🔄
+- TypeScript Workers API
+- D1 database setup
+- Deploy to edge network
+
+### Phase 5: Sync Logic 🔄
+- Bidirectional sync
+- Conflict resolution
+- Background sync
+
+### Phase 6: Location Features 📅
+- MapBox integration
+- Geocoding
+- Near-location queries
+
+### Phase 7: Recurring Reminders 📅
+- Recurrence patterns
+- Instance generation
+
+### Phase 8: Voice Input 📅
+- Local STT integration
+- NLP parsing
+- Voice commands
+
+---
+
+## Project Structure
+
+```
+ProjectReminder/
+├── server/                 # FastAPI backend
+│   ├── main.py            # API server entry point
+│   ├── database.py        # SQLite interface
+│   ├── models.py          # Pydantic models
+│   └── config.py          # Configuration
+├── workers/               # Cloudflare Workers
+│   ├── src/
+│   │   └── index.ts       # Workers API
+│   └── wrangler.toml      # Cloudflare config
+├── public/                # Web UI
+│   ├── index.html         # Today view
+│   ├── upcoming.html      # Upcoming view
+│   ├── edit.html          # Create/edit form
+│   ├── settings.html      # Configuration
+│   ├── css/               # Stylesheets
+│   └── js/                # JavaScript
+├── ClaudeUsage/           # Development guides
+├── CLAUDE.md              # Project instructions
+├── TODOS.md               # Task tracking
+├── reminders-project-spec.md  # Full specification
+└── secrets.json           # API keys (gitignored)
 ```
 
 ---
 
-## 🎉 What's Next?
+## API Documentation
 
-After setup:
+### Base URLs
+- **Local:** `http://localhost:8000/api`
+- **Cloud:** `https://reminders-api.YOUR_SUBDOMAIN.workers.dev/api`
 
-1. **Customize** - Edit CLAUDE.md with your project details
-2. **Explore** - Read guides in ClaudeUsage/ directory
-3. **Build** - Start coding with Claude Code
-4. **Iterate** - Update TODOS.md and guides as needed
+### Key Endpoints
+- `POST /api/reminders` - Create reminder
+- `GET /api/reminders/today` - Today view
+- `GET /api/reminders/upcoming` - Upcoming view
+- `PATCH /api/reminders/:id` - Update reminder
+- `DELETE /api/reminders/:id` - Delete reminder
+- `POST /api/sync` - Bidirectional sync
 
----
+### Authentication
+All requests require bearer token:
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
 
-## 📝 Contributing
-
-Found a better pattern? Want to add a guide?
-
-This template uses a **two-branch strategy**:
-- **`main` branch** - Clean, user-facing template (you're here)
-- **`dev` branch** - Template development and maintenance
-
-### For Template Development:
-1. Check out the [dev branch](https://github.com/AutumnsGrove/BaseProject/tree/dev)
-2. Read [CONTRIBUTING.md](https://github.com/AutumnsGrove/BaseProject/blob/dev/CONTRIBUTING.md) for full workflow
-3. Make changes in dev branch
-4. Test thoroughly before merging to main
-
-### For Quick Improvements:
-1. Add your guide to `ClaudeUsage/`
-2. Update `ClaudeUsage/README.md` index
-3. Follow the documentation standards in `ClaudeUsage/documentation_standards.md`
-4. Commit with proper message format
+For complete API specification, see `reminders-project-spec.md` (API Specification section).
 
 ---
 
-## 📄 License
+## Database Schema
 
-This template is provided as-is for use with Claude Code. Customize freely for your projects.
+### reminders table
+```sql
+CREATE TABLE reminders (
+    id TEXT PRIMARY KEY,           -- UUID v4
+    text TEXT NOT NULL,            -- Reminder description
+    due_date TEXT,                 -- ISO 8601 date
+    due_time TEXT,                 -- ISO 8601 time
+    time_required BOOLEAN,         -- Must be done at specific time
+    location_text TEXT,            -- Human-readable location
+    location_lat REAL,             -- Latitude
+    location_lng REAL,             -- Longitude
+    location_radius INTEGER,       -- Trigger radius (meters)
+    priority TEXT,                 -- 'chill', 'important', 'urgent'
+    category TEXT,                 -- Freeform tag
+    status TEXT,                   -- 'pending', 'completed', 'snoozed'
+    completed_at TEXT,             -- ISO 8601 timestamp
+    snoozed_until TEXT,            -- ISO 8601 timestamp
+    recurrence_id TEXT,            -- Foreign key to recurrence_patterns
+    source TEXT,                   -- 'manual', 'voice', 'api'
+    created_at TEXT NOT NULL,      -- ISO 8601 timestamp
+    updated_at TEXT NOT NULL,      -- ISO 8601 timestamp
+    synced_at TEXT                 -- Last cloud sync
+);
+```
 
 ---
 
-**Last updated:** 2025-10-19
-**Maintained for:** Claude Code CLI
-**Guides:** 16 comprehensive workflow documents
+## Development Workflow
+
+### Before You Start
+1. Check `TODOS.md` for current tasks
+2. Read relevant guides in `ClaudeUsage/`
+3. Ensure secrets are configured
+
+### Making Changes
+1. Create feature branch: `git checkout -b feature/name`
+2. Implement changes
+3. Test locally
+4. Update `TODOS.md`
+5. Commit with conventional commits format
+6. Merge to `main` when complete
+
+### Conventional Commits
+```bash
+feat: Add location picker component
+fix: Correct timezone handling in due dates
+docs: Update API documentation
+refactor: Extract validation logic to separate module
+```
+
+For complete git workflow, see `ClaudeUsage/git_guide.md`.
+
+---
+
+## Testing
+
+### Manual Testing (MVP)
+- Test CRUD operations via Swagger docs (`http://localhost:8000/docs`)
+- Test UI on multiple screen sizes
+- Test offline functionality (disable network)
+- Test sync with multiple devices
+
+### Future: Automated Testing
+- Unit tests for API endpoints
+- Integration tests for sync logic
+- E2E tests for critical flows
+
+---
+
+## Deployment
+
+### Local Deployment
+```bash
+# Run FastAPI server
+uvicorn server.main:app --host 0.0.0.0 --port 8000
+
+# Serve web UI
+python -m http.server 8080 --directory public
+```
+
+### Cloudflare Workers Deployment (Phase 4)
+```bash
+cd workers
+npm install
+npx wrangler login
+npx wrangler d1 create reminders
+npx wrangler deploy
+```
+
+---
+
+## Troubleshooting
+
+### API Not Responding
+- Check server is running: `curl http://localhost:8000/api/health`
+- Verify port 8000 is not in use: `lsof -i :8000`
+- Check logs for errors
+
+### Database Issues
+- Ensure `reminders.db` exists in project root
+- Verify permissions: `chmod 644 reminders.db`
+- Reinitialize if corrupted: `python server/database.py`
+
+### UI Not Loading Data
+- Check API endpoint in settings
+- Verify bearer token is correct
+- Check browser console for errors
+- Ensure CORS is configured (FastAPI)
+
+---
+
+## Contributing
+
+This is a personal project, but suggestions welcome! If you find issues:
+1. Check `TODOS.md` to see if it's already tracked
+2. Create GitHub issue with details
+3. Follow project coding style (see `ClaudeUsage/code_style_guide.md`)
+
+---
+
+## Resources
+
+### Documentation
+- [Full Project Specification](reminders-project-spec.md)
+- [Development Guides](ClaudeUsage/README.md)
+- [FastAPI Docs](https://fastapi.tiangolo.com/)
+- [Cloudflare Workers](https://developers.cloudflare.com/workers/)
+- [MapBox GL JS](https://docs.mapbox.com/mapbox-gl-js/)
+
+### Tools
+- Claude Code - Terminal-based agentic coding
+- Postman - API testing
+- SQLite Browser - Database inspection
+- Chrome DevTools - Frontend debugging
+
+---
+
+## License
+
+This project is provided as-is for personal use.
+
+---
+
+## Contact
+
+**Developer:** Autumn Brown
+**Location:** Smyrna, GA
+**Development Environment:** Claude Code
+
+For questions or issues, refer to project documentation or create GitHub issue.
+
+---
+
+**Last Updated:** November 2, 2025
+**Version:** 1.0 MVP (In Development)
+**Next Milestone:** Phase 1 - Core Backend

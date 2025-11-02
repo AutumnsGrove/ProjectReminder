@@ -5,17 +5,38 @@
 ---
 
 ## Project Purpose
-[Fill in: What this project does - 1-2 sentences]
+An ADHD-friendly, offline-first reminders system with voice input as the primary interaction method. Tasks persist visibly until explicitly completed, preventing "out of sight, out of mind" task loss common with traditional reminder apps.
 
 ## Tech Stack
-[Fill in: Technologies, frameworks, and languages used]
-- Language:
-- Framework:
-- Key Libraries:
-- Package Manager:
+- **Language**: Python 3.11+ (backend), TypeScript (cloud), Vanilla JavaScript (frontend)
+- **Backend Framework**: FastAPI (local API server)
+- **Frontend**: HTML5, CSS3, Vanilla JavaScript (no frameworks)
+- **Local Database**: SQLite 3
+- **Cloud**: Cloudflare Workers + D1 (serverless edge API + cloud SQLite)
+- **Maps**: MapBox GL JS (location-based reminders)
+- **Package Manager**: UV (Python), npm (TypeScript/JavaScript)
+- **Future**: Whisper.cpp (local STT), Llama 3.2 1B / Phi-3 Mini (NLP parsing)
 
 ## Architecture Notes
-[Fill in: Key architectural decisions, patterns, or structure]
+**Three-tier offline-first architecture:**
+1. **Cloud Layer** - Cloudflare Workers + D1 for multi-device sync and backup
+2. **Local Layer** - FastAPI + SQLite for offline-first primary operation (localhost:8000)
+3. **Client Layer** - Plain HTML/CSS/JS web UI (auto-switches local → cloud fallback)
+
+**Key Patterns:**
+- Offline-first: Local SQLite is always authoritative for device, cloud is reconciliation point
+- Bidirectional sync: Background sync every 5 minutes when online
+- Conflict resolution: Last-write-wins (MVP), manual resolution (future)
+- UUID generation: Client-side for offline creation
+- Priority system: "chill/important/urgent" not numeric scales
+- Functional-OOP hybrid: Composition over inheritance, small focused functions
+
+**ADHD-Optimized Design:**
+- Persistent visibility: Tasks don't disappear until completed
+- Low friction: Voice input removes typing barrier
+- Context-aware: Location-based reminders ("when I'm at Home Depot")
+- Flexible timing: "Today" vs "Tuesday at 3pm exactly"
+- No notification fatigue: Persistent display instead of aggressive pings
 
 ---
 
@@ -120,6 +141,20 @@ docs: Update README
 - Provide `secrets_template.json` for setup
 - Use environment variables as fallbacks
 
+### API Keys Required
+This project requires the following API keys:
+- **MapBox Access Token** - For location picker and geocoding (get at: https://account.mapbox.com/)
+- **API_TOKEN** - Self-generated bearer token for API authentication (use strong random string)
+- **Cloudflare Account** - For Workers and D1 deployment (Phase 4+)
+
+Store these in `secrets.json`:
+```json
+{
+  "mapbox_access_token": "pk.eyJ1...",
+  "api_token": "your-strong-random-token-here",
+  "comment": "Never commit this file. Cloudflare tokens managed via wrangler CLI."
+}
+```
 
 ### House Agents Quick Trigger
 **When searching 20+ files**, use house-research for:
@@ -166,5 +201,6 @@ For all detailed guides, workflows, and examples, see:
 
 ---
 
-*Last updated: 2025-10-19*
+*Last updated: 2025-11-02*
 *Model: Claude Sonnet 4.5*
+*Project: ADHD-Friendly Voice Reminders System*
