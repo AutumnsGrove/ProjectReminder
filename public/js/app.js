@@ -262,6 +262,45 @@ const App = (function() {
     }
 
     /**
+     * Initialize Future View
+     */
+    async function initFutureView() {
+        console.log('Initializing Future view...');
+
+        try {
+            const reminders = await API.getFutureReminders();
+            console.log('Future reminders:', reminders);
+
+            const container = document.getElementById('futureContainer');
+            if (!container) return;
+
+            if (reminders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>No future reminders</p>
+                        <p class="empty-subtitle">All caught up! 🎉</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Group by date (reuse same logic as upcoming)
+            const groupedByDate = groupRemindersByDate(reminders);
+
+            // Render date groups
+            container.innerHTML = '';
+            groupedByDate.forEach(group => {
+                const dateGroup = createDateGroup(group);
+                container.appendChild(dateGroup);
+            });
+
+        } catch (error) {
+            console.error('Error loading future view:', error);
+            showError('Failed to load future reminders');
+        }
+    }
+
+    /**
      * Group reminders by date
      */
     function groupRemindersByDate(reminders) {
@@ -558,6 +597,7 @@ const App = (function() {
         init,
         initTodayView,
         initUpcomingView,
+        initFutureView,
         initEditView,
         handleReminderSubmit,
         handleReminderDelete

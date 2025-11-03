@@ -321,6 +321,46 @@ const API = (function() {
     }
 
     /**
+     * Get future reminders (8+ days from now)
+     * @returns {Promise<Array>} Array of reminders sorted by date
+     */
+    async function getFutureReminders() {
+        try {
+            // Fetch all pending reminders
+            const response = await request('GET', '/reminders?status=pending');
+            const reminders = response.data || [];
+
+            const today = new Date().toISOString().split('T')[0];
+            const nextWeek = new Date();
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            const nextWeekStr = nextWeek.toISOString().split('T')[0];
+
+            // Filter for future (beyond next 7 days)
+            const future = reminders.filter(r => {
+                if (!r.due_date) return false; // Exclude floating tasks
+                if (r.due_date <= nextWeekStr) return false; // Exclude upcoming/today
+                return true; // Include everything beyond 7 days
+            });
+
+            // Sort by due_date ascending, then priority
+            future.sort((a, b) => {
+                const dateDiff = a.due_date.localeCompare(b.due_date);
+                if (dateDiff !== 0) return dateDiff;
+
+                const priorityOrder = { urgent: 0, important: 1, chill: 2 };
+                return priorityOrder[a.priority] - priorityOrder[b.priority];
+            });
+
+            return future;
+
+        } catch (error) {
+            const message = formatErrorMessage(error);
+            showError(`Failed to load future reminders: ${message}`);
+            throw error;
+        }
+    }
+
+    /**
      * Health check endpoint
      * @returns {Promise<Object>} Health status object
      */
@@ -347,6 +387,7 @@ const API = (function() {
         completeReminder,
         getTodayReminders,
         getUpcomingReminders,
+        getFutureReminders,
         healthCheck
     };
 })();
