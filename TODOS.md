@@ -220,52 +220,57 @@
 
 ---
 
-## Phase 8: Voice Input (Iteration 2) 🔮
+## Phase 8: Voice Input (MVP - Voice-to-Text Only) 📅 NEXT
+
+**Tech Stack Decided:**
+- ✅ STT: Whisper.cpp (local, offline)
+- ✅ LLM: Llama 3.2 1B (deferred to Phase 8.1)
+
+**MVP Scope:** Voice transcription only (manual field completion)
+**Architecture:** See `docs/phase8_architecture.md` for full plan
 
 ### Research & Selection
-- [ ] Research local STT options (Whisper.cpp, Vosk)
-- [ ] Research small LLMs (Llama 3.2 1B, Phi-3 Mini)
-- [ ] Evaluate performance on target hardware
-- [ ] Choose final stack
+- [x] Research local STT options (Whisper.cpp chosen)
+- [x] Research small LLMs (Llama 3.2 1B chosen, deferred)
+- [x] Architecture plan created with house-planner
+- [x] Choose final stack (Whisper.cpp for MVP)
 
-### STT Integration
-- [ ] Install and configure chosen STT model
-- [ ] Create Python wrapper for STT
+### Whisper.cpp Integration
+- [ ] Install and configure Whisper.cpp (base.en model)
+- [ ] Create Python wrapper for Whisper.cpp (`server/voice/whisper.py`)
 - [ ] Add voice recording endpoint (`POST /api/voice/transcribe`)
 - [ ] Test transcription accuracy
 
-### NLP Parsing
-- [ ] Install and configure chosen LLM
+### UI Integration
+- [ ] Add voice button (🎤) to edit form with 3 states
+- [ ] Implement audio recording in browser (`public/js/voice-recorder.js`)
+- [ ] Send audio to backend for transcription
+- [ ] Display transcription in text field
+- [ ] Add comprehensive error handling (permissions, failures)
+
+### NLP Parsing (Phase 8.1 - Deferred)
+- [ ] Install and configure Llama 3.2 1B
 - [ ] Create prompt for reminder parsing
 - [ ] Implement parsing pipeline (text → structured data)
 - [ ] Add fallback to manual edit if parse fails
+- [ ] Add `POST /api/voice/parse` endpoint
 
-### UI Integration
-- [ ] Add voice button (🎤) to edit form
-- [ ] Implement audio recording in browser
-- [ ] Send audio to backend for processing
-- [ ] Display transcription before saving
-- [ ] Handle parsing errors gracefully
-
-**Example Interactions:**
-```
-"Remind me to call mom tomorrow at 3pm"
-→ {text: "Call mom", due_date: "2025-11-04", due_time: "15:00"}
-
-"Buy groceries when I'm at Kroger"
-→ {text: "Buy groceries", location_text: "Kroger"}
-
-"Important: Submit report by Friday 5pm"
-→ {text: "Submit report", due_date: "2025-11-08", due_time: "17:00", priority: "important"}
-```
-
-**Success Criteria:**
-- ✅ Voice input creates correct reminders (>90% accuracy)
+**Phase 8 MVP Success Criteria:**
+- ✅ Voice transcription to text (>85% accuracy)
 - ✅ Runs locally (privacy preserved)
-- ✅ Fast enough (<5 seconds end-to-end)
-- ✅ Handles ambiguity gracefully
+- ✅ Fast enough (<8 seconds end-to-end)
+- ✅ User manually fills date, time, priority
+- ✅ Graceful error handling
 
-**Estimated Time:** 12-15 hours
+**Phase 8.1 Success Criteria (Future):**
+- ✅ Auto-extract date: "tomorrow" → "2025-11-04"
+- ✅ Auto-extract time: "at 3pm" → "15:00:00"
+- ✅ Auto-extract priority: "urgent" → "urgent"
+- ✅ Auto-extract location: "at Kroger" → geocoded
+
+**Estimated Time:**
+- Phase 8 MVP: 12-15 hours
+- Phase 8.1: 8-10 hours (future)
 
 ---
 
