@@ -157,6 +157,12 @@ const API = (function() {
             };
 
             const response = await request('POST', '/reminders', normalizedData);
+
+            // Queue change for sync (Phase 5)
+            if (window.SyncManager && response.id) {
+                window.SyncManager.queueChange(response.id, 'create', response);
+            }
+
             showSuccess('Reminder created!');
             return response;
 
@@ -182,6 +188,12 @@ const API = (function() {
             };
 
             const response = await request('PATCH', `/reminders/${id}`, normalizedData);
+
+            // Queue change for sync (Phase 5)
+            if (window.SyncManager && response.id) {
+                window.SyncManager.queueChange(response.id, 'update', normalizedData);
+            }
+
             showSuccess('Reminder updated!');
             return response;
 
@@ -200,6 +212,12 @@ const API = (function() {
     async function deleteReminder(id) {
         try {
             await request('DELETE', `/reminders/${id}`);
+
+            // Queue change for sync (Phase 5)
+            if (window.SyncManager) {
+                window.SyncManager.queueChange(id, 'delete', null);
+            }
+
             showSuccess('Reminder deleted!');
             return null;
 

@@ -426,6 +426,109 @@ def count_rows(table_name: str) -> int:
 
 
 # =============================================================================
+# Sync Functions (Phase 5)
+# =============================================================================
+
+def get_changes_since(last_sync: Optional[str] = None) -> List[Dict[str, Any]]:
+    """
+    Get all reminders changed since last_sync timestamp.
+
+    Args:
+        last_sync: ISO 8601 timestamp of last sync (None = all reminders)
+
+    Returns:
+        List of reminder dictionaries changed since last_sync
+    """
+    if last_sync:
+        return db_query(
+            "SELECT * FROM reminders WHERE updated_at > ? ORDER BY updated_at ASC",
+            (last_sync,)
+        )
+    else:
+        # First sync - return all reminders
+        return db_query("SELECT * FROM reminders ORDER BY updated_at ASC")
+
+
+def apply_sync_change(change_id: str, action: str, data: Optional[Dict[str, Any]]) -> bool:
+    """
+    Apply a single sync change to local database.
+
+    Args:
+        change_id: Reminder UUID
+        action: 'create', 'update', or 'delete'
+        data: Reminder data (None for delete)
+
+    Returns:
+        True if change was applied successfully
+    """
+    if action == "delete":
+        return delete_reminder(change_id)
+
+    elif action == "create":
+        if not data:
+            return False
+        create_reminder(data)
+        return True
+
+    elif action == "update":
+        if not data:
+            return False
+        return update_reminder(change_id, data)
+
+    return False
+
+
+def update_synced_at(reminder_id: str, synced_at: str) -> bool:
+    """
+    Update synced_at timestamp for a reminder.
+
+    Args:
+        reminder_id: Reminder UUID
+        synced_at: ISO 8601 timestamp
+
+    Returns:
+        True if updated successfully
+    """
+    affected = db_execute(
+        "UPDATE reminders SET synced_at = ? WHERE id = ?",
+        (synced_at, reminder_id)
+    )
+    return affected > 0
+
+
+def batch_update_synced_at(reminder_ids: List[str], synced_at: str) -> int:
+    """
+    Update synced_at timestamp for multiple reminders.
+
+    Args:
+        reminder_ids: List of reminder UUIDs
+        synced_at: ISO 8601 timestamp
+
+    Returns:
+        Number of reminders updated
+    """
+    if not reminder_ids:
+        return 0
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        placeholders = ", ".join(["?"] * len(reminder_ids))
+        query = f"UPDATE reminders SET synced_at = ? WHERE id IN ({placeholders})"
+        params = [synced_at] + reminder_ids
+
+        cursor.execute(query, params)
+        conn.commit()
+        return cursor.rowcount
+    except sqlite3.Error as e:
+        conn.rollback()
+        raise Exception(f"Batch update failed: {e}")
+    finally:
+        conn.close()
+
+
+# =============================================================================
 # Initialization Script
 # =============================================================================
 

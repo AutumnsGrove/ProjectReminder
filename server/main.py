@@ -20,7 +20,11 @@ from .models import (
     ReminderListResponse,
     PaginationMetadata,
     HealthResponse,
-    ErrorResponse
+    ErrorResponse,
+    SyncRequest,
+    SyncResponse,
+    SyncChange,
+    ConflictInfo
 )
 
 
@@ -400,6 +404,120 @@ async def delete_reminder(reminder_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete reminder: {str(e)}")
+
+
+# =============================================================================
+# Sync Endpoint (Phase 5)
+# =============================================================================
+
+@app.post(
+    "/api/sync",
+    response_model=SyncResponse,
+    tags=["Sync"],
+    summary="Synchronize reminders between client and server",
+    dependencies=[Depends(verify_token)]
+)
+async def sync_reminders(sync_request: SyncRequest):
+    """
+    Bidirectional sync endpoint for offline-first synchronization.
+
+    This endpoint:
+    1. Accepts client changes (creates, updates, deletes)
+    2. Applies client changes to server database
+    3. Detects and resolves conflicts (last-write-wins)
+    4. Returns server changes since client's last sync
+
+    Requires authentication via Bearer token.
+
+    Args:
+        sync_request: Sync request with client_id, last_sync, and changes
+
+    Returns:
+        Server changes, conflicts, and new last_sync timestamp
+    """
+    try:
+        current_time = get_current_timestamp()
+        conflicts: List[ConflictInfo] = []
+        applied_count = 0
+
+        # Step 1: Apply client changes to server
+        for change in sync_request.changes:
+            try:
+                # Check if reminder exists on server
+                existing = db.get_reminder_by_id(change.id)
+
+                # Detect conflicts (both client and server modified same reminder)
+                if change.action == "update" and existing:
+                    client_updated_at = change.updated_at
+                    server_updated_at = existing.get("updated_at")
+
+                    # Conflict: both updated since last sync
+                    if server_updated_at and client_updated_at:
+                        # Last-write-wins: Compare timestamps
+                        if server_updated_at > client_updated_at:
+                            # Server wins - skip client change
+                            conflicts.append(ConflictInfo(
+                                id=change.id,
+                                client_updated_at=client_updated_at,
+                                server_updated_at=server_updated_at,
+                                resolution="server_wins"
+                            ))
+                            continue
+                        else:
+                            # Client wins - apply change and log conflict
+                            conflicts.append(ConflictInfo(
+                                id=change.id,
+                                client_updated_at=client_updated_at,
+                                server_updated_at=server_updated_at,
+                                resolution="client_wins"
+                            ))
+
+                # Apply the change
+                success = db.apply_sync_change(change.id, change.action, change.data)
+                if success:
+                    applied_count += 1
+
+                    # Update synced_at for this reminder
+                    if change.action != "delete":
+                        db.update_synced_at(change.id, current_time)
+
+            except Exception as e:
+                # Log error but continue processing other changes
+                print(f"ERROR: Failed to apply change {change.id}: {e}")
+                continue
+
+        # Step 2: Get server changes since client's last sync
+        server_reminders = db.get_changes_since(sync_request.last_sync)
+
+        # Convert server reminders to SyncChange objects
+        server_changes: List[SyncChange] = []
+        for reminder in server_reminders:
+            # Skip reminders that were just updated by this sync request
+            if any(c.id == reminder["id"] for c in sync_request.changes):
+                continue
+
+            server_changes.append(SyncChange(
+                id=reminder["id"],
+                action="update",  # Existing reminders are always updates
+                data=reminder,
+                updated_at=reminder["updated_at"]
+            ))
+
+        # Step 3: Update synced_at for all reminders sent to client
+        reminder_ids = [change.id for change in server_changes]
+        if reminder_ids:
+            db.batch_update_synced_at(reminder_ids, current_time)
+
+        # Step 4: Return sync response
+        return SyncResponse(
+            server_changes=server_changes,
+            conflicts=conflicts,
+            last_sync=current_time,
+            applied_count=applied_count
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")
 
 
 # =============================================================================

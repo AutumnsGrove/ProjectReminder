@@ -211,3 +211,103 @@ class ErrorResponse(BaseModel):
                 "detail": "Reminder not found"
             }
         }
+
+
+# =============================================================================
+# Sync Models (Phase 5)
+# =============================================================================
+
+class SyncChange(BaseModel):
+    """Model for a single sync change"""
+    id: str = Field(..., description="Reminder UUID")
+    action: Literal["create", "update", "delete"] = Field(..., description="Type of change")
+    data: Optional[dict] = Field(None, description="Reminder data (null for delete)")
+    updated_at: str = Field(..., description="ISO 8601 timestamp of change")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "id": "550e8400-e29b-41d4-a716-446655440000",
+                "action": "update",
+                "data": {
+                    "text": "Updated reminder text",
+                    "priority": "urgent"
+                },
+                "updated_at": "2025-11-03T10:30:00Z"
+            }
+        }
+
+
+class SyncRequest(BaseModel):
+    """Model for sync request from client"""
+    client_id: str = Field(..., description="Unique device identifier (UUID)")
+    last_sync: Optional[str] = Field(None, description="ISO 8601 timestamp of last successful sync")
+    changes: List[SyncChange] = Field(default_factory=list, description="Local changes to push to server")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "client_id": "a1b2c3d4-e5f6-4789-a012-3456789abcde",
+                "last_sync": "2025-11-03T10:00:00Z",
+                "changes": [
+                    {
+                        "id": "550e8400-e29b-41d4-a716-446655440000",
+                        "action": "update",
+                        "data": {
+                            "status": "completed",
+                            "completed_at": "2025-11-03T10:15:00Z"
+                        },
+                        "updated_at": "2025-11-03T10:15:00Z"
+                    }
+                ]
+            }
+        }
+
+
+class ConflictInfo(BaseModel):
+    """Model for sync conflict information"""
+    id: str = Field(..., description="Reminder UUID with conflict")
+    client_updated_at: str = Field(..., description="Client's update timestamp")
+    server_updated_at: str = Field(..., description="Server's update timestamp")
+    resolution: Literal["server_wins", "client_wins"] = Field(..., description="How conflict was resolved")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "id": "550e8400-e29b-41d4-a716-446655440000",
+                "client_updated_at": "2025-11-03T10:15:00Z",
+                "server_updated_at": "2025-11-03T10:20:00Z",
+                "resolution": "server_wins"
+            }
+        }
+
+
+class SyncResponse(BaseModel):
+    """Model for sync response from server"""
+    server_changes: List[SyncChange] = Field(default_factory=list, description="Changes from server since last sync")
+    conflicts: List[ConflictInfo] = Field(default_factory=list, description="Conflicts detected and resolved")
+    last_sync: str = Field(..., description="ISO 8601 timestamp to use for next sync request")
+    applied_count: int = Field(..., description="Number of client changes successfully applied")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "server_changes": [
+                    {
+                        "id": "660e8400-e29b-41d4-a716-446655440001",
+                        "action": "create",
+                        "data": {
+                            "text": "New reminder from other device",
+                            "priority": "chill",
+                            "status": "pending",
+                            "created_at": "2025-11-03T10:25:00Z",
+                            "updated_at": "2025-11-03T10:25:00Z"
+                        },
+                        "updated_at": "2025-11-03T10:25:00Z"
+                    }
+                ],
+                "conflicts": [],
+                "last_sync": "2025-11-03T10:30:00Z",
+                "applied_count": 1
+            }
+        }

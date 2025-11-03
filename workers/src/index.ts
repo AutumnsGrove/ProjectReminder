@@ -682,6 +682,205 @@ app.delete('/api/reminders/:id', authMiddleware, async (c) => {
 })
 
 /**
+ * Sync Endpoint (Phase 5)
+ *
+ * POST /api/sync
+ * REQUIRES authentication
+ *
+ * Bidirectional sync endpoint for offline-first synchronization.
+ *
+ * Request body:
+ * {
+ *   "client_id": "device-uuid",
+ *   "last_sync": "2025-11-03T10:00:00Z" | null,
+ *   "changes": [
+ *     {
+ *       "id": "reminder-uuid",
+ *       "action": "create" | "update" | "delete",
+ *       "data": { reminder fields } | null,
+ *       "updated_at": "2025-11-03T10:15:00Z"
+ *     }
+ *   ]
+ * }
+ *
+ * Response format:
+ * {
+ *   "server_changes": [SyncChange[]],
+ *   "conflicts": [ConflictInfo[]],
+ *   "last_sync": "2025-11-03T10:30:00Z",
+ *   "applied_count": 3
+ * }
+ */
+app.post('/api/sync', authMiddleware, async (c) => {
+  try {
+    const body = await c.req.json()
+    const currentTime = new Date().toISOString()
+
+    // Validate request body
+    if (!body.client_id) {
+      return c.json({
+        error: 'Validation error',
+        message: 'client_id is required'
+      }, 400)
+    }
+
+    const conflicts: any[] = []
+    let appliedCount = 0
+
+    // Step 1: Apply client changes to server
+    if (body.changes && Array.isArray(body.changes)) {
+      for (const change of body.changes) {
+        try {
+          // Check if reminder exists on server
+          const existing = await c.env.DB.prepare('SELECT * FROM reminders WHERE id = ?')
+            .bind(change.id)
+            .first()
+
+          // Detect conflicts (both client and server modified same reminder)
+          if (change.action === 'update' && existing) {
+            const clientUpdatedAt = change.updated_at
+            const serverUpdatedAt = existing.updated_at as string
+
+            // Conflict: both updated since last sync
+            if (serverUpdatedAt && clientUpdatedAt) {
+              // Last-write-wins: Compare timestamps
+              if (serverUpdatedAt > clientUpdatedAt) {
+                // Server wins - skip client change
+                conflicts.push({
+                  id: change.id,
+                  client_updated_at: clientUpdatedAt,
+                  server_updated_at: serverUpdatedAt,
+                  resolution: 'server_wins'
+                })
+                continue
+              } else {
+                // Client wins - apply change and log conflict
+                conflicts.push({
+                  id: change.id,
+                  client_updated_at: clientUpdatedAt,
+                  server_updated_at: serverUpdatedAt,
+                  resolution: 'client_wins'
+                })
+              }
+            }
+          }
+
+          // Apply the change
+          if (change.action === 'delete') {
+            const result = await c.env.DB.prepare('DELETE FROM reminders WHERE id = ?')
+              .bind(change.id)
+              .run()
+            if (result.success) appliedCount++
+          } else if (change.action === 'create') {
+            if (!change.data) continue
+
+            const data = change.data
+            const result = await c.env.DB.prepare(`
+              INSERT INTO reminders (
+                id, text, notes, due_date, due_time, time_required,
+                location_name, location_address, location_lat, location_lng, location_radius,
+                priority, category, status, completed_at, snoozed_until, snooze_count,
+                recurrence_id, is_recurring_instance, original_due_date,
+                created_at, updated_at, synced_at
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).bind(
+              data.id, data.text, data.notes || null, data.due_date || null, data.due_time || null,
+              data.time_required || 0, data.location_name || null, data.location_address || null,
+              data.location_lat || null, data.location_lng || null, data.location_radius || 100,
+              data.priority || 'chill', data.category || null, data.status || 'pending',
+              data.completed_at || null, data.snoozed_until || null, data.snooze_count || 0,
+              data.recurrence_id || null, data.is_recurring_instance || 0, data.original_due_date || null,
+              data.created_at, data.updated_at, currentTime
+            ).run()
+
+            if (result.success) appliedCount++
+          } else if (change.action === 'update') {
+            if (!change.data) continue
+
+            const data = change.data
+            const updates: string[] = []
+            const params: any[] = []
+
+            // Build dynamic UPDATE query
+            Object.keys(data).forEach(key => {
+              if (key !== 'id' && key !== 'created_at') {
+                updates.push(`${key} = ?`)
+                params.push(data[key])
+              }
+            })
+
+            updates.push('synced_at = ?')
+            params.push(currentTime)
+            params.push(change.id)
+
+            const result = await c.env.DB.prepare(
+              `UPDATE reminders SET ${updates.join(', ')} WHERE id = ?`
+            ).bind(...params).run()
+
+            if (result.success) appliedCount++
+          }
+        } catch (error) {
+          console.error(`Failed to apply change ${change.id}:`, error)
+          continue
+        }
+      }
+    }
+
+    // Step 2: Get server changes since client's last sync
+    let serverReminders: any[] = []
+    if (body.last_sync) {
+      const result = await c.env.DB.prepare(
+        'SELECT * FROM reminders WHERE updated_at > ? ORDER BY updated_at ASC'
+      ).bind(body.last_sync).all()
+      serverReminders = result.results || []
+    } else {
+      // First sync - return all reminders
+      const result = await c.env.DB.prepare(
+        'SELECT * FROM reminders ORDER BY updated_at ASC'
+      ).all()
+      serverReminders = result.results || []
+    }
+
+    // Convert server reminders to SyncChange objects
+    const serverChanges = serverReminders
+      .filter(reminder => {
+        // Skip reminders that were just updated by this sync request
+        return !body.changes?.some((c: any) => c.id === reminder.id)
+      })
+      .map(reminder => ({
+        id: reminder.id,
+        action: 'update',
+        data: reminder,
+        updated_at: reminder.updated_at
+      }))
+
+    // Step 3: Update synced_at for all reminders sent to client
+    if (serverChanges.length > 0) {
+      const reminderIds = serverChanges.map(c => c.id)
+      const placeholders = reminderIds.map(() => '?').join(',')
+      await c.env.DB.prepare(
+        `UPDATE reminders SET synced_at = ? WHERE id IN (${placeholders})`
+      ).bind(currentTime, ...reminderIds).run()
+    }
+
+    // Step 4: Return sync response
+    return c.json({
+      server_changes: serverChanges,
+      conflicts: conflicts,
+      last_sync: currentTime,
+      applied_count: appliedCount
+    })
+  } catch (error) {
+    console.error('Sync error:', error)
+    return c.json({
+      error: 'Internal Server Error',
+      message: 'Sync failed',
+      timestamp: new Date().toISOString()
+    }, 500)
+  }
+})
+
+/**
  * 404 Handler
  */
 app.notFound((c) => {
@@ -696,6 +895,7 @@ app.notFound((c) => {
       'POST /api/reminders',
       'PATCH /api/reminders/:id',
       'DELETE /api/reminders/:id',
+      'POST /api/sync',
       'GET /api/test-auth'
     ]
   }, 404)
