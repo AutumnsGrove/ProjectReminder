@@ -142,6 +142,13 @@
 **Known Issues for Next Session:**
 - [ ] Time picker not appearing (HTML5 input type="time" not working in some browsers) - Use text input as workaround
 
+**Enhancements Identified:**
+- [ ] 💡 **UX Issue**: Reminders beyond 7 days are invisible - Add "Future" view for tasks >7 days out
+  - Current: Today (overdue/today/floating) + Upcoming (next 7 days)
+  - Needed: Future view for reminders 8+ days out
+  - Alternative: Extend Upcoming window to 30 days
+- [ ] ✅ **Testing**: Add automated tests - **DONE** in commit c85bbd7 (24 tests, 80% coverage)
+
 ---
 
 ## Phase 4: Cloudflare Workers (Day 2-3) 📅
