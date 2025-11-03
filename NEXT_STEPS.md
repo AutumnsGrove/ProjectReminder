@@ -129,45 +129,49 @@ See `INTEGRATION_TESTING.md` for comprehensive manual test checklist covering:
 
 ---
 
-## Priority System Enhancement (Future Iteration)
+## Priority System Enhancement (Next Session) ✅ DECISION MADE
 
-**Current Priority Levels:**
+**Current Priority Levels (3):**
 - 🟢 **Chill** (Green) - Low priority, no time pressure
 - 🟡 **Important** (Yellow) - Medium priority, should be done
 - 🔴 **Urgent** (Red) - High priority, time-sensitive
 
-**Requested Enhancement:** Add 2 more priority levels
+**NEW Priority Levels to Add (2):**
+- 🔵 **Someday** (Blue) - Future ideas, no timeline, lower than Chill
+- 🟠 **Waiting** (Orange) - Blocked by external dependency, special state
 
-**Design Options to Consider:**
-1. **Lower than Chill:**
-   - "Someday" - Tasks with no timeline (blue/purple)
-   - "Maybe" - Ideas to revisit later (light gray)
-   - "Backburner" - On hold indefinitely (dark gray)
+**Final Priority System (5 levels):**
+1. 🔵 Someday - Backlog, ideas, no rush
+2. 🟢 Chill - Low priority
+3. 🟡 Important - Medium priority
+4. 🔴 Urgent - High priority
+5. 🟠 Waiting - Blocked/on hold
 
-2. **Higher than Urgent:**
-   - "Critical" - Drop everything priority (dark red/black)
-   - "Emergency" - Same-day must-do (flashing red)
+**Rationale:**
+- Simple: Only 5 levels, avoids decision paralysis (ADHD-friendly)
+- "Someday" captures future ideas without cluttering Today/Upcoming
+- "Waiting" acknowledges external blockers (reduces mental load)
+- Color palette: Blue/Green/Yellow/Red/Orange (distinct, accessible)
 
-3. **Special States:**
-   - "Waiting" - Blocked by external dependency (orange)
-   - "In Progress" - Currently working on (teal)
-   - "Delegated" - Assigned to someone else (light blue)
+**Implementation Tasks for Next Session:**
+1. **Database Schema** (`server/database.py`, `server/models.py`)
+   - Update priority CHECK constraint: Add 'someday' and 'waiting'
+   - Migration: ALTER TABLE (or recreate for SQLite)
 
-4. **Complexity Markers:**
-   - "Quick Win" - <5 min tasks (bright green)
-   - "Deep Work" - Requires focus blocks (purple)
+2. **Backend** (`server/main.py`)
+   - Update Pydantic models priority Literal type
+   - Test API with new priority values
 
-**Implementation Considerations:**
-- Color palette must remain distinct and accessible
-- ADHD-friendly: Too many options = decision paralysis
-- Recommendation: Add 1-2 max, keep simple
-- Suggested: "Someday" (lower) + "Critical" (higher) for 5 total levels
+3. **Frontend** (`public/edit.html`, `public/css/*.css`)
+   - Add 2 new radio buttons to priority selector
+   - Add blue/orange color classes
+   - Update priority badge CSS
 
-**Next Session Decision Needed:**
-- Which 2 levels to add?
-- What colors/semantics?
-- Update database schema (priority enum)
-- Update UI (edit form, card colors)
+4. **Tests** (`tests/test_api.py`)
+   - Add test cases for new priority levels
+   - Verify filtering works with all 5 levels
+
+**Estimated Time:** 45-60 minutes
 
 ---
 
