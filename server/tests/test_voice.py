@@ -14,8 +14,8 @@ def test_transcribe_endpoint_success(client, test_token):
     """Test /api/voice/transcribe endpoint."""
     import io
 
-    # Create fake audio file
-    audio_data = io.BytesIO(b'fake audio data for testing')
+    # Create fake audio file (> 1KB to pass validation)
+    audio_data = io.BytesIO(b'fake audio data ' * 100)  # ~1.5KB
 
     with patch('server.voice.whisper.transcribe_audio', return_value="Test transcription"):
         response = client.post(
