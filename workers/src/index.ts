@@ -125,7 +125,8 @@ app.get('/', async (c) => {
     description: 'ADHD-Friendly Voice Reminders System - Cloudflare Workers API',
     endpoints: {
       health: '/api/health',
-      reminders: '/api/reminders (coming in Subagent 10-11)',
+      listReminders: 'GET /api/reminders (with filtering and pagination)',
+      getReminder: 'GET /api/reminders/:id',
       testAuth: '/api/test-auth (protected endpoint for testing)'
     },
     documentation: 'See workers/ARCHITECTURE.md for full API specification'
@@ -145,13 +146,166 @@ app.get('/api/test-auth', authMiddleware, async (c) => {
 })
 
 /**
+ * List Reminders Endpoint
+ *
+ * GET /api/reminders
+ * REQUIRES authentication
+ *
+ * Query Parameters:
+ * - status (optional): Filter by status (pending/completed/snoozed)
+ * - category (optional): Filter by category
+ * - priority (optional): Filter by priority (someday/chill/important/urgent/waiting)
+ * - limit (optional, default: 100): Max results to return
+ * - offset (optional, default: 0): Pagination offset
+ *
+ * Response format (matches FastAPI backend exactly):
+ * {
+ *   "reminders": [...],
+ *   "total": 10,
+ *   "limit": 100,
+ *   "offset": 0
+ * }
+ */
+app.get('/api/reminders', authMiddleware, async (c) => {
+  try {
+    // Parse query parameters
+    const status = c.req.query('status')
+    const category = c.req.query('category')
+    const priority = c.req.query('priority')
+    const limit = parseInt(c.req.query('limit') || '100', 10)
+    const offset = parseInt(c.req.query('offset') || '0', 10)
+
+    // Build base query with dynamic filters
+    let query = 'SELECT * FROM reminders WHERE 1=1'
+    const params: any[] = []
+
+    // Add filters conditionally
+    if (status) {
+      query += ' AND status = ?'
+      params.push(status)
+    }
+    if (category) {
+      query += ' AND category = ?'
+      params.push(category)
+    }
+    if (priority) {
+      query += ' AND priority = ?'
+      params.push(priority)
+    }
+
+    // Add ordering (match FastAPI: created_at DESC)
+    query += ' ORDER BY created_at DESC'
+
+    // Add pagination
+    query += ' LIMIT ? OFFSET ?'
+    params.push(limit, offset)
+
+    // Execute query with D1
+    const stmt = c.env.DB.prepare(query)
+    const result = await stmt.bind(...params).all()
+
+    // Build count query for total
+    let countQuery = 'SELECT COUNT(*) as total FROM reminders WHERE 1=1'
+    const countParams: any[] = []
+
+    // Apply same filters to count query
+    if (status) {
+      countQuery += ' AND status = ?'
+      countParams.push(status)
+    }
+    if (category) {
+      countQuery += ' AND category = ?'
+      countParams.push(category)
+    }
+    if (priority) {
+      countQuery += ' AND priority = ?'
+      countParams.push(priority)
+    }
+
+    // Execute count query
+    const countStmt = c.env.DB.prepare(countQuery)
+    const countResult = await countStmt.bind(...countParams).first()
+    const total = countResult ? (countResult.total as number) : 0
+
+    // Return response matching FastAPI format
+    return c.json({
+      reminders: result.results || [],
+      total: total,
+      limit: limit,
+      offset: offset
+    })
+  } catch (error) {
+    console.error('Error fetching reminders:', error)
+    return c.json({
+      error: 'Internal Server Error',
+      message: 'Failed to fetch reminders',
+      timestamp: new Date().toISOString()
+    }, 500)
+  }
+})
+
+/**
+ * Get Single Reminder Endpoint
+ *
+ * GET /api/reminders/:id
+ * REQUIRES authentication
+ *
+ * Path Parameter:
+ * - id: UUID of the reminder
+ *
+ * Response format (200 OK):
+ * {
+ *   "id": "uuid-string",
+ *   "text": "Call mom",
+ *   ... all fields
+ * }
+ *
+ * Response format (404 Not Found):
+ * {
+ *   "error": "Reminder not found"
+ * }
+ */
+app.get('/api/reminders/:id', authMiddleware, async (c) => {
+  try {
+    const id = c.req.param('id')
+
+    // Query single reminder by ID
+    const stmt = c.env.DB.prepare('SELECT * FROM reminders WHERE id = ?')
+    const result = await stmt.bind(id).first()
+
+    // Return 404 if not found
+    if (!result) {
+      return c.json({
+        error: 'Reminder not found'
+      }, 404)
+    }
+
+    // Return single reminder object (not array)
+    return c.json(result)
+  } catch (error) {
+    console.error('Error fetching reminder:', error)
+    return c.json({
+      error: 'Internal Server Error',
+      message: 'Failed to fetch reminder',
+      timestamp: new Date().toISOString()
+    }, 500)
+  }
+})
+
+/**
  * 404 Handler
  */
 app.notFound((c) => {
   return c.json({
     error: 'Not Found',
     message: `Route ${c.req.method} ${c.req.path} not found`,
-    availableEndpoints: ['GET /', 'GET /api/health']
+    availableEndpoints: [
+      'GET /',
+      'GET /api/health',
+      'GET /api/reminders',
+      'GET /api/reminders/:id',
+      'GET /api/test-auth'
+    ]
   }, 404)
 })
 
