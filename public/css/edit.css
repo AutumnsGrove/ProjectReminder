@@ -474,3 +474,89 @@ select.form-control {
         flex-direction: column;
     }
 }
+
+/* ===== Voice Recorder Button ===== */
+.voice-recorder-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all var(--transition-fast);
+}
+
+.voice-recorder-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.voice-recorder-btn svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--color-text-secondary);
+    transition: fill var(--transition-fast);
+}
+
+.voice-recorder-btn.recording {
+    background-color: var(--color-danger-light);
+    animation: pulse 1.5s infinite;
+}
+
+.voice-recorder-btn.recording svg {
+    fill: var(--color-danger);
+}
+
+.voice-recorder-btn.processing svg {
+    fill: var(--color-text-disabled);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: translateY(-50%) scale(1); }
+    50% { transform: translateY(-50%) scale(1.1); }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Voice recording timer */
+.voice-recorder-timer {
+    position: absolute;
+    bottom: -24px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.form-group.has-voice-input {
+    position: relative;
+    padding-right: 60px;
+}
+
+/* Wrapper for voice input */
+.voice-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+/* Improve form control with voice button */
+.form-group .form-control {
+    padding-right: 60px;
+}
+
+/* Form control state with voice recording */
+.form-group.recording .form-control {
+    border-color: var(--color-danger-light);
+}

@@ -637,6 +637,101 @@ const App = (function() {
         alert(message);
     }
 
+    /**
+     * Initialize Voice Recorder for the Edit view
+     */
+    function initVoiceRecorder() {
+        // Check if browser supports voice recording
+        if (!VoiceRecorder.isSupported()) {
+            console.warn('Voice recording not supported in this browser.');
+            document.getElementById('voiceRecorderBtn').style.display = 'none';
+            return null;
+        }
+
+        const reminderText = document.getElementById('reminderText');
+        const voiceRecorderBtn = document.getElementById('voiceRecorderBtn');
+        const voiceRecorderTimer = document.getElementById('voiceRecorderTimer');
+        const formGroup = voiceRecorderBtn.closest('.form-group');
+
+        // Create VoiceRecorder instance
+        const voiceRecorder = new VoiceRecorder({
+            onRecordingStart: () => {
+                // UI updates for recording start
+                voiceRecorderBtn.classList.add('recording');
+                formGroup.classList.add('recording');
+                voiceRecorderTimer.textContent = '0:00';
+                voiceRecorderTimer.style.display = 'block';
+            },
+            onRecordingStop: async (audioBlob) => {
+                // Reset UI
+                voiceRecorderBtn.classList.remove('recording');
+                voiceRecorderBtn.classList.add('processing');
+                formGroup.classList.remove('recording');
+                formGroup.classList.add('processing');
+                voiceRecorderTimer.textContent = '';
+                voiceRecorderTimer.style.display = 'none';
+
+                try {
+                    // Transcribe audio
+                    const result = await API.transcribeAudio(audioBlob);
+
+                    // Update text field if transcription successful
+                    if (result && result.text) {
+                        reminderText.value = result.text.trim();
+
+                        // Optional: Show toast or notification
+                        showToast(`Transcribed: ${result.text}`, 'success');
+                    }
+                } catch (error) {
+                    // Show error in case of transcription failure
+                    showToast(error.message, 'error');
+                } finally {
+                    // Reset button state
+                    voiceRecorderBtn.classList.remove('processing');
+                }
+            },
+            onRecordingUpdate: (elapsedTime) => {
+                // Update timer display
+                const minutes = Math.floor(elapsedTime / 60000);
+                const seconds = Math.floor((elapsedTime % 60000) / 1000);
+                voiceRecorderTimer.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            },
+            onError: (errorMessage) => {
+                showToast(errorMessage, 'error');
+                voiceRecorderBtn.classList.remove('recording', 'processing');
+                formGroup.classList.remove('recording', 'processing');
+            }
+        });
+
+        // Voice recorder button click handler
+        voiceRecorderBtn.addEventListener('click', () => {
+            if (voiceRecorder.isRecording()) {
+                voiceRecorder.stopRecording();
+            } else {
+                voiceRecorder.startRecording();
+            }
+        });
+
+        return voiceRecorder;
+    }
+
+    // Modify initEditView to include voice recorder
+    function initEditView() {
+        console.log('Initializing Edit view...');
+
+        // Existing edit view initialization
+        const urlParams = new URLSearchParams(window.location.search);
+        const reminderId = urlParams.get('id');
+
+        // Initialize voice recorder
+        initVoiceRecorder();
+
+        if (reminderId) {
+            // Load existing reminder
+            loadReminderForEdit(reminderId);
+        }
+    }
+
     // Public API
     // Note: init() is now called from HTML files to ensure proper async/await
     return {
@@ -646,7 +741,8 @@ const App = (function() {
         initFutureView,
         initEditView,
         handleReminderSubmit,
-        handleReminderDelete
+        handleReminderDelete,
+        initVoiceRecorder // Expose for testing
     };
 })();
 

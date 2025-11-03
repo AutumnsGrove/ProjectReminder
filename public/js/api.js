@@ -424,6 +424,36 @@ const API = (function() {
         return result.data || [];
     }
 
+    /**
+     * Transcribe audio file to text using Whisper.cpp
+     * @param {Blob} audioBlob - Audio file blob
+     * @returns {Promise<{text: string, model: string, language: string, file_size_bytes: number}>}
+     */
+    async function transcribeAudio(audioBlob) {
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.webm');
+
+        try {
+            const response = await fetch(`${getEndpoint()}/voice/transcribe`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${config.api.token}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || `Transcription failed (${response.status})`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Transcription error:', error);
+            throw error;
+        }
+    }
+
     // Public API
     return {
         init,
@@ -438,7 +468,8 @@ const API = (function() {
         getUpcomingReminders,
         getFutureReminders,
         getNearbyReminders,
-        healthCheck
+        healthCheck,
+        transcribeAudio  // New function
     };
 })();
 
