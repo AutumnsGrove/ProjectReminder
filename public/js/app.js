@@ -28,6 +28,25 @@ const App = (function() {
     async function initTodayView() {
         console.log('Initializing Today view...');
 
+        // Check for navigation errors
+        const urlParams = new URLSearchParams(window.location.search);
+        const errorCode = urlParams.get('error');
+
+        if (errorCode) {
+            switch(errorCode) {
+                case 'reminderNotFound':
+                    showError('The reminder you tried to edit was not found.');
+                    break;
+                case 'loadFailed':
+                    showError('Failed to load the reminder. Please try again.');
+                    break;
+                default:
+                    console.warn('Unknown error code:', errorCode);
+            }
+            // Clear the error parameter
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
         try {
             // Get today's reminders from API (already categorized)
             const {overdue, today, floating} = await API.getTodayReminders();
@@ -491,7 +510,8 @@ const App = (function() {
             const reminder = await API.getReminder(id);
 
             if (!reminder) {
-                showError('Reminder not found');
+                // Navigate away instead of showing an error
+                window.location.href = 'index.html?error=reminderNotFound';
                 return;
             }
 
@@ -508,7 +528,17 @@ const App = (function() {
             document.getElementById('dueDate').value = reminder.due_date || '';
             document.getElementById('dueTime').value = reminder.due_time || '';
             document.getElementById('timeRequired').checked = reminder.time_required || false;
-            document.getElementById('location').value = reminder.location_text || '';
+
+            // Location handling (updated for Phase 6)
+            if (reminder.location_name || reminder.location_address) {
+                document.getElementById('locationSearch').value = reminder.location_name || reminder.location_address;
+                document.getElementById('locationName').value = reminder.location_name || '';
+                document.getElementById('locationAddress').value = reminder.location_address || '';
+                document.getElementById('locationLat').value = reminder.location_lat || '';
+                document.getElementById('locationLng').value = reminder.location_lng || '';
+                document.getElementById('locationRadius').value = reminder.location_radius || '100';
+            }
+
             // TODO: Notes field (Phase 4+)
             // document.getElementById('notes').value = reminder.notes || '';
 
@@ -520,7 +550,7 @@ const App = (function() {
 
         } catch (error) {
             console.error('Error loading reminder:', error);
-            showError('Failed to load reminder');
+            window.location.href = 'index.html?error=loadFailed';
         }
     }
 
