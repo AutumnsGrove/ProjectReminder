@@ -109,6 +109,7 @@ class ReminderResponse(BaseModel):
     location_lat: Optional[float] = None
     location_lng: Optional[float] = None
     location_radius: int = 100
+    distance: Optional[float] = None  # Distance in meters (calculated for location queries)
 
     # Organization
     priority: str = "chill"

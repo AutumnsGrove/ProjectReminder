@@ -268,6 +268,123 @@ app.get('/api/reminders', authMiddleware, async (c) => {
  *   "error": "Reminder not found"
  * }
  */
+/**
+ * Get Single Reminder Endpoint
+ *
+ * GET /api/reminders/:id
+ * REQUIRES authentication
+ *
+ * Path Parameter:
+ * - id: UUID of the reminder
+ *
+ * Response format (200 OK):
+ * {
+ *   "id": "uuid-string",
+ *   "text": "Call mom",
+ *   ... all fields
+ * }
+ *
+ * Response format (404 Not Found):
+ * {
+ *   "error": "Reminder not found"
+ * }
+ */
+/**
+ * Location Endpoints (Phase 6)
+ *
+ * GET /api/reminders/near-location
+ *
+ * Find reminders near a specific location
+ * Requires: Authentication
+ * Query params: lat (required), lng (required), radius (optional, default 1000m)
+ *
+ * Response:
+ * {
+ *   "data": [...reminders within radius, sorted by distance...],
+ *   "pagination": { "total": N, "limit": N, "offset": 0, "returned": N } 
+ * }
+ */
+app.get('/api/reminders/near-location', authMiddleware, async (c) => {
+  try {
+    // Parse query parameters
+    const lat = parseFloat(c.req.query('lat') || '')
+    const lng = parseFloat(c.req.query('lng') || '')
+    const radius = parseInt(c.req.query('radius') || '1000')
+
+    // Validate parameters
+    if (isNaN(lat) || isNaN(lng)) {
+      return c.json({
+        error: 'Bad Request',
+        message: 'Missing or invalid lat/lng parameters'
+      }, 400)
+    }
+
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return c.json({
+        error: 'Bad Request',
+        message: 'Latitude must be -90 to 90, longitude must be -180 to 180'
+      }, 400)
+    }
+
+    if (isNaN(radius) || radius < 10 || radius > 50000) {
+      return c.json({
+        error: 'Bad Request',
+        message: 'Radius must be between 10 and 50000 meters'
+      }, 400)
+    }
+
+    // Get all reminders with location data
+    const allReminders = await c.env.DB.prepare(`
+      SELECT * FROM reminders
+      WHERE location_lat IS NOT NULL
+      AND location_lng IS NOT NULL
+    `).all()
+
+    // Calculate distances and filter by radius
+    const nearbyReminders: any[] = []
+
+    for (const reminder of allReminders.results || []) {
+      const distance = haversineDistance(
+        lat, lng,
+        reminder.location_lat as number,
+        reminder.location_lng as number
+      )
+
+      // Check if within reminder's configured radius (or search radius, whichever is larger)
+      const reminderRadius = (reminder.location_radius as number) || 100
+      const effectiveRadius = Math.max(radius, reminderRadius)
+
+      if (distance <= effectiveRadius) {
+        // Add distance metadata for sorting
+        nearbyReminders.push({
+          ...reminder,
+          distance: Math.round(distance * 100) / 100 // Round to 2 decimal places
+        })
+      }
+    }
+
+    // Sort by distance (nearest first)
+    nearbyReminders.sort((a, b) => a.distance - b.distance)
+
+    // Return response with pagination metadata
+    return c.json({
+      data: nearbyReminders,
+      pagination: {
+        total: nearbyReminders.length,
+        limit: nearbyReminders.length,
+        offset: 0,
+        returned: nearbyReminders.length
+      }
+    })
+  } catch (error) {
+    console.error('Near location error:', error)
+    return c.json({
+      error: 'Internal Server Error',
+      message: 'Failed to find nearby reminders',
+      timestamp: new Date().toISOString()
+    }, 500)
+  }
+})
 app.get('/api/reminders/:id', authMiddleware, async (c) => {
   try {
     const id = c.req.param('id')
@@ -911,6 +1028,45 @@ function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
 }
 
 /**
+
+/**
+ * 404 Handler
+ */
+app.notFound((c) => {
+  return c.json({
+    error: 'Not Found',
+    message: `Route ${c.req.method} ${c.req.path} not found`,
+    availableEndpoints: [
+      'GET /',
+      'GET /api/health',
+      'GET /api/reminders',
+      'GET /api/reminders/:id',
+      'POST /api/reminders',
+      'PATCH /api/reminders/:id',
+      'DELETE /api/reminders/:id',
+      'POST /api/sync',
+      'GET /api/reminders/near-location',
+      'GET /api/test-auth'
+    ]
+  }, 404)
+})
+
+/**
+ * Global Error Handler
+ */
+app.onError((err, c) => {
+  console.error('Unhandled error:', err)
+  return c.json({
+    error: 'Internal Server Error',
+    message: err.message || 'An unexpected error occurred',
+    timestamp: new Date().toISOString()
+  }, 500)
+})
+
+/**
+ * Export Hono app for Cloudflare Workers
+ */
+/**
  * Location Endpoints (Phase 6)
  *
  * GET /api/reminders/near-location
@@ -922,7 +1078,7 @@ function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
  * Response:
  * {
  *   "data": [...reminders within radius, sorted by distance...],
- *   "pagination": { "total": N, "limit": N, "offset": 0, "returned": N }
+ *   "pagination": { "total": N, "limit": N, "offset": 0, "returned": N } 
  * }
  */
 app.get('/api/reminders/near-location', authMiddleware, async (c) => {
@@ -1006,42 +1162,4 @@ app.get('/api/reminders/near-location', authMiddleware, async (c) => {
     }, 500)
   }
 })
-
-/**
- * 404 Handler
- */
-app.notFound((c) => {
-  return c.json({
-    error: 'Not Found',
-    message: `Route ${c.req.method} ${c.req.path} not found`,
-    availableEndpoints: [
-      'GET /',
-      'GET /api/health',
-      'GET /api/reminders',
-      'GET /api/reminders/:id',
-      'POST /api/reminders',
-      'PATCH /api/reminders/:id',
-      'DELETE /api/reminders/:id',
-      'POST /api/sync',
-      'GET /api/reminders/near-location',
-      'GET /api/test-auth'
-    ]
-  }, 404)
-})
-
-/**
- * Global Error Handler
- */
-app.onError((err, c) => {
-  console.error('Unhandled error:', err)
-  return c.json({
-    error: 'Internal Server Error',
-    message: err.message || 'An unexpected error occurred',
-    timestamp: new Date().toISOString()
-  }, 500)
-})
-
-/**
- * Export Hono app for Cloudflare Workers
- */
 export default app

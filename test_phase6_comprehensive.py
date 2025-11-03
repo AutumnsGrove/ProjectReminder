@@ -162,7 +162,7 @@ def test_distance_sorting():
         lat, lng = 35.0, -95.0  # Central US
         response = requests.get(
             f"{BASE_URL}/api/reminders/near-location",
-            params={"lat": lat, "lng": lng, "radius": 5000000},  # 5000km
+            params={"lat": lat, "lng": lng, "radius": 50000},  # 50km
             headers=HEADERS
         )
         data = response.json()
