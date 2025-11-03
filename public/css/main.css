@@ -541,3 +541,99 @@ button:focus,
 a:focus {
     outline: 2px solid var(--color-border-focus);
 }
+
+/* ===== Sync Status UI (Phase 5) ===== */
+.sync-status {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    transition: all var(--transition-fast);
+}
+
+.sync-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    transition: background-color var(--transition-fast);
+}
+
+/* Sync status colors */
+.sync-indicator.sync-offline {
+    background-color: var(--color-text-disabled);
+}
+
+.sync-indicator.sync-online {
+    background-color: var(--color-success);
+}
+
+.sync-indicator.sync-syncing {
+    background-color: var(--color-primary);
+    animation: sync-pulse 1.5s ease-in-out infinite;
+}
+
+.sync-indicator.sync-synced {
+    background-color: var(--color-success);
+}
+
+.sync-indicator.sync-error {
+    background-color: var(--color-danger);
+}
+
+/* Sync pulse animation */
+@keyframes sync-pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.3);
+    }
+}
+
+.sync-text {
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+/* Sync button states */
+#syncBtn {
+    transition: all var(--transition-fast);
+}
+
+#syncBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#syncBtn:not(:disabled):hover {
+    background-color: var(--color-bg-tertiary);
+    transform: rotate(180deg);
+}
+
+#syncBtn:not(:disabled):active {
+    transform: rotate(180deg) scale(0.95);
+}
+
+/* Mobile responsive sync status */
+@media (max-width: 480px) {
+    .sync-text {
+        display: none;
+    }
+
+    .sync-status {
+        padding: var(--spacing-xs);
+        min-width: 24px;
+        justify-content: center;
+    }
+
+    .sync-indicator {
+        margin: 0;
+    }
+}
