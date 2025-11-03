@@ -1,0 +1,21 @@
+{
+  "api": {
+    "local_endpoint": "http://100.114.120.17:8000/api",
+    "cloud_endpoint": "https://reminders-api.m7jv4v7npb.workers.dev/api",
+    "use_cloud": false,
+    "token": "c27d0f34a3fbbb12faf361328615bfd42033b4adfc80732b30bdbaa7d3d0bc60"
+  },
+  "sync": {
+    "enabled": false,
+    "interval_minutes": 5
+  },
+  "ui": {
+    "theme": "light",
+    "animations_enabled": true
+  },
+  "location": {
+    "enabled": false,
+    "mapbox_token": "pk.eyJ1IjoiYXV0dW1uc2dhcmRlbiIsImEiOiJjbWhpNWJjc2kxMHZ2MmhxNm13MTE2OTN3In0.HHjohgRHw8ZqMSH4H2dohg"
+  },
+  "_comment": "Configuration for the reminders app. Edit as needed for your setup. Set use_cloud to true to use Cloudflare Workers API instead of local backend."
+}
