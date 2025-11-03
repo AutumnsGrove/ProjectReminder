@@ -205,6 +205,106 @@ def test_list_reminders_filter_by_priority(client, auth_headers, multiple_remind
 
 
 @pytest.mark.api
+def test_create_reminder_with_someday_priority(client, auth_headers):
+    """Test creating a reminder with someday priority"""
+    reminder_data = {
+        "text": "Learn Rust programming language",
+        "priority": "someday"
+    }
+
+    response = client.post(
+        "/api/reminders",
+        headers=auth_headers,
+        json=reminder_data
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["priority"] == "someday"
+    assert data["text"] == "Learn Rust programming language"
+
+
+@pytest.mark.api
+def test_create_reminder_with_waiting_priority(client, auth_headers):
+    """Test creating a reminder with waiting priority"""
+    reminder_data = {
+        "text": "Review contract (waiting on legal team)",
+        "priority": "waiting"
+    }
+
+    response = client.post(
+        "/api/reminders",
+        headers=auth_headers,
+        json=reminder_data
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["priority"] == "waiting"
+    assert data["text"] == "Review contract (waiting on legal team)"
+
+
+@pytest.mark.api
+def test_list_reminders_filter_by_someday(client, auth_headers):
+    """Test filtering reminders by someday priority"""
+    # Create a someday reminder first
+    client.post(
+        "/api/reminders",
+        headers=auth_headers,
+        json={"text": "Future project idea", "priority": "someday"}
+    )
+
+    # Create a different priority reminder to verify filtering works
+    client.post(
+        "/api/reminders",
+        headers=auth_headers,
+        json={"text": "Urgent task", "priority": "urgent"}
+    )
+
+    # Filter by someday
+    response = client.get(
+        "/api/reminders?priority=someday",
+        headers=auth_headers
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["data"]) >= 1
+    for reminder in data["data"]:
+        assert reminder["priority"] == "someday"
+
+
+@pytest.mark.api
+def test_list_reminders_filter_by_waiting(client, auth_headers):
+    """Test filtering reminders by waiting priority"""
+    # Create a waiting reminder first
+    client.post(
+        "/api/reminders",
+        headers=auth_headers,
+        json={"text": "Deploy to production (blocked by DevOps)", "priority": "waiting"}
+    )
+
+    # Create a different priority reminder to verify filtering works
+    client.post(
+        "/api/reminders",
+        headers=auth_headers,
+        json={"text": "Regular task", "priority": "chill"}
+    )
+
+    # Filter by waiting
+    response = client.get(
+        "/api/reminders?priority=waiting",
+        headers=auth_headers
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["data"]) >= 1
+    for reminder in data["data"]:
+        assert reminder["priority"] == "waiting"
+
+
+@pytest.mark.api
 def test_list_reminders_pagination(client, auth_headers, multiple_reminders):
     """Test pagination parameters"""
     response = client.get(
