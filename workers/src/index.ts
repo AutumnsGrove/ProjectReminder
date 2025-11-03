@@ -127,6 +127,9 @@ app.get('/', async (c) => {
       health: '/api/health',
       listReminders: 'GET /api/reminders (with filtering and pagination)',
       getReminder: 'GET /api/reminders/:id',
+      createReminder: 'POST /api/reminders',
+      updateReminder: 'PATCH /api/reminders/:id',
+      deleteReminder: 'DELETE /api/reminders/:id',
       testAuth: '/api/test-auth (protected endpoint for testing)'
     },
     documentation: 'See workers/ARCHITECTURE.md for full API specification'
@@ -293,6 +296,392 @@ app.get('/api/reminders/:id', authMiddleware, async (c) => {
 })
 
 /**
+ * Create Reminder Endpoint
+ *
+ * POST /api/reminders
+ * REQUIRES authentication
+ *
+ * Request Body (JSON):
+ * {
+ *   "text": "Call mom",              // REQUIRED
+ *   "priority": "important",         // Optional (default: 'chill')
+ *   "category": "Calls",             // Optional
+ *   "due_date": "2025-11-04",        // Optional
+ *   "due_time": "15:00:00",          // Optional
+ *   "time_required": 30,             // Optional (minutes)
+ *   "location_name": "Home",         // Optional
+ *   "location_address": "123 Main",  // Optional
+ *   "location_lat": 40.7128,         // Optional
+ *   "location_lng": -74.0060,        // Optional
+ *   "location_radius": 100,          // Optional (default: 100)
+ *   "notes": "Don't forget..."       // Optional
+ * }
+ *
+ * Response format (201 Created):
+ * Returns complete reminder object with generated id, created_at, updated_at
+ *
+ * Response format (400 Bad Request):
+ * {
+ *   "error": "Validation error",
+ *   "message": "Missing required field: text"
+ * }
+ */
+app.post('/api/reminders', authMiddleware, async (c) => {
+  try {
+    const body = await c.req.json()
+
+    // Validate required field
+    if (!body.text || body.text.trim() === '') {
+      return c.json({
+        error: 'Validation error',
+        message: 'Missing required field: text'
+      }, 400)
+    }
+
+    // Validate priority if provided
+    const validPriorities = ['someday', 'chill', 'important', 'urgent', 'waiting']
+    if (body.priority && !validPriorities.includes(body.priority)) {
+      return c.json({
+        error: 'Validation error',
+        message: `Invalid priority. Must be one of: ${validPriorities.join(', ')}`
+      }, 400)
+    }
+
+    // Validate status if provided
+    const validStatuses = ['pending', 'completed', 'snoozed']
+    if (body.status && !validStatuses.includes(body.status)) {
+      return c.json({
+        error: 'Validation error',
+        message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+      }, 400)
+    }
+
+    // Generate server fields
+    const id = crypto.randomUUID()
+    const now = new Date().toISOString()
+
+    // Build INSERT with all fields
+    const stmt = c.env.DB.prepare(`
+      INSERT INTO reminders (
+        id, text, priority, category, status,
+        due_date, due_time, time_required,
+        location_name, location_address, location_lat, location_lng, location_radius,
+        notes, completed_at, created_at, updated_at,
+        snoozed_until, snooze_count, recurrence_id,
+        is_recurring_instance, original_due_date
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+
+    const result = await stmt.bind(
+      id,
+      body.text,
+      body.priority || 'chill',
+      body.category || null,
+      body.status || 'pending',
+      body.due_date || null,
+      body.due_time || null,
+      body.time_required || null,
+      body.location_name || null,
+      body.location_address || null,
+      body.location_lat || null,
+      body.location_lng || null,
+      body.location_radius || 100,
+      body.notes || null,
+      body.completed_at || null,
+      now,
+      now,
+      body.snoozed_until || null,
+      body.snooze_count || 0,
+      body.recurrence_id || null,
+      body.is_recurring_instance || 0,
+      body.original_due_date || null
+    ).run()
+
+    if (!result.success) {
+      console.error('Database insert failed:', result)
+      return c.json({
+        error: 'Database error',
+        message: 'Failed to create reminder'
+      }, 500)
+    }
+
+    // Fetch and return the created reminder
+    const created = await c.env.DB.prepare('SELECT * FROM reminders WHERE id = ?').bind(id).first()
+
+    if (!created) {
+      return c.json({
+        error: 'Database error',
+        message: 'Reminder created but could not be retrieved'
+      }, 500)
+    }
+
+    return c.json(created, 201)
+  } catch (error) {
+    console.error('Error creating reminder:', error)
+    return c.json({
+      error: 'Internal Server Error',
+      message: 'Failed to create reminder',
+      timestamp: new Date().toISOString()
+    }, 500)
+  }
+})
+
+/**
+ * Update Reminder Endpoint
+ *
+ * PATCH /api/reminders/:id
+ * REQUIRES authentication
+ *
+ * Path Parameter:
+ * - id: UUID of the reminder
+ *
+ * Request Body (JSON):
+ * All fields are optional (partial update)
+ * {
+ *   "text": "Updated text",
+ *   "priority": "urgent",
+ *   "status": "completed",
+ *   "completed_at": "2025-11-03T18:30:00.000Z"
+ * }
+ *
+ * Special Logic:
+ * - If status changes to 'completed' and no completed_at provided, set it automatically
+ * - If status changes from 'completed' to anything else, clear completed_at
+ * - updated_at is always set to current timestamp
+ *
+ * Response format (200 OK):
+ * Returns complete updated reminder object
+ *
+ * Response format (404 Not Found):
+ * {
+ *   "error": "Reminder not found"
+ * }
+ */
+app.patch('/api/reminders/:id', authMiddleware, async (c) => {
+  try {
+    const id = c.req.param('id')
+    const body = await c.req.json()
+
+    // First check if reminder exists
+    const existing = await c.env.DB.prepare('SELECT * FROM reminders WHERE id = ?').bind(id).first()
+    if (!existing) {
+      return c.json({
+        error: 'Reminder not found'
+      }, 404)
+    }
+
+    // Build dynamic UPDATE query
+    const updates: string[] = []
+    const params: any[] = []
+
+    // Add each field that's present in the body
+    if (body.text !== undefined) {
+      updates.push('text = ?')
+      params.push(body.text)
+    }
+    if (body.priority !== undefined) {
+      // Validate priority
+      const validPriorities = ['someday', 'chill', 'important', 'urgent', 'waiting']
+      if (!validPriorities.includes(body.priority)) {
+        return c.json({
+          error: 'Validation error',
+          message: `Invalid priority. Must be one of: ${validPriorities.join(', ')}`
+        }, 400)
+      }
+      updates.push('priority = ?')
+      params.push(body.priority)
+    }
+    if (body.category !== undefined) {
+      updates.push('category = ?')
+      params.push(body.category)
+    }
+    if (body.due_date !== undefined) {
+      updates.push('due_date = ?')
+      params.push(body.due_date)
+    }
+    if (body.due_time !== undefined) {
+      updates.push('due_time = ?')
+      params.push(body.due_time)
+    }
+    if (body.time_required !== undefined) {
+      updates.push('time_required = ?')
+      params.push(body.time_required)
+    }
+    if (body.location_name !== undefined) {
+      updates.push('location_name = ?')
+      params.push(body.location_name)
+    }
+    if (body.location_address !== undefined) {
+      updates.push('location_address = ?')
+      params.push(body.location_address)
+    }
+    if (body.location_lat !== undefined) {
+      updates.push('location_lat = ?')
+      params.push(body.location_lat)
+    }
+    if (body.location_lng !== undefined) {
+      updates.push('location_lng = ?')
+      params.push(body.location_lng)
+    }
+    if (body.location_radius !== undefined) {
+      updates.push('location_radius = ?')
+      params.push(body.location_radius)
+    }
+    if (body.notes !== undefined) {
+      updates.push('notes = ?')
+      params.push(body.notes)
+    }
+    if (body.snoozed_until !== undefined) {
+      updates.push('snoozed_until = ?')
+      params.push(body.snoozed_until)
+    }
+    if (body.snooze_count !== undefined) {
+      updates.push('snooze_count = ?')
+      params.push(body.snooze_count)
+    }
+    if (body.recurrence_id !== undefined) {
+      updates.push('recurrence_id = ?')
+      params.push(body.recurrence_id)
+    }
+    if (body.is_recurring_instance !== undefined) {
+      updates.push('is_recurring_instance = ?')
+      params.push(body.is_recurring_instance)
+    }
+    if (body.original_due_date !== undefined) {
+      updates.push('original_due_date = ?')
+      params.push(body.original_due_date)
+    }
+
+    // Special logic: handle status change to/from completed
+    if (body.status !== undefined) {
+      // Validate status
+      const validStatuses = ['pending', 'completed', 'snoozed']
+      if (!validStatuses.includes(body.status)) {
+        return c.json({
+          error: 'Validation error',
+          message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+        }, 400)
+      }
+
+      updates.push('status = ?')
+      params.push(body.status)
+
+      // Auto-set completed_at when marking as completed
+      if (body.status === 'completed' && body.completed_at === undefined) {
+        updates.push('completed_at = ?')
+        params.push(new Date().toISOString())
+      } else if (body.status !== 'completed') {
+        // Clear completed_at when changing away from completed
+        updates.push('completed_at = ?')
+        params.push(null)
+      }
+    }
+
+    // Handle explicit completed_at if provided
+    if (body.completed_at !== undefined) {
+      updates.push('completed_at = ?')
+      params.push(body.completed_at)
+    }
+
+    // Always update updated_at
+    updates.push('updated_at = ?')
+    params.push(new Date().toISOString())
+
+    // If no fields to update (empty body), just return current state
+    if (updates.length === 1) { // Only updated_at
+      return c.json(existing)
+    }
+
+    // Add id for WHERE clause
+    params.push(id)
+
+    const query = `UPDATE reminders SET ${updates.join(', ')} WHERE id = ?`
+    const result = await c.env.DB.prepare(query).bind(...params).run()
+
+    if (!result.success) {
+      console.error('Database update failed:', result)
+      return c.json({
+        error: 'Database error',
+        message: 'Failed to update reminder'
+      }, 500)
+    }
+
+    // Fetch and return updated reminder
+    const updated = await c.env.DB.prepare('SELECT * FROM reminders WHERE id = ?').bind(id).first()
+
+    if (!updated) {
+      return c.json({
+        error: 'Database error',
+        message: 'Reminder updated but could not be retrieved'
+      }, 500)
+    }
+
+    return c.json(updated)
+  } catch (error) {
+    console.error('Error updating reminder:', error)
+    return c.json({
+      error: 'Internal Server Error',
+      message: 'Failed to update reminder',
+      timestamp: new Date().toISOString()
+    }, 500)
+  }
+})
+
+/**
+ * Delete Reminder Endpoint
+ *
+ * DELETE /api/reminders/:id
+ * REQUIRES authentication
+ *
+ * Path Parameter:
+ * - id: UUID of the reminder
+ *
+ * Implementation: Hard delete (actually removes from database)
+ *
+ * Response format (204 No Content):
+ * Empty body, HTTP status 204
+ *
+ * Response format (404 Not Found):
+ * {
+ *   "error": "Reminder not found"
+ * }
+ */
+app.delete('/api/reminders/:id', authMiddleware, async (c) => {
+  try {
+    const id = c.req.param('id')
+
+    // Check if exists first (for proper 404)
+    const existing = await c.env.DB.prepare('SELECT * FROM reminders WHERE id = ?').bind(id).first()
+    if (!existing) {
+      return c.json({
+        error: 'Reminder not found'
+      }, 404)
+    }
+
+    // Hard delete
+    const result = await c.env.DB.prepare('DELETE FROM reminders WHERE id = ?').bind(id).run()
+
+    if (!result.success) {
+      console.error('Database delete failed:', result)
+      return c.json({
+        error: 'Database error',
+        message: 'Failed to delete reminder'
+      }, 500)
+    }
+
+    // Return 204 No Content
+    return c.body(null, 204)
+  } catch (error) {
+    console.error('Error deleting reminder:', error)
+    return c.json({
+      error: 'Internal Server Error',
+      message: 'Failed to delete reminder',
+      timestamp: new Date().toISOString()
+    }, 500)
+  }
+})
+
+/**
  * 404 Handler
  */
 app.notFound((c) => {
@@ -304,6 +693,9 @@ app.notFound((c) => {
       'GET /api/health',
       'GET /api/reminders',
       'GET /api/reminders/:id',
+      'POST /api/reminders',
+      'PATCH /api/reminders/:id',
+      'DELETE /api/reminders/:id',
       'GET /api/test-auth'
     ]
   }, 404)
