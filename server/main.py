@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone
 from typing import Optional, List
 import uuid
+import math
 
 from . import config
 from . import database as db
@@ -104,6 +105,37 @@ def generate_uuid() -> str:
     return str(uuid.uuid4())
 
 
+def haversine_distance(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    """
+    Calculate distance between two coordinates using Haversine formula.
+
+    Args:
+        lat1: Latitude of first point (degrees)
+        lng1: Longitude of first point (degrees)
+        lat2: Latitude of second point (degrees)
+        lng2: Longitude of second point (degrees)
+
+    Returns:
+        Distance in meters
+    """
+    # Earth's radius in meters
+    R = 6371000
+
+    # Convert degrees to radians
+    lat1_rad = math.radians(lat1)
+    lat2_rad = math.radians(lat2)
+    delta_lat = math.radians(lat2 - lat1)
+    delta_lng = math.radians(lng2 - lng1)
+
+    # Haversine formula
+    a = (math.sin(delta_lat / 2) ** 2 +
+         math.cos(lat1_rad) * math.cos(lat2_rad) *
+         math.sin(delta_lng / 2) ** 2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    return R * c
+
+
 # =============================================================================
 # Health Check Endpoint (No Authentication Required)
 # =============================================================================
@@ -174,7 +206,8 @@ async def create_reminder(reminder: ReminderCreate):
             "due_date": reminder.due_date,
             "due_time": reminder.due_time,
             "time_required": 1 if reminder.time_required else 0,
-            "location_text": reminder.location_text,
+            "location_name": reminder.location_name,
+            "location_address": reminder.location_address,
             "location_lat": reminder.location_lat,
             "location_lng": reminder.location_lng,
             "location_radius": reminder.location_radius,
@@ -264,6 +297,89 @@ async def list_reminders(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to list reminders: {str(e)}")
+
+
+# =============================================================================
+# Location Endpoints (Phase 6)
+# =============================================================================
+
+@app.get(
+    "/api/reminders/near-location",
+    response_model=ReminderListResponse,
+    tags=["Location"],
+    summary="Find reminders near a location",
+    dependencies=[Depends(verify_token)]
+)
+async def get_reminders_near_location(
+    lat: float = Query(..., ge=-90, le=90, description="Latitude of search location"),
+    lng: float = Query(..., ge=-180, le=180, description="Longitude of search location"),
+    radius: int = Query(1000, ge=10, le=50000, description="Search radius in meters (default: 1000m)")
+):
+    """
+    Find reminders near a specific location.
+
+    Uses Haversine formula to calculate distances between search location
+    and reminder locations. Returns all reminders within the specified radius,
+    sorted by distance (nearest first).
+
+    Requires authentication via Bearer token.
+
+    Args:
+        lat: Latitude of search location
+        lng: Longitude of search location
+        radius: Search radius in meters (10m - 50km)
+
+    Returns:
+        List of reminders within radius, sorted by distance
+    """
+    try:
+        # Get all reminders with location data
+        all_reminders = db.get_all_reminders(limit=10000)
+
+        # Filter reminders with valid location coordinates
+        reminders_with_location = [
+            r for r in all_reminders
+            if r.get('location_lat') is not None and r.get('location_lng') is not None
+        ]
+
+        # Calculate distances and filter by radius
+        nearby_reminders = []
+        for reminder in reminders_with_location:
+            distance = haversine_distance(
+                lat, lng,
+                reminder['location_lat'], reminder['location_lng']
+            )
+
+            # Check if within reminder's configured radius (or search radius, whichever is larger)
+            reminder_radius = reminder.get('location_radius', 100)
+            effective_radius = max(radius, reminder_radius)
+
+            if distance <= effective_radius:
+                # Add distance metadata for sorting
+                reminder['distance'] = round(distance, 2)
+                nearby_reminders.append(reminder)
+
+        # Sort by distance (nearest first)
+        nearby_reminders.sort(key=lambda r: r['distance'])
+
+        # Convert to response models
+        reminder_responses = [ReminderResponse(**r) for r in nearby_reminders]
+
+        # Build pagination metadata
+        pagination = PaginationMetadata(
+            total=len(reminder_responses),
+            limit=len(reminder_responses),
+            offset=0,
+            returned=len(reminder_responses)
+        )
+
+        return ReminderListResponse(
+            data=reminder_responses,
+            pagination=pagination
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to find nearby reminders: {str(e)}")
 
 
 @app.get(
@@ -518,6 +634,29 @@ async def sync_reminders(sync_request: SyncRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")
+
+
+# =============================================================================
+# Config Endpoint (Phase 6)
+# =============================================================================
+
+@app.get(
+    "/api/config/mapbox",
+    tags=["Config"],
+    summary="Get MapBox configuration"
+)
+async def get_mapbox_config():
+    """
+    Get MapBox access token for frontend.
+
+    Does NOT require authentication (frontend needs this to initialize MapBox).
+
+    Returns:
+        MapBox access token
+    """
+    return {
+        "mapbox_access_token": config.MAPBOX_ACCESS_TOKEN
+    }
 
 
 # =============================================================================

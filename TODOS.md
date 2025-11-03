@@ -1,7 +1,7 @@
 # TODOs - ADHD-Friendly Voice Reminders System
 
-**Project Status:** ✅ Phase 1-5 Complete | 🚀 Phase 6 Next (Location Features)
-**Last Updated:** November 3, 2025 (Evening Session - Phase 5 Complete!)
+**Project Status:** ✅ Phase 1-6 Complete | 🚀 Phase 7 Next (Recurring Reminders)
+**Last Updated:** November 3, 2025 (Location Features Complete!)
 **Worker URL:** https://reminders-api.m7jv4v7npb.workers.dev
 
 ---
@@ -120,28 +120,28 @@
 ## Phase 6: Location Features (Day 3-4) 📅 NEXT
 
 ### MapBox Setup
-- [ ] Get MapBox access token (free tier: 50k requests/month)
-- [ ] Add MapBox GL JS to project
-- [ ] Configure MapBox in secrets.json
+- [x] Get MapBox access token (free tier: 50k requests/month)
+- [x] Add MapBox GL JS to project
+- [x] Configure MapBox in secrets.json
 
 ### Location Picker
-- [ ] Create location picker component in edit form
-- [ ] Implement geocoding (address → lat/lng)
-- [ ] Add map visualization
-- [ ] Enable pin dragging to adjust location
-- [ ] Add radius configuration (default: 100m, adjustable 10m-10km)
+- [x] Create location picker component in edit form
+- [x] Implement geocoding (address → lat/lng)
+- [x] Add map visualization
+- [x] Enable pin dragging to adjust location
+- [x] Add radius configuration (default: 100m, adjustable 10m-10km)
 
 ### Location Endpoints
-- [ ] Implement `GET /api/reminders/near-location` (FastAPI)
-- [ ] Implement `GET /api/reminders/near-location` (Workers)
-- [ ] Add Haversine distance calculation
-- [ ] Test location-based filtering
+- [x] Implement `GET /api/reminders/near-location` (FastAPI)
+- [x] Implement `GET /api/reminders/near-location` (Workers)
+- [x] Add Haversine distance calculation
+- [x] Test location-based filtering
 
 ### Geolocation
-- [ ] Integrate browser Geolocation API
-- [ ] Add "Use my location" button
-- [ ] Handle permission denied gracefully
-- [ ] Display location reminders on map (optional view)
+- [x] Integrate browser Geolocation API
+- [x] Add "Use my location" button
+- [x] Handle permission denied gracefully
+- [x] Display location reminders on map (optional view)
 
 **Success Criteria:**
 - ✅ Can set reminder location via text or map
@@ -149,7 +149,7 @@
 - ✅ Location-based filtering works
 - ✅ Geocoding is accurate
 
-**Estimated Time:** 6-8 hours
+**Estimated Time:** 6-8 hours (Completed)
 
 ---
 
@@ -267,13 +267,13 @@
 - Phase 3.6: 5-Level Priority
 - Phase 4: Cloud Deployment
 - Phase 5: Sync Logic
+- Phase 6: Location Features
 
 **Remaining for MVP (📅):**
-- Phase 6: Location Features (6-8 hours)
 - Phase 7: Recurring Reminders (8-10 hours)
 - Phase 8: Voice Input (12-15 hours)
 
-**Total Time to MVP:** ~26-33 hours remaining (~3-4 days)
+**Total Time to MVP:** ~20-25 hours remaining (~3 days)
 
 ---
 

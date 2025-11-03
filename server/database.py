@@ -63,7 +63,8 @@ def init_db(db_path: str = str(DB_PATH), force: bool = False) -> None:
                 time_required INTEGER DEFAULT 0,
 
                 -- Location
-                location_text TEXT,
+                location_name TEXT,
+                location_address TEXT,
                 location_lat REAL,
                 location_lng REAL,
                 location_radius INTEGER DEFAULT 100,

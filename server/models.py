@@ -21,7 +21,8 @@ class ReminderCreate(BaseModel):
     time_required: Optional[bool] = Field(False, description="Must be done at specific time")
 
     # Location
-    location_text: Optional[str] = Field(None, max_length=500, description="Human-readable location")
+    location_name: Optional[str] = Field(None, max_length=500, description="Human-readable location name")
+    location_address: Optional[str] = Field(None, max_length=1000, description="Full address from geocoding")
     location_lat: Optional[float] = Field(None, ge=-90, le=90, description="Latitude")
     location_lng: Optional[float] = Field(None, ge=-180, le=180, description="Longitude")
     location_radius: Optional[int] = Field(100, ge=10, le=10000, description="Trigger radius in meters")
@@ -61,7 +62,8 @@ class ReminderUpdate(BaseModel):
     time_required: Optional[bool] = None
 
     # Location
-    location_text: Optional[str] = Field(None, max_length=500)
+    location_name: Optional[str] = Field(None, max_length=500)
+    location_address: Optional[str] = Field(None, max_length=1000)
     location_lat: Optional[float] = Field(None, ge=-90, le=90)
     location_lng: Optional[float] = Field(None, ge=-180, le=180)
     location_radius: Optional[int] = Field(None, ge=10, le=10000)
@@ -102,7 +104,8 @@ class ReminderResponse(BaseModel):
     time_required: bool = False
 
     # Location
-    location_text: Optional[str] = None
+    location_name: Optional[str] = None
+    location_address: Optional[str] = None
     location_lat: Optional[float] = None
     location_lng: Optional[float] = None
     location_radius: int = 100

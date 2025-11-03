@@ -393,6 +393,31 @@ const API = (function() {
         }
     }
 
+    /**
+     * Get reminders near a location (Phase 6)
+     * @param {number} lat - Latitude
+     * @param {number} lng - Longitude
+     * @param {number} radius - Search radius in meters (default: 1000)
+     * @returns {Promise<Array>} Array of reminders within radius
+     */
+    async function getNearbyReminders(lat, lng, radius = 1000) {
+        const endpoint = getEndpoint();
+        const url = `${endpoint}/reminders/near-location?lat=${lat}&lng=${lng}&radius=${radius}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: getHeaders()
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to get nearby reminders');
+        }
+
+        const result = await response.json();
+        return result.data || [];
+    }
+
     // Public API
     return {
         init,
@@ -406,6 +431,7 @@ const API = (function() {
         getTodayReminders,
         getUpcomingReminders,
         getFutureReminders,
+        getNearbyReminders,
         healthCheck
     };
 })();

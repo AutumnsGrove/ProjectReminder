@@ -7,6 +7,10 @@
     <title>Edit Reminder</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/edit.css">
+    <link rel="stylesheet" href="css/location.css">
+    <!-- MapBox GL JS (Phase 6: Location Features) -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -132,17 +136,59 @@
                     <small class="form-hint">Check if this task must be done at a specific time</small>
                 </div>
 
-                <!-- Location (Simple text input for Phase 2) -->
+                <!-- Location Picker (Phase 6) -->
                 <div class="form-group">
-                    <label for="location" class="form-label">Location</label>
-                    <input
-                        type="text"
-                        id="location"
-                        name="location_text"
-                        class="form-control"
-                        placeholder="e.g., Home Depot, Gym, Office"
-                    >
-                    <small class="form-hint">Location-based reminders (map picker coming in Phase 6)</small>
+                    <label for="locationSearch" class="form-label">Location</label>
+
+                    <!-- Hidden fields for location data -->
+                    <input type="hidden" id="locationName" name="location_name">
+                    <input type="hidden" id="locationAddress" name="location_address">
+                    <input type="hidden" id="locationLat" name="location_lat">
+                    <input type="hidden" id="locationLng" name="location_lng">
+                    <input type="hidden" id="locationRadius" name="location_radius" value="100">
+
+                    <!-- Search input -->
+                    <div class="location-search-container">
+                        <input
+                            type="text"
+                            id="locationSearch"
+                            class="form-control"
+                            placeholder="Search for a place or address..."
+                        >
+                        <button type="button" class="btn btn-secondary btn-sm" id="useMyLocationBtn">
+                            📍 Use My Location
+                        </button>
+                    </div>
+
+                    <!-- Map container (initially hidden) -->
+                    <div id="mapContainer" class="map-container" style="display: none;">
+                        <div id="locationMap" class="location-map"></div>
+                        <div class="map-controls">
+                            <label for="radiusSlider" class="form-label-sm">Reminder Radius: <span id="radiusValue">100m</span></label>
+                            <input
+                                type="range"
+                                id="radiusSlider"
+                                min="10"
+                                max="10000"
+                                value="100"
+                                step="10"
+                                class="radius-slider"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Current location display -->
+                    <div id="locationDisplay" class="location-display" style="display: none;">
+                        <div class="location-info">
+                            <strong id="locationDisplayName"></strong>
+                            <small id="locationDisplayAddress"></small>
+                        </div>
+                        <button type="button" class="btn-icon btn-sm" id="clearLocationBtn" title="Clear location">
+                            <span class="icon">✕</span>
+                        </button>
+                    </div>
+
+                    <small class="form-hint">Click map or search to set reminder location</small>
                 </div>
 
                 <!-- Form Actions -->
@@ -163,6 +209,8 @@
     <script src="js/api.js"></script>
     <script src="js/sync.js"></script>
     <script src="js/animations.js"></script>
+    <script src="js/mapbox.js"></script>
+    <script src="js/location-picker.js"></script>
     <script src="js/app.js"></script>
     <script>
         // Initialize Edit view
@@ -170,6 +218,11 @@
             if (typeof App !== 'undefined' && App.init && App.initEditView) {
                 await App.init(); // Wait for API config to load first!
                 App.initEditView();
+            }
+
+            // Initialize location picker (Phase 6)
+            if (typeof LocationPicker !== 'undefined') {
+                await LocationPicker.init();
             }
 
             // Initialize sync manager (Phase 5)

@@ -123,11 +123,13 @@ const App = (function() {
             meta.appendChild(categoryItem);
         }
 
-        // Add location if present
-        if (reminder.location_text) {
+        // Add location if present (Phase 6: Updated to use location_name)
+        if (reminder.location_name || reminder.location_address) {
             const locationItem = document.createElement('span');
             locationItem.className = 'meta-item location-badge';
-            locationItem.innerHTML = `<span class="meta-icon">📍</span>${reminder.location_text}`;
+            const locationText = reminder.location_name || reminder.location_address || 'Unknown Location';
+            locationItem.innerHTML = `<span class="meta-icon">📍</span>${locationText}`;
+            locationItem.title = reminder.location_address || ''; // Show full address on hover
             meta.appendChild(locationItem);
         }
 
@@ -397,11 +399,13 @@ const App = (function() {
             meta.appendChild(categoryItem);
         }
 
-        // Add location if present
-        if (reminder.location_text) {
+        // Add location if present (Phase 6: Updated to use location_name)
+        if (reminder.location_name || reminder.location_address) {
             const locationItem = document.createElement('span');
             locationItem.className = 'meta-item location-badge';
-            locationItem.innerHTML = `<span class="meta-icon">📍</span>${reminder.location_text}`;
+            const locationText = reminder.location_name || reminder.location_address || 'Unknown Location';
+            locationItem.innerHTML = `<span class="meta-icon">📍</span>${locationText}`;
+            locationItem.title = reminder.location_address || ''; // Show full address on hover
             meta.appendChild(locationItem);
         }
 

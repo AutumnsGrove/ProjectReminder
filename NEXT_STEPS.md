@@ -1,49 +1,57 @@
 # Project Next Steps
 
-## Current Status: Phase 5 Complete | Phase 6 Targeting Location Features
+## Current Status: Phase 6 Complete | Phase 7 Next (Recurring Reminders)
 
-## Immediate Next Steps (Phase 6: Location-Based Reminders)
+## Completed Phases
 
-### 1. MapBox Integration
-- [ ] Complete MapBox GL JS integration
-- [ ] Design location picker UI
-- [ ] Implement geolocation permissions flow
-- [ ] Create location-based reminder creation UX
-- [ ] Test cross-browser geolocation support
+### Phase 6: Location-Based Reminders (Completed November 2025)
+- [x] MapBox GL JS integration
+- [x] Location picker UI design
+- [x] Geolocation permissions flow
+- [x] Location-based reminder creation
+- [x] Cross-browser geolocation support
+- [x] Database schema extensions
+- [x] Sync logic updates
+- [x] Initial testing and QA
 
-### 2. Location Data Model
-- [ ] Extend database schema for location-based reminders
-- [ ] Update sync logic to handle location metadata
-- [ ] Create migration scripts for new location columns
-- [ ] Add validation for location data entry
+## Immediate Next Steps (Phase 7: Recurring Reminders)
 
-### 3. Geofencing Logic
-- [ ] Research background geofencing strategies
-- [ ] Implement client-side geofence detection
-- [ ] Design low-battery geofencing approach
-- [ ] Create notification/alert system for location triggers
-- [ ] Performance optimize location tracking
+### 1. Recurring Pattern Database
+- [ ] Create `recurrence_patterns` table
+- [ ] Design flexible recurrence model
+- [ ] Implement database migrations
+- [ ] Add validation for recurrence configurations
 
-### 4. Privacy & Permissions
-- [ ] Implement clear location permission UI
-- [ ] Add granular location tracking controls
-- [ ] Create privacy policy section in settings
-- [ ] Design opt-out mechanisms for location features
+### 2. Recurring Reminder UI
+- [ ] Design recurrence selection UI
+- [ ] Create pattern input components
+- [ ] Add interval and end condition selectors
+- [ ] Implement visual preview of recurrence
 
-### 5. Testing & QA
-- [ ] Develop comprehensive location feature test suite
-- [ ] Cross-device location reminder synchronization tests
-- [ ] Battery usage and performance benchmarking
-- [ ] User experience testing with diverse device/browser combos
+### 3. Instance Generation
+- [ ] Develop recurrence rule parser
+- [ ] Create algorithm for generating reminder instances
+- [ ] Design handling for series vs. individual instances
+- [ ] Implement deletion/modification logic
+
+### 4. Sync and Persistence
+- [ ] Update sync mechanisms for recurring reminders
+- [ ] Ensure cloud/local consistency
+- [ ] Design conflict resolution for recurring events
+
+### 5. Testing
+- [ ] Develop comprehensive test suite
+- [ ] Cover various recurrence scenarios
+- [ ] Performance testing for instance generation
 
 ### 6. Documentation
-- [ ] Update user docs for location-based reminders
-- [ ] Create developer notes on geofencing implementation
-- [ ] Write technical design document for location features
+- [ ] Update user documentation
+- [ ] Create developer design notes
+- [ ] Document recurrence implementation details
 
 ## Long-Term Roadmap
 
-### Phase 7: Voice Input & NLP
+### Phase 8: Voice Input & NLP
 - Whisper.cpp local speech-to-text
 - Natural language processing for task parsing
 - Complex task creation via voice

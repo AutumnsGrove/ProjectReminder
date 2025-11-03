@@ -881,6 +881,133 @@ app.post('/api/sync', authMiddleware, async (c) => {
 })
 
 /**
+ * Haversine Distance Calculation
+ *
+ * Calculate distance between two coordinates using Haversine formula
+ *
+ * @param lat1 - Latitude of first point (degrees)
+ * @param lng1 - Longitude of first point (degrees)
+ * @param lat2 - Latitude of second point (degrees)
+ * @param lng2 - Longitude of second point (degrees)
+ * @returns Distance in meters
+ */
+function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  // Earth's radius in meters
+  const R = 6371000
+
+  // Convert degrees to radians
+  const lat1Rad = lat1 * Math.PI / 180
+  const lat2Rad = lat2 * Math.PI / 180
+  const deltaLat = (lat2 - lat1) * Math.PI / 180
+  const deltaLng = (lng2 - lng1) * Math.PI / 180
+
+  // Haversine formula
+  const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+            Math.cos(lat1Rad) * Math.cos(lat2Rad) *
+            Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
+  return R * c
+}
+
+/**
+ * Location Endpoints (Phase 6)
+ *
+ * GET /api/reminders/near-location
+ *
+ * Find reminders near a specific location
+ * Requires: Authentication
+ * Query params: lat (required), lng (required), radius (optional, default 1000m)
+ *
+ * Response:
+ * {
+ *   "data": [...reminders within radius, sorted by distance...],
+ *   "pagination": { "total": N, "limit": N, "offset": 0, "returned": N }
+ * }
+ */
+app.get('/api/reminders/near-location', authMiddleware, async (c) => {
+  try {
+    // Parse query parameters
+    const lat = parseFloat(c.req.query('lat') || '')
+    const lng = parseFloat(c.req.query('lng') || '')
+    const radius = parseInt(c.req.query('radius') || '1000')
+
+    // Validate parameters
+    if (isNaN(lat) || isNaN(lng)) {
+      return c.json({
+        error: 'Bad Request',
+        message: 'Missing or invalid lat/lng parameters'
+      }, 400)
+    }
+
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return c.json({
+        error: 'Bad Request',
+        message: 'Latitude must be -90 to 90, longitude must be -180 to 180'
+      }, 400)
+    }
+
+    if (isNaN(radius) || radius < 10 || radius > 50000) {
+      return c.json({
+        error: 'Bad Request',
+        message: 'Radius must be between 10 and 50000 meters'
+      }, 400)
+    }
+
+    // Get all reminders with location data
+    const allReminders = await c.env.DB.prepare(`
+      SELECT * FROM reminders
+      WHERE location_lat IS NOT NULL
+      AND location_lng IS NOT NULL
+    `).all()
+
+    // Calculate distances and filter by radius
+    const nearbyReminders: any[] = []
+
+    for (const reminder of allReminders.results || []) {
+      const distance = haversineDistance(
+        lat, lng,
+        reminder.location_lat as number,
+        reminder.location_lng as number
+      )
+
+      // Check if within reminder's configured radius (or search radius, whichever is larger)
+      const reminderRadius = (reminder.location_radius as number) || 100
+      const effectiveRadius = Math.max(radius, reminderRadius)
+
+      if (distance <= effectiveRadius) {
+        // Add distance metadata for sorting
+        nearbyReminders.push({
+          ...reminder,
+          distance: Math.round(distance * 100) / 100 // Round to 2 decimal places
+        })
+      }
+    }
+
+    // Sort by distance (nearest first)
+    nearbyReminders.sort((a, b) => a.distance - b.distance)
+
+    // Return response with pagination metadata
+    return c.json({
+      data: nearbyReminders,
+      pagination: {
+        total: nearbyReminders.length,
+        limit: nearbyReminders.length,
+        offset: 0,
+        returned: nearbyReminders.length
+      }
+    })
+  } catch (error) {
+    console.error('Near location error:', error)
+    return c.json({
+      error: 'Internal Server Error',
+      message: 'Failed to find nearby reminders',
+      timestamp: new Date().toISOString()
+    }, 500)
+  }
+})
+
+/**
  * 404 Handler
  */
 app.notFound((c) => {
@@ -896,6 +1023,7 @@ app.notFound((c) => {
       'PATCH /api/reminders/:id',
       'DELETE /api/reminders/:id',
       'POST /api/sync',
+      'GET /api/reminders/near-location',
       'GET /api/test-auth'
     ]
   }, 404)
