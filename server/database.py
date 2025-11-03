@@ -69,7 +69,7 @@ def init_db(db_path: str = str(DB_PATH), force: bool = False) -> None:
                 location_radius INTEGER DEFAULT 100,
 
                 -- Organization
-                priority TEXT CHECK(priority IN ('chill', 'important', 'urgent')) DEFAULT 'chill',
+                priority TEXT CHECK(priority IN ('someday', 'chill', 'important', 'urgent', 'waiting')) DEFAULT 'chill',
                 category TEXT,
 
                 -- Status Tracking

@@ -27,7 +27,7 @@ class ReminderCreate(BaseModel):
     location_radius: Optional[int] = Field(100, ge=10, le=10000, description="Trigger radius in meters")
 
     # Organization
-    priority: Literal["chill", "important", "urgent"] = Field("chill", description="Priority level")
+    priority: Literal["someday", "chill", "important", "urgent", "waiting"] = Field("chill", description="Priority level")
     category: Optional[str] = Field(None, max_length=100, description="Category tag")
 
     # Status
@@ -67,7 +67,7 @@ class ReminderUpdate(BaseModel):
     location_radius: Optional[int] = Field(None, ge=10, le=10000)
 
     # Organization
-    priority: Optional[Literal["chill", "important", "urgent"]] = None
+    priority: Optional[Literal["someday", "chill", "important", "urgent", "waiting"]] = None
     category: Optional[str] = Field(None, max_length=100)
 
     # Status
