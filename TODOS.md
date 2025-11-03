@@ -136,9 +136,11 @@
 - ✅ Error messages are helpful
 - ✅ Full stack integration working
 
+**Previous Issues (RESOLVED):**
+- [x] ~~🐛 Create reminder form doesn't save to database~~ - **FIXED** in commit 7d686fe (race condition causing 401 errors before config loaded)
+
 **Known Issues for Next Session:**
-- [ ] 🐛 **CRITICAL**: Create reminder form doesn't save to database (redirects but no data persisted)
-- [ ] Time picker not appearing (HTML5 input type="time" not working in some browsers)
+- [ ] Time picker not appearing (HTML5 input type="time" not working in some browsers) - Use text input as workaround
 
 ---
 
