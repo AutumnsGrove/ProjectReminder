@@ -5,12 +5,14 @@ ADHD-Friendly Voice Reminders System
 Phase 1: Core Backend REST API
 """
 
-from fastapi import FastAPI, Depends, HTTPException, Header, Query
+from fastapi import FastAPI, Depends, HTTPException, Header, Query, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone
 from typing import Optional, List
 import uuid
 import math
+import os
+import tempfile
 
 from . import config
 from . import database as db
@@ -27,7 +29,8 @@ from .models import (
     SyncChange,
     ConflictInfo,
     RecurrencePatternCreate,
-    RecurrencePatternResponse
+    RecurrencePatternResponse,
+    VoiceTranscriptionResponse
 )
 
 
@@ -417,6 +420,118 @@ async def get_reminders_near_location(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to find nearby reminders: {str(e)}")
+
+
+@app.post(
+    "/api/voice/transcribe",
+    response_model=VoiceTranscriptionResponse,
+    tags=["Voice"],
+    summary="Transcribe audio to text",
+    description="Upload audio file (WebM/MP4/WAV) and receive transcribed text using Whisper.cpp"
+)
+async def transcribe_voice(
+    audio: UploadFile = File(..., description="Audio file (WebM/MP4/WAV, max 10MB)"),
+    token: str = Depends(verify_token)
+):
+    """
+    Transcribe audio file to text using local Whisper.cpp.
+
+    Requires bearer token authentication.
+    Accepts audio files up to 10MB.
+    Processing time: typically 2-8 seconds for 5-30 second audio.
+    """
+    temp_path = None
+
+    try:
+        # Validate content type
+        if not audio.content_type or not audio.content_type.startswith('audio/'):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid content type: {audio.content_type}. Expected audio/*"
+            )
+
+        # Determine file extension from content type
+        ext_map = {
+            'audio/webm': '.webm',
+            'audio/mp4': '.mp4',
+            'audio/x-m4a': '.m4a',
+            'audio/wav': '.wav',
+            'audio/x-wav': '.wav',
+            'audio/mpeg': '.mp3'
+        }
+        ext = ext_map.get(audio.content_type, '.webm')
+
+        # Save uploaded file to temp directory
+        with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
+            temp_path = tmp.name
+            content = await audio.read()
+            tmp.write(content)
+
+        # Validate file size
+        file_size = os.path.getsize(temp_path)
+        if file_size > 10 * 1024 * 1024:  # 10MB max
+            raise HTTPException(
+                status_code=413,
+                detail="Audio file too large (max 10MB)"
+            )
+
+        if file_size < 1024:  # 1KB min
+            raise HTTPException(
+                status_code=400,
+                detail="Audio file too small (min 1KB)"
+            )
+
+        # Transcribe using Whisper.cpp
+        from server.voice.whisper import transcribe_audio
+        text = transcribe_audio(temp_path)
+
+        return VoiceTranscriptionResponse(
+            text=text,
+            model="base.en",
+            language="en",
+            file_size_bytes=file_size
+        )
+
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+
+    except RuntimeError as e:
+        # Whisper-specific errors
+        error_msg = str(e)
+        if "not found" in error_msg:
+            raise HTTPException(
+                status_code=503,
+                detail="Voice transcription service not configured. Contact administrator."
+            )
+        elif "timeout" in error_msg.lower():
+            raise HTTPException(
+                status_code=504,
+                detail="Transcription timeout. Try a shorter recording."
+            )
+        elif "No speech detected" in error_msg or "No transcription found" in error_msg:
+            raise HTTPException(
+                status_code=422,
+                detail="No speech detected in audio. Please speak louder and try again."
+            )
+        else:
+            raise HTTPException(status_code=500, detail=f"Transcription failed: {error_msg}")
+
+    except Exception as e:
+        # Unexpected errors
+        print(f"Unexpected transcription error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Internal server error during transcription"
+        )
+
+    finally:
+        # Cleanup temp file
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except Exception as e:
+                print(f"Warning: Failed to cleanup temp file {temp_path}: {e}")
 
 
 @app.get(

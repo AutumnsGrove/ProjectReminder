@@ -5,6 +5,7 @@ models.py - Pydantic models for request/response validation
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List, Literal
 from datetime import datetime
+from pydantic import ConfigDict
 
 
 # =============================================================================
@@ -44,6 +45,30 @@ class RecurrencePatternCreate(BaseModel):
         }
 
 
+# =============================================================================
+# Voice Models (Phase 8)
+# =============================================================================
+
+
+class VoiceTranscriptionResponse(BaseModel):
+    """Response from voice transcription endpoint."""
+    text: str = Field(..., description="Transcribed text from audio")
+    model: str = Field(default="base.en", description="Whisper model used")
+    language: str = Field(default="en", description="Language detected/used")
+    file_size_bytes: int = Field(..., description="Size of uploaded audio file")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "text": "Call mom about Thanksgiving",
+                "model": "base.en",
+                "language": "en",
+                "file_size_bytes": 87432
+            }
+        }
+    )
+
+
 class RecurrencePatternResponse(BaseModel):
     """Model for recurrence pattern response"""
     id: str
@@ -68,6 +93,30 @@ class RecurrencePatternResponse(BaseModel):
                 "created_at": "2025-11-03T10:00:00Z"
             }
         }
+
+
+# =============================================================================
+# Voice Models (Phase 8)
+# =============================================================================
+
+
+class VoiceTranscriptionResponse(BaseModel):
+    """Response from voice transcription endpoint."""
+    text: str = Field(..., description="Transcribed text from audio")
+    model: str = Field(default="base.en", description="Whisper model used")
+    language: str = Field(default="en", description="Language detected/used")
+    file_size_bytes: int = Field(..., description="Size of uploaded audio file")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "text": "Call mom about Thanksgiving",
+                "model": "base.en",
+                "language": "en",
+                "file_size_bytes": 87432
+            }
+        }
+    )
 
 
 class ReminderCreate(BaseModel):
@@ -112,6 +161,30 @@ class ReminderCreate(BaseModel):
         }
 
 
+# =============================================================================
+# Voice Models (Phase 8)
+# =============================================================================
+
+
+class VoiceTranscriptionResponse(BaseModel):
+    """Response from voice transcription endpoint."""
+    text: str = Field(..., description="Transcribed text from audio")
+    model: str = Field(default="base.en", description="Whisper model used")
+    language: str = Field(default="en", description="Language detected/used")
+    file_size_bytes: int = Field(..., description="Size of uploaded audio file")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "text": "Call mom about Thanksgiving",
+                "model": "base.en",
+                "language": "en",
+                "file_size_bytes": 87432
+            }
+        }
+    )
+
+
 class ReminderUpdate(BaseModel):
     """Model for updating an existing reminder"""
     text: Optional[str] = Field(None, min_length=1, max_length=1000)
@@ -147,6 +220,30 @@ class ReminderUpdate(BaseModel):
                 "completed_at": "2025-11-02T15:30:00Z"
             }
         }
+
+
+# =============================================================================
+# Voice Models (Phase 8)
+# =============================================================================
+
+
+class VoiceTranscriptionResponse(BaseModel):
+    """Response from voice transcription endpoint."""
+    text: str = Field(..., description="Transcribed text from audio")
+    model: str = Field(default="base.en", description="Whisper model used")
+    language: str = Field(default="en", description="Language detected/used")
+    file_size_bytes: int = Field(..., description="Size of uploaded audio file")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "text": "Call mom about Thanksgiving",
+                "model": "base.en",
+                "language": "en",
+                "file_size_bytes": 87432
+            }
+        }
+    )
 
 
 # =============================================================================
@@ -206,6 +303,30 @@ class ReminderResponse(BaseModel):
         }
 
 
+# =============================================================================
+# Voice Models (Phase 8)
+# =============================================================================
+
+
+class VoiceTranscriptionResponse(BaseModel):
+    """Response from voice transcription endpoint."""
+    text: str = Field(..., description="Transcribed text from audio")
+    model: str = Field(default="base.en", description="Whisper model used")
+    language: str = Field(default="en", description="Language detected/used")
+    file_size_bytes: int = Field(..., description="Size of uploaded audio file")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "text": "Call mom about Thanksgiving",
+                "model": "base.en",
+                "language": "en",
+                "file_size_bytes": 87432
+            }
+        }
+    )
+
+
 class PaginationMetadata(BaseModel):
     """Pagination metadata"""
     total: int = Field(..., description="Total number of items")
@@ -243,6 +364,30 @@ class ReminderListResponse(BaseModel):
         }
 
 
+# =============================================================================
+# Voice Models (Phase 8)
+# =============================================================================
+
+
+class VoiceTranscriptionResponse(BaseModel):
+    """Response from voice transcription endpoint."""
+    text: str = Field(..., description="Transcribed text from audio")
+    model: str = Field(default="base.en", description="Whisper model used")
+    language: str = Field(default="en", description="Language detected/used")
+    file_size_bytes: int = Field(..., description="Size of uploaded audio file")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "text": "Call mom about Thanksgiving",
+                "model": "base.en",
+                "language": "en",
+                "file_size_bytes": 87432
+            }
+        }
+    )
+
+
 class HealthResponse(BaseModel):
     """Model for health check response"""
     status: Literal["ok", "error"] = "ok"
@@ -262,6 +407,30 @@ class HealthResponse(BaseModel):
 
 
 # =============================================================================
+# Voice Models (Phase 8)
+# =============================================================================
+
+
+class VoiceTranscriptionResponse(BaseModel):
+    """Response from voice transcription endpoint."""
+    text: str = Field(..., description="Transcribed text from audio")
+    model: str = Field(default="base.en", description="Whisper model used")
+    language: str = Field(default="en", description="Language detected/used")
+    file_size_bytes: int = Field(..., description="Size of uploaded audio file")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "text": "Call mom about Thanksgiving",
+                "model": "base.en",
+                "language": "en",
+                "file_size_bytes": 87432
+            }
+        }
+    )
+
+
+# =============================================================================
 # Error Models
 # =============================================================================
 
@@ -275,6 +444,30 @@ class ErrorResponse(BaseModel):
                 "detail": "Reminder not found"
             }
         }
+
+
+# =============================================================================
+# Voice Models (Phase 8)
+# =============================================================================
+
+
+class VoiceTranscriptionResponse(BaseModel):
+    """Response from voice transcription endpoint."""
+    text: str = Field(..., description="Transcribed text from audio")
+    model: str = Field(default="base.en", description="Whisper model used")
+    language: str = Field(default="en", description="Language detected/used")
+    file_size_bytes: int = Field(..., description="Size of uploaded audio file")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "text": "Call mom about Thanksgiving",
+                "model": "base.en",
+                "language": "en",
+                "file_size_bytes": 87432
+            }
+        }
+    )
 
 
 # =============================================================================
@@ -300,6 +493,30 @@ class SyncChange(BaseModel):
                 "updated_at": "2025-11-03T10:30:00Z"
             }
         }
+
+
+# =============================================================================
+# Voice Models (Phase 8)
+# =============================================================================
+
+
+class VoiceTranscriptionResponse(BaseModel):
+    """Response from voice transcription endpoint."""
+    text: str = Field(..., description="Transcribed text from audio")
+    model: str = Field(default="base.en", description="Whisper model used")
+    language: str = Field(default="en", description="Language detected/used")
+    file_size_bytes: int = Field(..., description="Size of uploaded audio file")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "text": "Call mom about Thanksgiving",
+                "model": "base.en",
+                "language": "en",
+                "file_size_bytes": 87432
+            }
+        }
+    )
 
 
 class SyncRequest(BaseModel):
@@ -328,6 +545,30 @@ class SyncRequest(BaseModel):
         }
 
 
+# =============================================================================
+# Voice Models (Phase 8)
+# =============================================================================
+
+
+class VoiceTranscriptionResponse(BaseModel):
+    """Response from voice transcription endpoint."""
+    text: str = Field(..., description="Transcribed text from audio")
+    model: str = Field(default="base.en", description="Whisper model used")
+    language: str = Field(default="en", description="Language detected/used")
+    file_size_bytes: int = Field(..., description="Size of uploaded audio file")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "text": "Call mom about Thanksgiving",
+                "model": "base.en",
+                "language": "en",
+                "file_size_bytes": 87432
+            }
+        }
+    )
+
+
 class ConflictInfo(BaseModel):
     """Model for sync conflict information"""
     id: str = Field(..., description="Reminder UUID with conflict")
@@ -344,6 +585,30 @@ class ConflictInfo(BaseModel):
                 "resolution": "server_wins"
             }
         }
+
+
+# =============================================================================
+# Voice Models (Phase 8)
+# =============================================================================
+
+
+class VoiceTranscriptionResponse(BaseModel):
+    """Response from voice transcription endpoint."""
+    text: str = Field(..., description="Transcribed text from audio")
+    model: str = Field(default="base.en", description="Whisper model used")
+    language: str = Field(default="en", description="Language detected/used")
+    file_size_bytes: int = Field(..., description="Size of uploaded audio file")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "text": "Call mom about Thanksgiving",
+                "model": "base.en",
+                "language": "en",
+                "file_size_bytes": 87432
+            }
+        }
+    )
 
 
 class SyncResponse(BaseModel):
@@ -375,3 +640,27 @@ class SyncResponse(BaseModel):
                 "applied_count": 1
             }
         }
+
+
+# =============================================================================
+# Voice Models (Phase 8)
+# =============================================================================
+
+
+class VoiceTranscriptionResponse(BaseModel):
+    """Response from voice transcription endpoint."""
+    text: str = Field(..., description="Transcribed text from audio")
+    model: str = Field(default="base.en", description="Whisper model used")
+    language: str = Field(default="en", description="Language detected/used")
+    file_size_bytes: int = Field(..., description="Size of uploaded audio file")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "text": "Call mom about Thanksgiving",
+                "model": "base.en",
+                "language": "en",
+                "file_size_bytes": 87432
+            }
+        }
+    )
