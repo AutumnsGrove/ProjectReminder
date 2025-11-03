@@ -159,8 +159,9 @@
     <script src="js/app.js"></script>
     <script>
         // Initialize Edit view
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof App !== 'undefined' && App.initEditView) {
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (typeof App !== 'undefined' && App.init && App.initEditView) {
+                await App.init(); // Wait for API config to load first!
                 App.initEditView();
             }
         });

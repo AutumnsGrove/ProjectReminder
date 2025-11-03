@@ -552,10 +552,8 @@ const App = (function() {
         alert(message);
     }
 
-    // Initialize on load
-    init();
-
     // Public API
+    // Note: init() is now called from HTML files to ensure proper async/await
     return {
         init,
         initTodayView,

@@ -69,8 +69,9 @@
     <script src="js/app.js"></script>
     <script>
         // Initialize Today view
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof App !== 'undefined' && App.initTodayView) {
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (typeof App !== 'undefined' && App.init && App.initTodayView) {
+                await App.init(); // Wait for API config to load first!
                 App.initTodayView();
             }
         });

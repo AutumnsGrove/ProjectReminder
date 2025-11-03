@@ -53,8 +53,9 @@
     <script src="js/app.js"></script>
     <script>
         // Initialize Upcoming view
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof App !== 'undefined' && App.initUpcomingView) {
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (typeof App !== 'undefined' && App.init && App.initUpcomingView) {
+                await App.init(); // Wait for API config to load first!
                 App.initUpcomingView();
             }
         });
