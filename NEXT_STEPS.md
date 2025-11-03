@@ -1,19 +1,24 @@
 # Next Steps - ADHD-Friendly Voice Reminders System
 
-**Session Date:** November 2, 2025
+**Session Date:** November 3, 2025
 **Current Phase:** Phase 4 - Cloudflare Workers
-**Status:** ✅ Phase 1, 2 & 3 Complete | 🎉 FULLY INTEGRATED & WORKING!
+**Status:** ✅ Phase 1, 2, 3 & 3.5 Complete | 🎉 TESTED & READY FOR CLOUD SYNC!
 
 ---
 
-## 🎉 Latest Update: Phase 3 Integration COMPLETE!
+## 🎉 Latest Update: Phase 3.5 Testing & Enhancements COMPLETE!
 
-**Just Fixed (November 2, 2025):**
-- ✅ **Race condition resolved** - API config now loads before making requests
-- ✅ **401 Unauthorized errors fixed** - Token properly loaded from config.json
-- ✅ **Full stack working** - UI → FastAPI → SQLite all connected
-- ✅ **Security hardening** - API tokens rotated and removed from git
-- ✅ **All 7 Phase 3 commits** - bd0ee1c through 7d686fe
+**Just Completed (November 3, 2025):**
+- ✅ **Bug Investigation** - "Reminders don't save" issue was UX gap, not code bug
+- ✅ **Race condition already fixed** - Commit 7d686fe resolved 401 errors
+- ✅ **Real issue found** - Reminders >7 days out had no view to display them
+- ✅ **Future view added** - Third time-horizon page for reminders 8+ days out
+- ✅ **Testing infrastructure** - 24 pytest tests with 80% code coverage
+  - 18 API tests (all endpoints + auth + filtering)
+  - 6 database tests (CRUD operations)
+  - test_api.py, test_database.py, conftest.py created
+- ✅ **Database cleaned** - Flushed test data, ready for Phase 4
+- ✅ **All 3 commits** - 7e9b727 (Future view), ee725da (docs), c85bbd7 (tests)
 
 **How to Run:**
 ```bash
@@ -24,9 +29,16 @@ uv run uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
 python serve_ui.py
 
 # Open: http://localhost:3000
+# Views: Today (0-1 days), Upcoming (2-7 days), Future (8+ days)
+
+# Run tests
+pytest tests/ -v --cov=server
 ```
 
-**The app is now fully functional!** You can create, complete, edit, and delete reminders through the UI, and they persist in the database.
+**The app now has:**
+- Three complete time-horizon views
+- 24 automated tests (80% coverage)
+- Clean database ready for cloud sync
 
 ---
 
@@ -117,7 +129,49 @@ See `INTEGRATION_TESTING.md` for comprehensive manual test checklist covering:
 
 ---
 
-## Phase 4: Cloudflare Workers + D1 - Ready to Start
+## Priority System Enhancement (Future Iteration)
+
+**Current Priority Levels:**
+- 🟢 **Chill** (Green) - Low priority, no time pressure
+- 🟡 **Important** (Yellow) - Medium priority, should be done
+- 🔴 **Urgent** (Red) - High priority, time-sensitive
+
+**Requested Enhancement:** Add 2 more priority levels
+
+**Design Options to Consider:**
+1. **Lower than Chill:**
+   - "Someday" - Tasks with no timeline (blue/purple)
+   - "Maybe" - Ideas to revisit later (light gray)
+   - "Backburner" - On hold indefinitely (dark gray)
+
+2. **Higher than Urgent:**
+   - "Critical" - Drop everything priority (dark red/black)
+   - "Emergency" - Same-day must-do (flashing red)
+
+3. **Special States:**
+   - "Waiting" - Blocked by external dependency (orange)
+   - "In Progress" - Currently working on (teal)
+   - "Delegated" - Assigned to someone else (light blue)
+
+4. **Complexity Markers:**
+   - "Quick Win" - <5 min tasks (bright green)
+   - "Deep Work" - Requires focus blocks (purple)
+
+**Implementation Considerations:**
+- Color palette must remain distinct and accessible
+- ADHD-friendly: Too many options = decision paralysis
+- Recommendation: Add 1-2 max, keep simple
+- Suggested: "Someday" (lower) + "Critical" (higher) for 5 total levels
+
+**Next Session Decision Needed:**
+- Which 2 levels to add?
+- What colors/semantics?
+- Update database schema (priority enum)
+- Update UI (edit form, card colors)
+
+---
+
+## Phase 4: Cloudflare Workers + D1 - READY TO START
 
 **Goal:** Deploy serverless cloud sync layer for multi-device support
 
@@ -135,8 +189,18 @@ See `INTEGRATION_TESTING.md` for comprehensive manual test checklist covering:
 - ✅ Local FastAPI backend working (Phase 1)
 - ✅ Web UI complete (Phase 2)
 - ✅ Integration tested (Phase 3)
+- ✅ Testing infrastructure in place (Phase 3.5)
+- ✅ Database cleaned and ready
+- ✅ All 3 time-horizon views functional
 - [ ] Cloudflare account created
 - [ ] Wrangler CLI installed
+
+**Current System Status:**
+- Local API: Stable and tested
+- UI: 3 views (Today/Upcoming/Future)
+- Database: Clean, schema verified
+- Tests: 24 passing, 80% coverage
+- Ready for cloud deployment
 
 **Quick Start:**
 ```bash

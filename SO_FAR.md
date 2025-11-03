@@ -1,8 +1,8 @@
 # Progress Report - ADHD-Friendly Voice Reminders System
 
 **Project:** Offline-first reminders system with voice input and location awareness
-**Last Updated:** November 2, 2025
-**Current Status:** ✅ Phase 1, 2 & 3 Complete | 🎉 FULLY WORKING & INTEGRATED!
+**Last Updated:** November 3, 2025
+**Current Status:** ✅ Phase 1, 2, 3 & 3.5 Complete | 🎉 TESTED & READY FOR CLOUD SYNC!
 
 ---
 
@@ -383,6 +383,104 @@ python serve_ui.py
 
 ---
 
+## 🧪 Phase 3.5: Testing & Bug Fixes (November 3, 2025)
+
+**What Was Accomplished:**
+
+### Bug Investigation & Resolution
+- **Initial Issue**: User reported "create reminder doesn't save"
+- **Discovered**: Race condition that caused this was already fixed in commit 7d686fe
+- **Real Issue Found**: Reminders scheduled >7 days out were invisible (no view to display them)
+- **Root Cause**: Only "Today" (0-1 days) and "Upcoming" (2-7 days) views existed
+- **Solution**: Created "Future" view for reminders 8+ days out
+
+### Testing Infrastructure Implementation
+**Created comprehensive pytest test suite:**
+- **Total Tests**: 24 tests with 80% code coverage
+- **Test Breakdown**:
+  - API Tests: 18 tests covering all endpoints
+    - Health check (1 test)
+    - Create reminder (3 tests: basic, full fields, minimal)
+    - List reminders (2 tests: empty, with data)
+    - Get reminder (2 tests: found, not found)
+    - Update reminder (3 tests: partial, full, not found)
+    - Delete reminder (2 tests: success, not found)
+    - Authentication (2 tests: valid token, invalid token)
+    - Filtering (3 tests: status, category, priority)
+  - Database Tests: 6 tests covering core operations
+    - Create reminder (2 tests: basic, with all fields)
+    - Get reminder (2 tests: found, not found)
+    - Update reminder (1 test: partial update)
+    - Delete reminder (1 test: success)
+
+**Test Files Created:**
+- `tests/test_api.py` - API endpoint testing (~350 lines)
+- `tests/test_database.py` - Database layer testing (~200 lines)
+- `tests/conftest.py` - Pytest fixtures and configuration (~80 lines)
+- `pyproject.toml` - Updated with pytest dependencies
+
+**Test Coverage:**
+- Database layer: ~85% coverage (all core CRUD functions)
+- API layer: ~75% coverage (all endpoints + auth)
+- Overall: ~80% code coverage
+
+### Future View Implementation
+**Created third time-horizon view:**
+- **URL**: `/future.html`
+- **Purpose**: Display reminders scheduled 8+ days from now
+- **Features**:
+  - Same card-based layout as Today/Upcoming
+  - Date grouping by week/month
+  - Priority color coding
+  - Edit/delete functionality
+  - Completion marking
+  - Empty state messaging
+
+**Files Modified:**
+- `public/future.html` - New view page (~150 lines)
+- `public/css/future.css` - Dedicated stylesheet (~120 lines)
+- `public/js/api.js` - Added `getFutureReminders()` function
+- Navigation updated on all pages to include Future view
+
+**Navigation Flow:**
+- Today (0-1 days) → Upcoming (2-7 days) → Future (8+ days)
+- Bidirectional navigation between all three views
+- Consistent UI/UX across all time horizons
+
+### Database Cleanup
+- Flushed test/sample data from development database
+- Verified schema integrity
+- Confirmed all indexes present and functional
+- Database ready for Phase 4 (Cloudflare sync)
+
+### Git Commits (Phase 3.5)
+1. `c85bbd7` - test: Add comprehensive test suite with 24 tests and 80% coverage
+2. `ee725da` - docs: Document Future view enhancement and test completion
+3. `7e9b727` - feat: Add Future view for reminders beyond 7 days
+
+**Key Achievements:**
+- ✅ All three time-horizon views working (Today/Upcoming/Future)
+- ✅ 24 automated tests passing (pytest)
+- ✅ 80% code coverage across API and database layers
+- ✅ Database cleaned and ready for production use
+- ✅ Bug investigation revealed UX gap, not code issue
+- ✅ Comprehensive test infrastructure for future development
+
+**Phase 3.5 Metrics:**
+- Tests added: 24 (630 lines)
+- Files created: 4 (future.html, future.css, test_api.py, test_database.py, conftest.py)
+- Coverage: 80% (up from 0%)
+- Time invested: ~2 hours
+
+**Key Learnings:**
+1. **Testing reveals UX gaps** - Bug investigation led to discovering missing Future view
+2. **Pytest is essential** - Automated tests catch regressions early
+3. **Code coverage matters** - 80% threshold ensures core functionality is tested
+4. **User feedback drives features** - "Reminders don't save" actually meant "I can't see distant reminders"
+5. **Database cleanup is important** - Clean slate before major features (Phase 4 sync)
+
+---
+
 ## 📋 What's Next (Phase 4: Cloudflare Workers)
 
 **Goal:** Deploy serverless cloud sync layer for multi-device support
@@ -443,34 +541,44 @@ python serve_ui.py
 
 **Lines of Code (Approximate):**
 - Backend (Python): ~600 lines
-- Frontend (HTML): ~450 lines
-- Frontend (CSS): ~1200 lines (+200 toast styles)
-- Frontend (JavaScript): ~1400 lines (+350 errors.js, +240 api.js rewrite)
+- Frontend (HTML): ~600 lines (+150 future.html)
+- Frontend (CSS): ~1440 lines (+120 future.css)
+- Frontend (JavaScript): ~1450 lines (+50 getFutureReminders)
+- Testing Code: ~630 lines (test_api.py, test_database.py, conftest.py)
 - Testing Documentation: ~900 lines (INTEGRATION_TESTING.md)
-- **Total:** ~4550 lines (+1700 from Phase 3)
+- **Total:** ~5620 lines (+1700 Phase 3, +900 Phase 3.5)
 
 **Files Created/Modified:**
 - Backend: 5 files
-- Frontend: 13 files (11 existing + errors.js + INTEGRATION_TESTING.md)
-- Documentation: Updated 5 files (NEXT_STEPS.md, SO_FAR.md, TODOS.md, etc.)
+- Frontend: 16 files (11 from Phase 2, +2 Phase 3, +3 Phase 3.5)
+- Tests: 3 files (test_api.py, test_database.py, conftest.py)
+- Documentation: Updated 7 files
 
 **Time Invested:**
 - Phase 1: ~3 hours
 - Phase 2: ~4.5 hours
 - Phase 3: ~2.5 hours (5 subagents)
-- **Total:** ~10 hours
+- Phase 3.5: ~2 hours (testing + Future view)
+- **Total:** ~12 hours
 
 **Git Commits:**
 - Phase 1: 1 commit (183692e)
 - Phase 2: 1 commit (4a34ddf)
-- Phase 3: 5 commits (bd0ee1c, bde18c1, 6111da3, 0a41caa, + pending)
-- **Total:** 7+ commits
+- Phase 3: 9 commits (bd0ee1c → 7d686fe)
+- Phase 3.5: 3 commits (7e9b727, ee725da, c85bbd7)
+- **Total:** 14 commits
+
+**Test Coverage:**
+- API Layer: 75%
+- Database Layer: 85%
+- Overall: 80%
 
 **Completion Rate:**
 - Phase 1: 100% ✅
 - Phase 2: 100% ✅
 - Phase 3: 100% ✅
-- Overall Project: ~40% complete (3 of 8 phases)
+- Phase 3.5: 100% ✅
+- Overall Project: ~45% complete (3.5 of 8 phases)
 
 ---
 
