@@ -16,9 +16,19 @@
                 <span class="icon">←</span>
             </button>
             <h1 class="page-title" id="pageTitle">New Reminder</h1>
-            <button class="btn-icon" id="deleteBtn" aria-label="Delete" title="Delete" style="display: none;">
-                <span class="icon">🗑</span>
-            </button>
+            <!-- Sync Status Indicator (Phase 5) -->
+            <div class="header-actions">
+                <div class="sync-status" id="syncStatus" title="Sync status">
+                    <span class="sync-indicator" id="syncIndicator"></span>
+                    <span class="sync-text" id="syncText">Offline</span>
+                </div>
+                <button class="btn-icon" id="syncBtn" aria-label="Sync now" title="Sync now">
+                    <span class="icon">⟳</span>
+                </button>
+                <button class="btn-icon" id="deleteBtn" aria-label="Delete" title="Delete" style="display: none;">
+                    <span class="icon">🗑</span>
+                </button>
+            </div>
         </header>
 
         <!-- Main Content -->
@@ -135,18 +145,6 @@
                     <small class="form-hint">Location-based reminders (map picker coming in Phase 6)</small>
                 </div>
 
-                <!-- Notes - TODO: Phase 4+ -->
-                <!-- <div class="form-group">
-                    <label for="notes" class="form-label">Notes</label>
-                    <textarea
-                        id="notes"
-                        name="notes"
-                        class="form-control"
-                        rows="2"
-                        placeholder="Additional details..."
-                    ></textarea>
-                </div> -->
-
                 <!-- Form Actions -->
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
@@ -163,6 +161,7 @@
     <script src="js/storage.js"></script>
     <script src="js/errors.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/sync.js"></script>
     <script src="js/animations.js"></script>
     <script src="js/app.js"></script>
     <script>
@@ -171,6 +170,66 @@
             if (typeof App !== 'undefined' && App.init && App.initEditView) {
                 await App.init(); // Wait for API config to load first!
                 App.initEditView();
+            }
+
+            // Initialize sync manager (Phase 5)
+            if (typeof SyncManager !== 'undefined') {
+                SyncManager.init();
+
+                // Update sync status UI
+                SyncManager.onSyncStatusChange((status) => {
+                    const indicator = document.getElementById('syncIndicator');
+                    const text = document.getElementById('syncText');
+                    const syncBtn = document.getElementById('syncBtn');
+
+                    if (indicator && text) {
+                        // Update indicator color and text
+                        indicator.className = `sync-indicator sync-${status}`;
+
+                        switch(status) {
+                            case 'offline':
+                                text.textContent = 'Offline';
+                                break;
+                            case 'online':
+                                text.textContent = 'Online';
+                                break;
+                            case 'syncing':
+                                text.textContent = 'Syncing...';
+                                if (syncBtn) syncBtn.disabled = true;
+                                break;
+                            case 'synced':
+                                const lastSync = SyncManager.lastSync();
+                                if (lastSync) {
+                                    const date = new Date(lastSync);
+                                    const now = new Date();
+                                    const diff = Math.floor((now - date) / 1000 / 60); // minutes
+                                    if (diff < 1) {
+                                        text.textContent = 'Just synced';
+                                    } else if (diff < 60) {
+                                        text.textContent = `Synced ${diff}m ago`;
+                                    } else {
+                                        text.textContent = 'Synced';
+                                    }
+                                } else {
+                                    text.textContent = 'Synced';
+                                }
+                                if (syncBtn) syncBtn.disabled = false;
+                                break;
+                            case 'error':
+                                text.textContent = 'Sync error';
+                                if (syncBtn) syncBtn.disabled = false;
+                                break;
+                        }
+                    }
+                });
+
+                // Manual sync button handler
+                const syncBtn = document.getElementById('syncBtn');
+                if (syncBtn) {
+                    syncBtn.addEventListener('click', async () => {
+                        await SyncManager.sync();
+                    });
+                }
             }
         });
 
