@@ -72,6 +72,182 @@ const authMiddleware = async (c: any, next: any) => {
 }
 
 /**
+ * =============================================================================
+ * Recurrence Pattern Helper Functions (Phase 7)
+ * =============================================================================
+ */
+
+/**
+ * Create a recurrence pattern in the database
+ */
+async function createRecurrencePattern(
+  db: D1Database,
+  patternId: string,
+  pattern: any
+): Promise<boolean> {
+  try {
+    const now = new Date().toISOString()
+    const stmt = db.prepare(`
+      INSERT INTO recurrence_patterns (
+        id, frequency, interval,
+        days_of_week, day_of_month, month_of_year,
+        end_date, end_count, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+
+    const result = await stmt.bind(
+      patternId,
+      pattern.frequency,
+      pattern.interval || 1,
+      pattern.days_of_week || null,
+      pattern.day_of_month || null,
+      pattern.month_of_year || null,
+      pattern.end_date || null,
+      pattern.end_count || null,
+      now
+    ).run()
+
+    return result.success
+  } catch (error) {
+    console.error('Failed to create recurrence pattern:', error)
+    return false
+  }
+}
+
+/**
+ * Generate recurring reminder instances based on pattern
+ */
+async function generateRecurrenceInstances(
+  db: D1Database,
+  baseReminder: any,
+  pattern: any,
+  horizonDays: number = 90
+): Promise<string[]> {
+  const generatedIds: string[] = []
+
+  try {
+    const frequency = pattern.frequency
+    const interval = pattern.interval || 1
+    const endDateStr = pattern.end_date
+    const endCount = pattern.end_count
+
+    // Parse start date from base reminder or use today
+    let startDate: Date
+    if (baseReminder.due_date) {
+      startDate = new Date(baseReminder.due_date)
+    } else {
+      startDate = new Date()
+    }
+    startDate.setHours(0, 0, 0, 0)
+
+    // Calculate horizon end date
+    const horizonEnd = new Date()
+    horizonEnd.setDate(horizonEnd.getDate() + horizonDays)
+
+    // Parse pattern end date if provided
+    let patternEnd: Date | null = null
+    if (endDateStr) {
+      patternEnd = new Date(endDateStr)
+    }
+
+    // Determine actual end date (whichever comes first)
+    const endDate = patternEnd && patternEnd < horizonEnd ? patternEnd : horizonEnd
+
+    // Generate instances
+    let currentDate = new Date(startDate)
+    let instanceCount = 0
+    const now = new Date().toISOString()
+
+    while (currentDate <= endDate) {
+      // Check end_count limit
+      if (endCount && instanceCount >= endCount) {
+        break
+      }
+
+      // For weekly recurrence, check if current day matches pattern
+      if (frequency === 'weekly' && pattern.days_of_week) {
+        const allowedDays = pattern.days_of_week.split(',').map((d: string) => parseInt(d))
+        const currentDay = (currentDate.getDay() + 6) % 7 // Convert Sun=0 to Mon=0
+        if (!allowedDays.includes(currentDay)) {
+          currentDate.setDate(currentDate.getDate() + 1)
+          continue
+        }
+      }
+
+      // For monthly recurrence, check day of month
+      if (frequency === 'monthly' && pattern.day_of_month) {
+        if (currentDate.getDate() !== pattern.day_of_month) {
+          currentDate.setDate(currentDate.getDate() + 1)
+          continue
+        }
+      }
+
+      // Create instance
+      const instanceId = crypto.randomUUID()
+      const dueDateISO = currentDate.toISOString().split('T')[0]
+
+      const stmt = db.prepare(`
+        INSERT INTO reminders (
+          id, text, due_date, due_time, time_required,
+          location_name, location_address, location_lat, location_lng, location_radius,
+          priority, category, status, completed_at, snoozed_until,
+          recurrence_id, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `)
+
+      await stmt.bind(
+        instanceId,
+        baseReminder.text,
+        dueDateISO,
+        baseReminder.due_time || null,
+        baseReminder.time_required || null,
+        baseReminder.location_name || null,
+        baseReminder.location_address || null,
+        baseReminder.location_lat || null,
+        baseReminder.location_lng || null,
+        baseReminder.location_radius || 100,
+        baseReminder.priority || 'chill',
+        baseReminder.category || null,
+        'pending',
+        null,
+        null,
+        baseReminder.recurrence_id,
+        now,
+        now
+      ).run()
+
+      generatedIds.push(instanceId)
+      instanceCount++
+
+      // Advance to next occurrence
+      if (frequency === 'daily') {
+        currentDate.setDate(currentDate.getDate() + interval)
+      } else if (frequency === 'weekly') {
+        currentDate.setDate(currentDate.getDate() + 1)
+        // After checking 7 days, skip ahead by (interval-1) weeks
+        if ((currentDate.getDay() + 6) % 7 === (startDate.getDay() + 6) % 7) {
+          if (interval > 1) {
+            currentDate.setDate(currentDate.getDate() + (interval - 1) * 7)
+          }
+        }
+      } else if (frequency === 'monthly') {
+        const month = currentDate.getMonth() + interval
+        const year = currentDate.getFullYear() + Math.floor(month / 12)
+        const newMonth = month % 12
+        currentDate = new Date(year, newMonth, currentDate.getDate())
+      } else if (frequency === 'yearly') {
+        currentDate.setFullYear(currentDate.getFullYear() + interval)
+      }
+    }
+
+    return generatedIds
+  } catch (error) {
+    console.error('Failed to generate recurrence instances:', error)
+    return generatedIds
+  }
+}
+
+/**
  * Health Check Endpoint
  *
  * GET /api/health
@@ -477,7 +653,79 @@ app.post('/api/reminders', authMiddleware, async (c) => {
     const id = crypto.randomUUID()
     const now = new Date().toISOString()
 
-    // Build INSERT with all fields
+    // Handle recurrence pattern if provided (Phase 7)
+    let patternId = body.recurrence_id || null
+    if (body.recurrence_pattern) {
+      // Validate recurrence pattern
+      const validFrequencies = ['daily', 'weekly', 'monthly', 'yearly']
+      if (!validFrequencies.includes(body.recurrence_pattern.frequency)) {
+        return c.json({
+          error: 'Validation error',
+          message: `Invalid recurrence frequency. Must be one of: ${validFrequencies.join(', ')}`
+        }, 400)
+      }
+
+      // Create recurrence pattern
+      patternId = crypto.randomUUID()
+      const patternCreated = await createRecurrencePattern(
+        c.env.DB,
+        patternId,
+        body.recurrence_pattern
+      )
+
+      if (!patternCreated) {
+        return c.json({
+          error: 'Database error',
+          message: 'Failed to create recurrence pattern'
+        }, 500)
+      }
+
+      // Generate recurring instances
+      const baseReminder = {
+        text: body.text,
+        due_date: body.due_date,
+        due_time: body.due_time,
+        time_required: body.time_required,
+        location_name: body.location_name,
+        location_address: body.location_address,
+        location_lat: body.location_lat,
+        location_lng: body.location_lng,
+        location_radius: body.location_radius || 100,
+        priority: body.priority || 'chill',
+        category: body.category,
+        recurrence_id: patternId
+      }
+
+      const generatedIds = await generateRecurrenceInstances(
+        c.env.DB,
+        baseReminder,
+        body.recurrence_pattern,
+        90 // 90 days horizon
+      )
+
+      if (generatedIds.length === 0) {
+        return c.json({
+          error: 'Database error',
+          message: 'Failed to generate recurrence instances'
+        }, 500)
+      }
+
+      // Fetch and return the first generated instance
+      const firstInstance = await c.env.DB.prepare(
+        'SELECT * FROM reminders WHERE id = ?'
+      ).bind(generatedIds[0]).first()
+
+      if (!firstInstance) {
+        return c.json({
+          error: 'Database error',
+          message: 'Instance created but could not be retrieved'
+        }, 500)
+      }
+
+      return c.json(firstInstance, 201)
+    }
+
+    // No recurrence - create single reminder
     const stmt = c.env.DB.prepare(`
       INSERT INTO reminders (
         id, text, priority, category, status,
@@ -509,7 +757,7 @@ app.post('/api/reminders', authMiddleware, async (c) => {
       now,
       body.snoozed_until || null,
       body.snooze_count || 0,
-      body.recurrence_id || null,
+      patternId,
       body.is_recurring_instance || 0,
       body.original_due_date || null
     ).run()

@@ -570,10 +570,20 @@ const App = (function() {
             due_date: formData.get('due_date') || null,
             due_time: formData.get('due_time') || null,
             time_required: formData.get('time_required') === 'on' ? true : false,
-            location_text: formData.get('location_text') || null
-            // TODO: Notes field (Phase 4+)
-            // notes: formData.get('notes') || null
+            location_name: formData.get('location_name') || null,
+            location_address: formData.get('location_address') || null,
+            location_lat: formData.get('location_lat') ? parseFloat(formData.get('location_lat')) : null,
+            location_lng: formData.get('location_lng') ? parseFloat(formData.get('location_lng')) : null,
+            location_radius: formData.get('location_radius') ? parseInt(formData.get('location_radius')) : 100
         };
+
+        // Add recurrence pattern if configured (Phase 7)
+        if (typeof RecurrenceUI !== 'undefined') {
+            const recurrencePattern = RecurrenceUI.getRecurrencePattern();
+            if (recurrencePattern) {
+                data.recurrence_pattern = recurrencePattern;
+            }
+        }
 
         const reminderId = formData.get('id');
 

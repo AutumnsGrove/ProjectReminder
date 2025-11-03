@@ -11,6 +11,65 @@ from datetime import datetime
 # Request Models
 # =============================================================================
 
+# =============================================================================
+# Recurrence Pattern Models (Phase 7)
+# =============================================================================
+
+class RecurrencePatternCreate(BaseModel):
+    """Model for creating a recurrence pattern"""
+    frequency: Literal["daily", "weekly", "monthly", "yearly"] = Field(..., description="Recurrence frequency")
+    interval: int = Field(1, ge=1, le=365, description="Repeat every N days/weeks/months/years")
+
+    # Weekly constraints
+    days_of_week: Optional[str] = Field(None, description="Comma-separated days (0=Mon, 6=Sun)")
+
+    # Monthly constraints
+    day_of_month: Optional[int] = Field(None, ge=1, le=31, description="Day of month (1-31)")
+
+    # Yearly constraints
+    month_of_year: Optional[int] = Field(None, ge=1, le=12, description="Month of year (1-12)")
+
+    # End conditions
+    end_date: Optional[str] = Field(None, description="End date in ISO 8601 format (YYYY-MM-DD)")
+    end_count: Optional[int] = Field(None, ge=1, description="Number of occurrences before stopping")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "frequency": "weekly",
+                "interval": 1,
+                "days_of_week": "0,2,4",  # Monday, Wednesday, Friday
+                "end_count": 10
+            }
+        }
+
+
+class RecurrencePatternResponse(BaseModel):
+    """Model for recurrence pattern response"""
+    id: str
+    frequency: str
+    interval: int = 1
+    days_of_week: Optional[str] = None
+    day_of_month: Optional[int] = None
+    month_of_year: Optional[int] = None
+    end_date: Optional[str] = None
+    end_count: Optional[int] = None
+    created_at: str
+
+    class Config:
+        from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "id": "550e8400-e29b-41d4-a716-446655440000",
+                "frequency": "weekly",
+                "interval": 1,
+                "days_of_week": "0,2,4",
+                "end_count": 10,
+                "created_at": "2025-11-03T10:00:00Z"
+            }
+        }
+
+
 class ReminderCreate(BaseModel):
     """Model for creating a new reminder"""
     text: str = Field(..., min_length=1, max_length=1000, description="Reminder text")
@@ -37,6 +96,7 @@ class ReminderCreate(BaseModel):
 
     # Recurrence
     recurrence_id: Optional[str] = Field(None, description="Recurrence pattern ID")
+    recurrence_pattern: Optional[RecurrencePatternCreate] = Field(None, description="Embedded recurrence pattern (creates pattern + instances)")
 
     # Metadata
     source: Literal["manual", "voice", "api"] = Field("manual", description="Creation source")

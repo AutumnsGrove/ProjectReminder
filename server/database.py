@@ -530,6 +530,364 @@ def batch_update_synced_at(reminder_ids: List[str], synced_at: str) -> int:
 
 
 # =============================================================================
+# Recurrence Pattern Operations (Phase 7)
+# =============================================================================
+
+def create_recurrence_pattern(
+    pattern_id: str,
+    frequency: str,
+    interval: int = 1,
+    days_of_week: Optional[str] = None,
+    day_of_month: Optional[int] = None,
+    month_of_year: Optional[int] = None,
+    end_date: Optional[str] = None,
+    end_count: Optional[int] = None,
+    db_path: str = str(DB_PATH)
+) -> str:
+    """
+    Create a new recurrence pattern.
+
+    Args:
+        pattern_id: UUID for the pattern
+        frequency: 'daily', 'weekly', 'monthly', or 'yearly'
+        interval: Repeat every N days/weeks/months (default: 1)
+        days_of_week: Comma-separated day numbers for weekly (0=Mon, 6=Sun)
+        day_of_month: Day of month for monthly recurrence (1-31)
+        month_of_year: Month for yearly recurrence (1-12)
+        end_date: ISO 8601 date when pattern ends
+        end_count: Number of occurrences before stopping
+        db_path: Path to database
+
+    Returns:
+        Pattern ID
+    """
+    conn = get_connection(db_path)
+    cursor = conn.cursor()
+
+    try:
+        now = datetime.now(timezone.utc).isoformat()
+
+        cursor.execute("""
+            INSERT INTO recurrence_patterns (
+                id, frequency, interval,
+                days_of_week, day_of_month, month_of_year,
+                end_date, end_count,
+                created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            pattern_id, frequency, interval,
+            days_of_week, day_of_month, month_of_year,
+            end_date, end_count,
+            now
+        ))
+
+        conn.commit()
+        return pattern_id
+    except sqlite3.Error as e:
+        conn.rollback()
+        raise Exception(f"Failed to create recurrence pattern: {e}")
+    finally:
+        conn.close()
+
+
+def get_recurrence_pattern(pattern_id: str, db_path: str = str(DB_PATH)) -> Optional[Dict[str, Any]]:
+    """
+    Get recurrence pattern by ID.
+
+    Args:
+        pattern_id: Pattern UUID
+        db_path: Path to database
+
+    Returns:
+        Pattern dictionary or None if not found
+    """
+    conn = get_connection(db_path)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT * FROM recurrence_patterns
+            WHERE id = ?
+        """, (pattern_id,))
+
+        row = cursor.fetchone()
+        return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def update_recurrence_pattern(
+    pattern_id: str,
+    frequency: Optional[str] = None,
+    interval: Optional[int] = None,
+    days_of_week: Optional[str] = None,
+    day_of_month: Optional[int] = None,
+    month_of_year: Optional[int] = None,
+    end_date: Optional[str] = None,
+    end_count: Optional[int] = None,
+    db_path: str = str(DB_PATH)
+) -> bool:
+    """
+    Update recurrence pattern.
+
+    Args:
+        pattern_id: Pattern UUID
+        frequency: New frequency
+        interval: New interval
+        days_of_week: New days of week
+        day_of_month: New day of month
+        month_of_year: New month of year
+        end_date: New end date
+        end_count: New end count
+        db_path: Path to database
+
+    Returns:
+        True if updated, False if not found
+    """
+    conn = get_connection(db_path)
+    cursor = conn.cursor()
+
+    try:
+        # Build dynamic update query based on provided fields
+        updates = []
+        params = []
+
+        if frequency is not None:
+            updates.append("frequency = ?")
+            params.append(frequency)
+        if interval is not None:
+            updates.append("interval = ?")
+            params.append(interval)
+        if days_of_week is not None:
+            updates.append("days_of_week = ?")
+            params.append(days_of_week)
+        if day_of_month is not None:
+            updates.append("day_of_month = ?")
+            params.append(day_of_month)
+        if month_of_year is not None:
+            updates.append("month_of_year = ?")
+            params.append(month_of_year)
+        if end_date is not None:
+            updates.append("end_date = ?")
+            params.append(end_date)
+        if end_count is not None:
+            updates.append("end_count = ?")
+            params.append(end_count)
+
+        if not updates:
+            return False  # Nothing to update
+
+        params.append(pattern_id)
+        query = f"""
+            UPDATE recurrence_patterns
+            SET {', '.join(updates)}
+            WHERE id = ?
+        """
+
+        cursor.execute(query, params)
+        conn.commit()
+        return cursor.rowcount > 0
+    except sqlite3.Error as e:
+        conn.rollback()
+        raise Exception(f"Failed to update recurrence pattern: {e}")
+    finally:
+        conn.close()
+
+
+def delete_recurrence_pattern(pattern_id: str, db_path: str = str(DB_PATH)) -> bool:
+    """
+    Delete recurrence pattern and unlink from reminders.
+
+    Args:
+        pattern_id: Pattern UUID
+        db_path: Path to database
+
+    Returns:
+        True if deleted, False if not found
+    """
+    conn = get_connection(db_path)
+    cursor = conn.cursor()
+
+    try:
+        # First unlink any reminders using this pattern
+        cursor.execute("""
+            UPDATE reminders
+            SET recurrence_id = NULL
+            WHERE recurrence_id = ?
+        """, (pattern_id,))
+
+        # Delete the pattern
+        cursor.execute("""
+            DELETE FROM recurrence_patterns
+            WHERE id = ?
+        """, (pattern_id,))
+
+        conn.commit()
+        return cursor.rowcount > 0
+    except sqlite3.Error as e:
+        conn.rollback()
+        raise Exception(f"Failed to delete recurrence pattern: {e}")
+    finally:
+        conn.close()
+
+
+def generate_recurrence_instances(
+    base_reminder: Dict[str, Any],
+    pattern: Dict[str, Any],
+    horizon_days: int = 90,
+    db_path: str = str(DB_PATH)
+) -> List[str]:
+    """
+    Generate recurring reminder instances based on pattern.
+
+    Args:
+        base_reminder: The template reminder with all fields
+        pattern: Recurrence pattern dictionary
+        horizon_days: How many days ahead to generate instances
+        db_path: Path to database
+
+    Returns:
+        List of generated reminder IDs
+    """
+    from datetime import date, timedelta
+    import uuid
+
+    conn = get_connection(db_path)
+    cursor = conn.cursor()
+    generated_ids = []
+
+    try:
+        frequency = pattern['frequency']
+        interval = pattern.get('interval', 1)
+        end_date_str = pattern.get('end_date')
+        end_count = pattern.get('end_count')
+
+        # Parse start date from base reminder's due_date or use today
+        start_date_str = base_reminder.get('due_date')
+        if start_date_str:
+            start_date = date.fromisoformat(start_date_str)
+        else:
+            start_date = date.today()
+
+        # Calculate horizon end date
+        horizon_end = date.today() + timedelta(days=horizon_days)
+
+        # Parse pattern end date if provided
+        pattern_end = None
+        if end_date_str:
+            pattern_end = date.fromisoformat(end_date_str)
+
+        # Determine actual end date (whichever comes first)
+        end_date = min(horizon_end, pattern_end) if pattern_end else horizon_end
+
+        # Generate instances
+        current_date = start_date
+        instance_count = 0
+        now = datetime.now(timezone.utc).isoformat()
+
+        while current_date <= end_date:
+            # Check end_count limit
+            if end_count and instance_count >= end_count:
+                break
+
+            # For weekly recurrence, check if current day matches pattern
+            if frequency == 'weekly':
+                days_of_week = pattern.get('days_of_week')
+                if days_of_week:
+                    # days_of_week is comma-separated: "0,2,4" for Mon, Wed, Fri
+                    allowed_days = [int(d) for d in days_of_week.split(',')]
+                    if current_date.weekday() not in allowed_days:
+                        current_date += timedelta(days=1)
+                        continue
+
+            # For monthly recurrence, check day of month
+            if frequency == 'monthly':
+                day_of_month = pattern.get('day_of_month')
+                if day_of_month and current_date.day != day_of_month:
+                    current_date += timedelta(days=1)
+                    continue
+
+            # Create instance
+            instance_id = str(uuid.uuid4())
+            instance_data = base_reminder.copy()
+            instance_data['id'] = instance_id
+            instance_data['due_date'] = current_date.isoformat()
+            instance_data['created_at'] = now
+            instance_data['updated_at'] = now
+
+            # Insert instance
+            cursor.execute("""
+                INSERT INTO reminders (
+                    id, text, due_date, due_time, time_required,
+                    location_name, location_address, location_lat, location_lng, location_radius,
+                    priority, category, status, completed_at, snoozed_until,
+                    recurrence_id, source, created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                instance_data['id'],
+                instance_data['text'],
+                instance_data['due_date'],
+                instance_data.get('due_time'),
+                instance_data.get('time_required', False),
+                instance_data.get('location_name'),
+                instance_data.get('location_address'),
+                instance_data.get('location_lat'),
+                instance_data.get('location_lng'),
+                instance_data.get('location_radius', 100),
+                instance_data.get('priority', 'chill'),
+                instance_data.get('category'),
+                instance_data.get('status', 'pending'),
+                instance_data.get('completed_at'),
+                instance_data.get('snoozed_until'),
+                instance_data.get('recurrence_id'),
+                instance_data.get('source', 'manual'),
+                instance_data['created_at'],
+                instance_data['updated_at']
+            ))
+
+            generated_ids.append(instance_id)
+            instance_count += 1
+
+            # Advance to next occurrence
+            if frequency == 'daily':
+                current_date += timedelta(days=interval)
+            elif frequency == 'weekly':
+                # For weekly, advance day by day to check each day
+                current_date += timedelta(days=1)
+                # After checking 7 days, skip ahead by (interval-1) weeks
+                if current_date.weekday() == start_date.weekday():
+                    if interval > 1:
+                        current_date += timedelta(weeks=interval - 1)
+            elif frequency == 'monthly':
+                # Monthly: advance month by interval
+                month = current_date.month + interval
+                year = current_date.year
+                while month > 12:
+                    month -= 12
+                    year += 1
+                # Handle day overflow (e.g., Jan 31 -> Feb 28)
+                try:
+                    current_date = date(year, month, current_date.day)
+                except ValueError:
+                    # Day doesn't exist in target month, use last day
+                    import calendar
+                    last_day = calendar.monthrange(year, month)[1]
+                    current_date = date(year, month, last_day)
+            elif frequency == 'yearly':
+                current_date = date(current_date.year + interval, current_date.month, current_date.day)
+
+        conn.commit()
+        return generated_ids
+    except Exception as e:
+        conn.rollback()
+        raise Exception(f"Failed to generate recurrence instances: {e}")
+    finally:
+        conn.close()
+
+
+# =============================================================================
 # Initialization Script
 # =============================================================================
 

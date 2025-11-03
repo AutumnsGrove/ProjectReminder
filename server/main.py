@@ -25,7 +25,9 @@ from .models import (
     SyncRequest,
     SyncResponse,
     SyncChange,
-    ConflictInfo
+    ConflictInfo,
+    RecurrencePatternCreate,
+    RecurrencePatternResponse
 )
 
 
@@ -188,16 +190,36 @@ async def create_reminder(reminder: ReminderCreate):
 
     Requires authentication via Bearer token.
 
+    If recurrence_pattern is provided, creates the pattern and generates
+    recurring instances for the next 90 days.
+
     Args:
         reminder: Reminder data
 
     Returns:
         Created reminder with generated ID and timestamps
+        (Note: For recurring reminders, returns the first instance)
     """
     try:
         # Generate ID and timestamps
         reminder_id = generate_uuid()
         current_time = get_current_timestamp()
+
+        # Handle recurrence pattern if provided
+        pattern_id = reminder.recurrence_id
+        if reminder.recurrence_pattern:
+            # Create recurrence pattern
+            pattern_id = generate_uuid()
+            db.create_recurrence_pattern(
+                pattern_id=pattern_id,
+                frequency=reminder.recurrence_pattern.frequency,
+                interval=reminder.recurrence_pattern.interval,
+                days_of_week=reminder.recurrence_pattern.days_of_week,
+                day_of_month=reminder.recurrence_pattern.day_of_month,
+                month_of_year=reminder.recurrence_pattern.month_of_year,
+                end_date=reminder.recurrence_pattern.end_date,
+                end_count=reminder.recurrence_pattern.end_count
+            )
 
         # Build reminder data dictionary
         reminder_data = {
@@ -216,17 +238,32 @@ async def create_reminder(reminder: ReminderCreate):
             "status": reminder.status,
             "completed_at": None,
             "snoozed_until": reminder.snoozed_until,
-            "recurrence_id": reminder.recurrence_id,
+            "recurrence_id": pattern_id,
             "source": reminder.source,
             "created_at": current_time,
             "updated_at": current_time,
             "synced_at": None
         }
 
-        # Create in database
-        db.create_reminder(reminder_data)
+        # If recurrence pattern exists, generate instances instead of single reminder
+        if reminder.recurrence_pattern and pattern_id:
+            pattern_dict = db.get_recurrence_pattern(pattern_id)
+            if pattern_dict:
+                # Generate recurring instances (90 days ahead)
+                generated_ids = db.generate_recurrence_instances(
+                    base_reminder=reminder_data,
+                    pattern=pattern_dict,
+                    horizon_days=90
+                )
 
-        # Return created reminder
+                # Return the first generated instance
+                if generated_ids:
+                    first_instance = db.get_reminder(generated_ids[0])
+                    if first_instance:
+                        return ReminderResponse(**first_instance)
+
+        # No recurrence - create single reminder
+        db.create_reminder(reminder_data)
         return ReminderResponse(**reminder_data)
 
     except Exception as e:

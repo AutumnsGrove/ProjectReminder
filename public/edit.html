@@ -191,6 +191,156 @@
                     <small class="form-hint">Click map or search to set reminder location</small>
                 </div>
 
+                <!-- Recurrence (Phase 7) -->
+                <div class="form-group">
+                    <label class="form-label">Recurrence</label>
+
+                    <!-- Hidden field for recurrence pattern ID -->
+                    <input type="hidden" id="recurrenceId" name="recurrence_id">
+
+                    <!-- Frequency selector -->
+                    <div class="recurrence-frequency">
+                        <label class="recurrence-option">
+                            <input type="radio" name="recurrence_frequency" value="none" checked>
+                            <span class="recurrence-badge">None</span>
+                        </label>
+                        <label class="recurrence-option">
+                            <input type="radio" name="recurrence_frequency" value="daily">
+                            <span class="recurrence-badge">📅 Daily</span>
+                        </label>
+                        <label class="recurrence-option">
+                            <input type="radio" name="recurrence_frequency" value="weekly">
+                            <span class="recurrence-badge">📆 Weekly</span>
+                        </label>
+                        <label class="recurrence-option">
+                            <input type="radio" name="recurrence_frequency" value="monthly">
+                            <span class="recurrence-badge">🗓️ Monthly</span>
+                        </label>
+                        <label class="recurrence-option">
+                            <input type="radio" name="recurrence_frequency" value="yearly">
+                            <span class="recurrence-badge">📅 Yearly</span>
+                        </label>
+                    </div>
+
+                    <!-- Recurrence details (initially hidden) -->
+                    <div id="recurrenceDetails" class="recurrence-details" style="display: none;">
+                        <!-- Interval -->
+                        <div class="recurrence-interval">
+                            <label for="recurrenceInterval" class="form-label-sm">Repeat every</label>
+                            <div class="interval-input-group">
+                                <input
+                                    type="number"
+                                    id="recurrenceInterval"
+                                    min="1"
+                                    max="365"
+                                    value="1"
+                                    class="form-control-sm"
+                                >
+                                <span id="intervalUnit" class="interval-unit">day(s)</span>
+                            </div>
+                        </div>
+
+                        <!-- Days of week (for weekly) -->
+                        <div id="daysOfWeekContainer" class="days-of-week-container" style="display: none;">
+                            <label class="form-label-sm">On these days:</label>
+                            <div class="days-of-week">
+                                <label class="day-checkbox">
+                                    <input type="checkbox" value="0">
+                                    <span>Mon</span>
+                                </label>
+                                <label class="day-checkbox">
+                                    <input type="checkbox" value="1">
+                                    <span>Tue</span>
+                                </label>
+                                <label class="day-checkbox">
+                                    <input type="checkbox" value="2">
+                                    <span>Wed</span>
+                                </label>
+                                <label class="day-checkbox">
+                                    <input type="checkbox" value="3">
+                                    <span>Thu</span>
+                                </label>
+                                <label class="day-checkbox">
+                                    <input type="checkbox" value="4">
+                                    <span>Fri</span>
+                                </label>
+                                <label class="day-checkbox">
+                                    <input type="checkbox" value="5">
+                                    <span>Sat</span>
+                                </label>
+                                <label class="day-checkbox">
+                                    <input type="checkbox" value="6">
+                                    <span>Sun</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Day of month (for monthly) -->
+                        <div id="dayOfMonthContainer" class="day-of-month-container" style="display: none;">
+                            <label for="dayOfMonth" class="form-label-sm">On day:</label>
+                            <input
+                                type="number"
+                                id="dayOfMonth"
+                                min="1"
+                                max="31"
+                                value="1"
+                                class="form-control-sm"
+                            >
+                        </div>
+
+                        <!-- End conditions -->
+                        <div class="recurrence-end">
+                            <label class="form-label-sm">End condition:</label>
+                            <div class="end-condition-options">
+                                <label class="end-option">
+                                    <input type="radio" name="recurrence_end" value="never" checked>
+                                    <span>Never</span>
+                                </label>
+                                <label class="end-option">
+                                    <input type="radio" name="recurrence_end" value="date">
+                                    <span>On date</span>
+                                </label>
+                                <label class="end-option">
+                                    <input type="radio" name="recurrence_end" value="count">
+                                    <span>After</span>
+                                </label>
+                            </div>
+
+                            <!-- End date input -->
+                            <div id="endDateContainer" class="end-date-container" style="display: none;">
+                                <input
+                                    type="date"
+                                    id="recurrenceEndDate"
+                                    class="form-control-sm"
+                                >
+                            </div>
+
+                            <!-- End count input -->
+                            <div id="endCountContainer" class="end-count-container" style="display: none;">
+                                <input
+                                    type="number"
+                                    id="recurrenceEndCount"
+                                    min="1"
+                                    max="999"
+                                    value="10"
+                                    class="form-control-sm"
+                                >
+                                <span>occurrences</span>
+                            </div>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="recurrence-preview">
+                            <label class="form-label-sm">Preview (next 3):</label>
+                            <div id="recurrencePreview" class="preview-dates">
+                                <small class="form-hint">Configure recurrence pattern to see preview</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <small class="form-hint">Set up recurring reminders for regular tasks</small>
+                </div>
+
                 <!-- Form Actions -->
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
@@ -211,6 +361,7 @@
     <script src="js/animations.js?v=2"></script>
     <script src="js/mapbox.js?v=2"></script>
     <script src="js/location-picker.js?v=2"></script>
+    <script src="js/recurrence.js?v=2"></script>
     <script src="js/app.js?v=2"></script>
     <script>
         // Initialize Edit view
@@ -223,6 +374,11 @@
             // Initialize location picker (Phase 6)
             if (typeof LocationPicker !== 'undefined') {
                 await LocationPicker.init();
+            }
+
+            // Initialize recurrence UI (Phase 7)
+            if (typeof RecurrenceUI !== 'undefined') {
+                RecurrenceUI.init();
             }
 
             // Initialize sync manager (Phase 5)
