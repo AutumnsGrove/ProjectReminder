@@ -1,24 +1,53 @@
 # Next Steps - ADHD-Friendly Voice Reminders System
 
-**Session Date:** November 3, 2025
-**Current Phase:** Phase 4 - Cloudflare Workers
-**Status:** ✅ Phase 1, 2, 3 & 3.5 Complete | 🎉 TESTED & READY FOR CLOUD SYNC!
+**Session Date:** November 3, 2025 (Evening Session Complete)
+**Current Phase:** Phase 4 - Cloudflare Workers (Infrastructure ✅, API Implementation Next)
+**Status:** ✅ Phase 1, 2, 3, 3.5 & 3.6 Complete | ⚡ Phase 4 Infrastructure Ready!
 
 ---
 
-## 🎉 Latest Update: Phase 3.5 Testing & Enhancements COMPLETE!
+## 🎉 Latest Update: Phase 3.6 & Phase 4 Infrastructure COMPLETE!
 
-**Just Completed (November 3, 2025):**
-- ✅ **Bug Investigation** - "Reminders don't save" issue was UX gap, not code bug
-- ✅ **Race condition already fixed** - Commit 7d686fe resolved 401 errors
-- ✅ **Real issue found** - Reminders >7 days out had no view to display them
-- ✅ **Future view added** - Third time-horizon page for reminders 8+ days out
-- ✅ **Testing infrastructure** - 24 pytest tests with 80% code coverage
-  - 18 API tests (all endpoints + auth + filtering)
-  - 6 database tests (CRUD operations)
-  - test_api.py, test_database.py, conftest.py created
-- ✅ **Database cleaned** - Flushed test data, ready for Phase 4
-- ✅ **All 3 commits** - 7e9b727 (Future view), ee725da (docs), c85bbd7 (tests)
+**Just Completed (November 3, 2025 Evening Session):**
+
+### Phase 3.6: Priority System Enhancement (45 min, 4 commits)
+- ✅ **5-Level Priority System** - Expanded from 3 to 5 levels for better ADHD task management
+  - Added: 🔵 **Someday** (Blue) - Future ideas, no timeline
+  - Added: 🟠 **Waiting** (Orange) - Blocked tasks, on hold
+  - Kept: 🟢 Chill, 🟡 Important, 🔴 Urgent
+- ✅ **Subagent-Driven Development** - Used proper Research → Development → Testing workflow
+  - Subagent 1 (b4beb91): Requirements analysis (285-line document)
+  - Subagent 2 (728f4e4): Backend implementation (database + models)
+  - Subagent 3 (f553816): Frontend implementation (UI + styles + JS)
+  - Subagent 4 (9c07fb4): Test coverage (4 new tests, 28 total passing)
+- ✅ **Files Modified** - 7 files updated (database, models, HTML, CSS, JS, tests)
+- ✅ **Test Coverage Maintained** - 80% coverage with new priority tests
+
+### Phase 4: Cloudflare Workers Infrastructure (1.5 hours, 4 commits)
+- ✅ **Architecture Research** - 692-line technical documentation (Subagent 5, af410da)
+  - Selected Hono framework (402,820 ops/sec, ~14KB, TypeScript-first)
+  - Documented Workers runtime, D1 patterns, authentication, CORS
+  - Created implementation checklist for API development
+- ✅ **D1 Migration Planning** - 187-line SQL migration (Subagent 6, 5071a2c)
+  - Schema matches local SQLite exactly (5-level priority system)
+  - 2 tables: reminders (22 fields) + recurrence_patterns (Phase 7)
+  - 5 performance indexes, 6 seed reminders
+- ✅ **Workers Project Setup** - npm/TypeScript/Wrangler configured (Subagent 7, 353e0fd)
+  - package.json with Hono + TypeScript dependencies
+  - tsconfig.json with Workers-compatible settings
+  - wrangler.toml with D1 binding configuration
+  - 224 npm packages installed
+- ✅ **D1 Database Created** - Live in Cloudflare production (Subagent 8, f85d88a)
+  - Database ID: 4c1e4710-37e9-49ae-a1ba-36eddfb1aa79
+  - Region: ENAM (Europe/North America)
+  - Migration applied: 10 queries, 53 rows written, 0.05 MB
+  - 6 seed reminders with all 5 priority levels
+
+**Total Progress This Session:**
+- 8 subagents completed (following subagent_usage.md workflow)
+- 8 atomic commits (b4beb91 → f85d88a + d596dcc docs)
+- 2.25 hours of focused development
+- 60% overall project completion (4.5 of 8 phases)
 
 **How to Run:**
 ```bash
@@ -36,9 +65,105 @@ pytest tests/ -v --cov=server
 ```
 
 **The app now has:**
-- Three complete time-horizon views
-- 24 automated tests (80% coverage)
-- Clean database ready for cloud sync
+- Three complete time-horizon views (Today/Upcoming/Future)
+- 5-level priority system (someday/chill/important/urgent/waiting)
+- 28 automated tests (80% coverage)
+- Cloudflare D1 database live in production
+- Workers infrastructure ready for API implementation
+
+---
+
+## 🚀 Next Session: Phase 4 API Implementation
+
+**Goal:** Implement TypeScript Workers API with Hono, deploy to Cloudflare edge
+
+**Prerequisites:**
+- ✅ Cloudflare account configured
+- ✅ Wrangler CLI updated (user confirmed)
+- ✅ D1 database created and migrated
+- ✅ Workers project scaffolded
+- ✅ Architecture research complete
+
+**Remaining Work (7 Subagents, ~3.5-4 hours):**
+
+### Implementation Phase (2-2.5 hours)
+
+**Subagent 9: Workers API - Health & Auth** (~30 min)
+- Create `workers/src/index.ts` with Hono app initialization
+- Implement `GET /api/health` endpoint (database connectivity check)
+- Add bearer token authentication middleware
+- Configure CORS middleware for web UI access
+- Test locally with `wrangler dev`
+
+**Subagent 10: Workers API - Read Endpoints** (~45 min)
+- Implement `GET /api/reminders` (list with filters: status, category, priority, limit, offset)
+- Implement `GET /api/reminders/:id` (single reminder by UUID)
+- Add D1 query patterns (.prepare(), .bind(), .first(), .all())
+- Match FastAPI response format exactly (JSON structure)
+- Error handling for 404, 500
+
+**Subagent 11: Workers API - Write Endpoints** (~45 min)
+- Implement `POST /api/reminders` (create with crypto.randomUUID())
+- Implement `PATCH /api/reminders/:id` (partial update)
+- Implement `DELETE /api/reminders/:id` (soft or hard delete)
+- Add timestamp management (created_at, updated_at via new Date().toISOString())
+- Validate request bodies, return proper status codes (201, 204, 400, 404)
+
+**Subagent 12: Frontend Cloud Integration** (~20 min)
+- Update `public/config.json` with Worker URL after deployment
+- Optional: Add UI toggle to switch local ↔ cloud endpoints
+- Test frontend can connect to cloud API
+- Verify CORS allows requests from localhost:3000
+
+### Testing & Deployment Phase (1-1.5 hours)
+
+**Subagent 13: Workers Local Testing** (~20 min)
+- Run `wrangler dev` to test locally
+- Test all 6 endpoints (health, create, list, get, update, delete)
+- Verify authentication blocks unauthorized requests
+- Validate response formats match FastAPI exactly
+- Check CORS headers present
+
+**Subagent 14: Deployment & Production Testing** (~30 min)
+- Deploy to Cloudflare: `wrangler deploy`
+- Capture Worker URL (e.g., `https://reminders-api.your-subdomain.workers.dev`)
+- Test all endpoints in production
+- Verify D1 database connectivity
+- Test with actual frontend (switch config.json to cloud URL)
+
+**Subagent 15: Integration Testing & Documentation** (~15 min)
+- End-to-end testing: UI → Cloud API → D1 → UI
+- Compare local vs cloud behavior (should be identical)
+- Update `SO_FAR.md` with Phase 4 completion
+- Update `NEXT_STEPS.md` for Phase 5 (Sync Logic)
+- Update `TODOS.md` to mark Phase 4 complete
+- Document Worker URL and deployment status
+
+**Success Criteria:**
+- ✅ All 6 API endpoints deployed and working
+- ✅ D1 queries successful from Workers
+- ✅ Bearer token authentication enforced
+- ✅ CORS configured correctly
+- ✅ Response formats match FastAPI
+- ✅ Frontend can switch local ↔ cloud
+- ✅ End-to-end testing passing
+- ✅ Documentation updated
+
+**Quick Start for Next Session:**
+```bash
+# Verify Wrangler
+npx wrangler --version
+
+# Test D1 database
+npx wrangler d1 execute reminders-db --command="SELECT COUNT(*) FROM reminders" --remote
+
+# Start local development (after API implementation)
+cd workers
+npx wrangler dev
+
+# Deploy when ready
+npx wrangler deploy
+```
 
 ---
 
