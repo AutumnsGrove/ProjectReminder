@@ -1,0 +1,26 @@
+name = "reminders-api"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# D1 Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "reminders-db"
+database_id = ""  # Will be filled after: wrangler d1 create reminders-db
+
+# Environment Variables (for secrets)
+[vars]
+ENVIRONMENT = "production"
+
+# Development settings
+[env.development]
+vars = { ENVIRONMENT = "development" }
+
+# CORS Configuration
+[build]
+command = ""  # No build step, Hono handles it
+
+# Custom routes (optional, defaults to workers.dev subdomain)
+# routes = [
+#   { pattern = "api.yourproject.com", zone_name = "yourproject.com" }
+# ]

@@ -1,0 +1,25 @@
+{
+  "name": "reminders-worker",
+  "version": "1.0.0",
+  "description": "Cloudflare Workers API for ADHD-friendly reminders system",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "build": "tsc",
+    "test": "vitest"
+  },
+  "keywords": ["cloudflare", "workers", "d1", "reminders", "api"],
+  "author": "Claude Code",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20231218.0",
+    "typescript": "^5.3.3",
+    "wrangler": "^3.22.1",
+    "vitest": "^1.1.0"
+  },
+  "dependencies": {
+    "hono": "^3.12.0"
+  }
+}
