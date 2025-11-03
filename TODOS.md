@@ -1,7 +1,7 @@
 # TODOs - ADHD-Friendly Voice Reminders System
 
-**Project Status:** ✅ Phase 1-7 Complete | 🚀 Phase 8 Next (Voice Input)
-**Last Updated:** November 3, 2025 (Recurring Reminders Complete!)
+**Project Status:** ✅ Phase 1-8 Complete | 🚀 Phase 8.1 Next (LLM Parsing)
+**Last Updated:** November 3, 2025 (Voice-to-Text MVP Complete!)
 **Worker URL:** https://reminders-api.m7jv4v7npb.workers.dev
 
 ---
@@ -220,57 +220,104 @@
 
 ---
 
-## Phase 8: Voice Input (MVP - Voice-to-Text Only) 📅 NEXT
+## Phase 8: Voice Input (MVP - Voice-to-Text Only) ✅ COMPLETE
 
-**Tech Stack Decided:**
-- ✅ STT: Whisper.cpp (local, offline)
+**Status**: ✅ Complete (November 3, 2025)
+**Implementation Time**: ~5-6 hours (8 subagents)
+**Documentation**: See `docs/phase8_completion.md` for full details
+
+**Tech Stack:**
+- ✅ STT: Whisper.cpp (local, offline, base.en model)
 - ✅ LLM: Llama 3.2 1B (deferred to Phase 8.1)
 
 **MVP Scope:** Voice transcription only (manual field completion)
 **Architecture:** See `docs/phase8_architecture.md` for full plan
 
-### Research & Selection
+### Research & Selection ✅
 - [x] Research local STT options (Whisper.cpp chosen)
 - [x] Research small LLMs (Llama 3.2 1B chosen, deferred)
 - [x] Architecture plan created with house-planner
 - [x] Choose final stack (Whisper.cpp for MVP)
 
-### Whisper.cpp Integration
-- [ ] Install and configure Whisper.cpp (base.en model)
-- [ ] Create Python wrapper for Whisper.cpp (`server/voice/whisper.py`)
-- [ ] Add voice recording endpoint (`POST /api/voice/transcribe`)
-- [ ] Test transcription accuracy
+### Whisper.cpp Integration ✅
+- [x] Install and configure Whisper.cpp (base.en model, 23x realtime)
+- [x] Create Python wrapper for Whisper.cpp (`server/voice/whisper.py`)
+- [x] Add voice recording endpoint (`POST /api/voice/transcribe`)
+- [x] Test transcription accuracy (85-90% for clear speech)
 
-### UI Integration
-- [ ] Add voice button (🎤) to edit form with 3 states
-- [ ] Implement audio recording in browser (`public/js/voice-recorder.js`)
-- [ ] Send audio to backend for transcription
-- [ ] Display transcription in text field
-- [ ] Add comprehensive error handling (permissions, failures)
+### UI Integration ✅
+- [x] Add voice button (🎤) to edit form with 3 states (idle/recording/processing)
+- [x] Implement audio recording in browser (`public/js/voice-recorder.js`)
+- [x] Send audio to backend for transcription (FormData multipart)
+- [x] Display transcription in text field (auto-populate)
+- [x] Add comprehensive error handling (permissions, failures, toast notifications)
 
-### NLP Parsing (Phase 8.1 - Deferred)
+### Backend Integration ✅
+- [x] FastAPI endpoint: `POST /api/voice/transcribe` (bearer auth, 10MB max)
+- [x] Cloudflare Workers endpoint: `POST /api/voice/transcribe` (501 Not Implemented)
+- [x] VoiceTranscriptionResponse model (text, model, language, file_size)
+- [x] Comprehensive error codes (400, 413, 422, 500, 503, 504)
+
+### Testing & Documentation ✅
+- [x] 14 pytest tests (100% pass, 97% endpoint coverage)
+- [x] Requirements document (`docs/phase8_requirements.md`)
+- [x] Technical research (`docs/phase8_technical_research.md`)
+- [x] Completion report (`docs/phase8_completion.md`)
+
+**Phase 8 MVP Success Criteria (All Met):**
+- ✅ Voice transcription to text (85-90% accuracy achieved)
+- ✅ Runs locally (privacy preserved, offline-first)
+- ✅ Fast enough (2-8 seconds end-to-end, 23x realtime processing)
+- ✅ User manually fills date, time, priority (as expected)
+- ✅ Graceful error handling (browser permissions, network, transcription)
+
+**User Flow:**
+1. Click 🎤 button → Browser requests permission
+2. User speaks: "Buy groceries at Kroger tomorrow"
+3. Recording stops (manual or auto 30s)
+4. Audio uploads → Whisper.cpp transcribes (2-8s)
+5. Text appears: "Buy groceries at Kroger tomorrow"
+6. User manually sets date, priority, location
+
+---
+
+## Phase 8.1: LLM Parsing (Natural Language Understanding) 📅 NEXT
+
+**Goal**: Auto-extract reminder metadata from transcribed text using local LLM.
+
+**Example**:
+- **Voice**: "Call mom about Thanksgiving tomorrow at 3pm, this is urgent"
+- **Phase 8 Output**: Text: "Call mom about Thanksgiving tomorrow at 3pm, this is urgent"
+- **Phase 8.1 Output**:
+  - Text: "Call mom about Thanksgiving"
+  - Due Date: 2025-11-04 (parsed "tomorrow")
+  - Due Time: 15:00:00 (parsed "3pm")
+  - Priority: urgent (parsed "this is urgent")
+  - Category: Calls (inferred from "call")
+  - Time Required: false
+
+**Tech Stack:**
+- Llama 3.2 1B or Phi-3 Mini (local inference)
+- llama.cpp or llama-cpp-python
+- Custom system prompt for reminder parsing
+- New endpoint: `POST /api/voice/parse`
+
+**Tasks:**
 - [ ] Install and configure Llama 3.2 1B
 - [ ] Create prompt for reminder parsing
 - [ ] Implement parsing pipeline (text → structured data)
 - [ ] Add fallback to manual edit if parse fails
 - [ ] Add `POST /api/voice/parse` endpoint
+- [ ] Test with various natural language inputs
 
-**Phase 8 MVP Success Criteria:**
-- ✅ Voice transcription to text (>85% accuracy)
-- ✅ Runs locally (privacy preserved)
-- ✅ Fast enough (<8 seconds end-to-end)
-- ✅ User manually fills date, time, priority
-- ✅ Graceful error handling
-
-**Phase 8.1 Success Criteria (Future):**
+**Phase 8.1 Success Criteria:**
 - ✅ Auto-extract date: "tomorrow" → "2025-11-04"
 - ✅ Auto-extract time: "at 3pm" → "15:00:00"
 - ✅ Auto-extract priority: "urgent" → "urgent"
 - ✅ Auto-extract location: "at Kroger" → geocoded
+- ✅ Auto-extract category: "call" → "Calls"
 
-**Estimated Time:**
-- Phase 8 MVP: 12-15 hours
-- Phase 8.1: 8-10 hours (future)
+**Estimated Time:** 8-10 hours (5-6 subagents)
 
 ---
 
