@@ -13,12 +13,16 @@
 /* ===== Root Variables ===== */
 :root {
     /* Colors - Priority System */
+    --color-someday: #2196F3;         /* Blue */
+    --color-someday-light: #E3F2FD;
     --color-chill: #4CAF50;        /* Green - Low priority */
     --color-chill-light: #E8F5E9;
     --color-important: #FFC107;    /* Yellow - Medium priority */
     --color-important-light: #FFF9C4;
     --color-urgent: #F44336;       /* Red - High priority */
     --color-urgent-light: #FFEBEE;
+    --color-waiting: #FF9800;         /* Orange */
+    --color-waiting-light: #FFF3E0;
 
     /* Base Colors */
     --color-primary: #2196F3;
@@ -302,6 +306,16 @@ body {
 .priority-badge.urgent {
     background-color: var(--color-urgent-light);
     color: var(--color-urgent);
+}
+
+.priority-badge.someday {
+    background-color: var(--color-someday-light);
+    color: var(--color-someday);
+}
+
+.priority-badge.waiting {
+    background-color: var(--color-waiting-light);
+    color: #E65100; /* Darker orange for readability */
 }
 
 /* ===== Empty State ===== */

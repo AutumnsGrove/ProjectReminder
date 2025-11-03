@@ -299,7 +299,7 @@ const API = (function() {
                 if (dateDiff !== 0) return dateDiff;
 
                 // Then by priority
-                const priorityOrder = { urgent: 0, important: 1, chill: 2 };
+                const priorityOrder = { urgent: 0, important: 1, chill: 2, someday: 3, waiting: 4 };
                 const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
                 if (priorityDiff !== 0) return priorityDiff;
 
@@ -347,7 +347,7 @@ const API = (function() {
                 const dateDiff = a.due_date.localeCompare(b.due_date);
                 if (dateDiff !== 0) return dateDiff;
 
-                const priorityOrder = { urgent: 0, important: 1, chill: 2 };
+                const priorityOrder = { urgent: 0, important: 1, chill: 2, someday: 3, waiting: 4 };
                 return priorityOrder[a.priority] - priorityOrder[b.priority];
             });
 

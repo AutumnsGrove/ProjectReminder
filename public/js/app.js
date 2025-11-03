@@ -172,9 +172,11 @@ const App = (function() {
      */
     function createPriorityBadge(priority) {
         const badges = {
+            someday: '<span class="priority-badge someday">🔵 Someday</span>',
             chill: '<span class="priority-badge chill">🟢 Chill</span>',
             important: '<span class="priority-badge important">🟡 Important</span>',
-            urgent: '<span class="priority-badge urgent">🔴 Urgent</span>'
+            urgent: '<span class="priority-badge urgent">🔴 Urgent</span>',
+            waiting: '<span class="priority-badge waiting">🟠 Waiting</span>'
         };
         return badges[priority] || badges.chill;
     }
