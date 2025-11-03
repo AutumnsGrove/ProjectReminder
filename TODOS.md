@@ -1,7 +1,7 @@
 # TODOs - ADHD-Friendly Voice Reminders System
 
-**Project Status:** ✅ Phase 1, 2, 3 Complete - Ready for Phase 4
-**Last Updated:** November 2, 2025 (Evening Session)
+**Project Status:** ✅ Phase 1, 2, 3, 3.5, 3.6 Complete | ⚡ Phase 4 In Progress (9 of 15 subagents complete - 60%)
+**Last Updated:** November 3, 2025 (Evening Session - Subagent 9 Complete)
 
 ---
 
@@ -151,38 +151,113 @@
 
 ---
 
-## Phase 4: Cloudflare Workers (Day 2-3) 📅
+## Phase 4: Cloudflare Workers (Day 2-3) ⚡ IN PROGRESS (65% Complete)
 
-### Setup
-- [ ] Create Cloudflare account (free tier)
-- [ ] Install Wrangler CLI (`npm install -g wrangler`)
-- [ ] Login to Cloudflare: `wrangler login`
-- [ ] Create `workers/` directory
+### Setup & Infrastructure ✅ COMPLETE (Subagents 5-8)
+- [x] Create Cloudflare account (free tier)
+- [x] Install Wrangler CLI (`npm install -g wrangler`)
+- [x] Login to Cloudflare: `wrangler login`
+- [x] Create `workers/` directory
 
-### Workers Development
-- [ ] Create `workers/src/index.ts` - Workers API
-- [ ] Create `workers/wrangler.toml` - Configuration
-- [ ] Implement TypeScript versions of all FastAPI endpoints
-- [ ] Add CORS headers for web UI access
-- [ ] Implement bearer token authentication
+### Research Phase ✅ COMPLETE
+- [x] **Subagent 5:** Architecture research (692-line technical doc)
+  - [x] Select Hono framework (402,820 ops/sec)
+  - [x] Document Workers runtime patterns
+  - [x] Plan D1 database integration
+  - [x] Design authentication and CORS strategy
+  - [x] Commit: `af410da`
 
-### D1 Database
-- [ ] Create D1 database: `wrangler d1 create reminders`
-- [ ] Create schema migration SQL file
-- [ ] Run migrations to set up tables
-- [ ] Seed default categories
+- [x] **Subagent 6:** D1 migration planning (187-line SQL migration)
+  - [x] Create schema matching local SQLite
+  - [x] Include 5-level priority system
+  - [x] Define 5 performance indexes
+  - [x] Add 6 seed reminders
+  - [x] Commit: `5071a2c`
 
-### Deployment
-- [ ] Deploy to Cloudflare: `wrangler deploy`
-- [ ] Test cloud API with curl
-- [ ] Verify D1 data persistence
-- [ ] Update settings page with cloud URL
+### Development Phase ✅ PARTIAL (1 of 4 complete)
+- [x] **Subagent 7:** Workers project setup
+  - [x] Create `package.json` with Hono + TypeScript
+  - [x] Create `tsconfig.json` (Workers-compatible)
+  - [x] Create `wrangler.toml` with D1 binding
+  - [x] Install npm dependencies (224 packages)
+  - [x] Commit: `353e0fd`
+
+- [x] **Subagent 8:** D1 database initialization
+  - [x] Create D1 database: `wrangler d1 create reminders-db`
+  - [x] Apply migration to production (10 queries, 53 rows)
+  - [x] Database ID: `4c1e4710-37e9-49ae-a1ba-36eddfb1aa79`
+  - [x] Commit: `f85d88a`
+
+- [x] **Subagent 9:** Workers API - Health & Auth (~30 min) ✅ COMPLETE
+  - [x] Create `workers/src/index.ts` with Hono app (173 lines)
+  - [x] Implement `GET /api/health` endpoint
+  - [x] Add bearer token authentication middleware
+  - [x] Configure CORS middleware for localhost:3000
+  - [x] Test locally with `wrangler dev` (7/7 tests passing)
+  - [x] Commit: `f3d2593`
+
+- [ ] **Subagent 10:** Workers API - Read Endpoints (~45 min) 📍 NEXT
+  - [ ] Implement `GET /api/reminders` (list with filters)
+  - [ ] Implement `GET /api/reminders/:id` (single reminder)
+  - [ ] Add D1 query patterns (`.prepare()`, `.bind()`, `.all()`, `.first()`)
+  - [ ] Match FastAPI response format exactly
+  - [ ] Error handling: 404, 500
+  - [ ] Apply authentication middleware
+  - [ ] Commit: `feat: Implement Workers read endpoints`
+
+- [ ] **Subagent 11:** Workers API - Write Endpoints (~45 min)
+  - [ ] Implement `POST /api/reminders` (create with UUID generation)
+  - [ ] Implement `PATCH /api/reminders/:id` (partial update)
+  - [ ] Implement `DELETE /api/reminders/:id` (delete)
+  - [ ] Add timestamp management (`created_at`, `updated_at`)
+  - [ ] Request body validation
+  - [ ] Proper status codes (201, 204, 400, 404)
+  - [ ] Commit: `feat: Implement Workers write endpoints`
+
+- [ ] **Subagent 12:** Frontend Cloud Integration (~20 min)
+  - [ ] Update `public/config.json` with Worker URL
+  - [ ] Optional: Add UI toggle for local ↔ cloud switching
+  - [ ] Test frontend connectivity to cloud API
+  - [ ] Verify CORS allows requests from localhost:3000
+  - [ ] Commit: `feat: Connect frontend to cloud Workers API`
+
+### Testing & Deployment Phase
+- [ ] **Subagent 13:** Workers Local Testing (~20 min)
+  - [ ] Run `wrangler dev` for local testing
+  - [ ] Test all 6 endpoints (health, create, list, get, update, delete)
+  - [ ] Verify authentication blocks unauthorized requests
+  - [ ] Validate response formats match FastAPI
+  - [ ] Check CORS headers present
+  - [ ] Commit: `test: Validate all Workers endpoints locally`
+
+- [ ] **Subagent 14:** Deployment & Production Testing (~30 min)
+  - [ ] Deploy to Cloudflare: `wrangler deploy`
+  - [ ] Capture Worker URL (e.g., `https://reminders-api.*.workers.dev`)
+  - [ ] Test all endpoints in production
+  - [ ] Verify D1 database connectivity
+  - [ ] Test with actual frontend (switch config.json to cloud URL)
+  - [ ] Commit: `deploy: Deploy Workers API to Cloudflare edge`
+
+- [ ] **Subagent 15:** Integration Testing & Documentation (~15 min)
+  - [ ] End-to-end testing: UI → Cloud API → D1 → UI
+  - [ ] Compare local vs cloud behavior (should match exactly)
+  - [ ] Update `SO_FAR.md` with Phase 4 completion
+  - [ ] Update `NEXT_STEPS.md` for Phase 5 (Sync Logic)
+  - [ ] Update `TODOS.md` to mark Phase 4 complete
+  - [ ] Document Worker URL and deployment status
+  - [ ] Commit: `docs: Complete Phase 4 documentation`
 
 **Success Criteria:**
 - ✅ Cloud API responds to requests
 - ✅ Can switch UI to cloud endpoint
 - ✅ Data persists in D1
 - ✅ CORS allows web UI access
+- ✅ All 6 endpoints working (health, create, list, get, update, delete)
+- ✅ Bearer token authentication enforced
+- ✅ Response formats match FastAPI exactly
+- ✅ End-to-end testing passing
+
+**Current Status:** Subagent 9 complete (health check + auth), Subagent 10 next (read endpoints)
 
 ---
 
