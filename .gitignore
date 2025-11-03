@@ -1,4 +1,5 @@
 secrets.json
+public/config.json
 reminders.db
 *.log
 __pycache__/

@@ -79,7 +79,7 @@ python serve_ui.py
 # API Server: http://localhost:8000
 # UI Server: http://localhost:3000
 # Swagger docs: http://localhost:8000/docs
-# API token: 10b3743d4bfd44585c2bb8518de240cf20e990dc6bdab17c4abe944dee273bc3
+# API token: (stored in secrets.json and config.json)
 ```
 
 **Testing:**
@@ -150,10 +150,12 @@ Or select **"No restrictions"** for development (public tokens are safe for clie
 Once obtained, update `secrets.json`:
 ```json
 {
-  "api_token": "10b3743d4bfd44585c2bb8518de240cf20e990dc6bdab17c4abe944dee273bc3",
+  "api_token": "YOUR_GENERATED_TOKEN_HERE",
   "mapbox_access_token": "pk.YOUR_MAPBOX_TOKEN_HERE"
 }
 ```
+
+**Generate your api_token with:** `openssl rand -hex 32` or `python3 -c "import secrets; print(secrets.token_hex(32))"`
 
 ---
 

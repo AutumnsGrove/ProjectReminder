@@ -610,9 +610,9 @@ python serve_ui.py
 # Test API health
 curl http://localhost:8000/api/health
 
-# Test creating reminder via API
+# Test creating reminder via API (replace YOUR_TOKEN with value from secrets.json)
 curl -X POST http://localhost:8000/api/reminders \
-  -H "Authorization: Bearer 10b3743d4bfd44585c2bb8518de240cf20e990dc6bdab17c4abe944dee273bc3" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"text": "Integration test", "priority": "chill"}'
 

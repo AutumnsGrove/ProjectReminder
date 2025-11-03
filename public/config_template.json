@@ -3,7 +3,7 @@
     "local_endpoint": "http://localhost:8000/api",
     "cloud_endpoint": "",
     "use_cloud": false,
-    "token": "10b3743d4bfd44585c2bb8518de240cf20e990dc6bdab17c4abe944dee273bc3"
+    "token": "YOUR_API_TOKEN_HERE_GENERATE_WITH_openssl_rand_hex_32"
   },
   "sync": {
     "enabled": false,
@@ -17,5 +17,5 @@
     "enabled": false,
     "mapbox_token": ""
   },
-  "_comment": "Configuration for the reminders app. Edit as needed for your setup."
+  "_comment": "SETUP: Copy this file to config.json and replace YOUR_API_TOKEN_HERE with the same token from secrets.json"
 }
