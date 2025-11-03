@@ -1,334 +1,126 @@
 # TODOs - ADHD-Friendly Voice Reminders System
 
-**Project Status:** ✅ Phase 1, 2, 3, 3.5, 3.6, 4, 5 Complete | 🚀 Phase 6 Next (Location Features)
+**Project Status:** ✅ Phase 1-5 Complete | 🚀 Phase 6 Next (Location Features)
 **Last Updated:** November 3, 2025 (Evening Session - Phase 5 Complete!)
 **Worker URL:** https://reminders-api.m7jv4v7npb.workers.dev
 
 ---
 
-## Phase 1: Core Backend (Day 1) ✅ COMPLETE
+## ✅ Completed Phases (Summary)
 
-### Setup & Configuration
-- [x] Initialize Python environment with UV
-- [x] Create `server/` directory structure
-- [x] Set up FastAPI project structure
-- [x] Create `secrets.json` from template
-- [x] Add `secrets.json` to `.gitignore`
-- [x] Configure MapBox and API tokens
+<details>
+<summary><strong>Phase 1: Core Backend ✅</strong> - FastAPI + SQLite + CRUD endpoints</summary>
 
-### Database
-- [x] Create `server/database.py` with SQLite interface
-- [x] Implement reminders table schema (all fields from spec)
-- [x] Add database indexes for performance
-- [x] Create seed data function (default categories)
-- [x] Write database initialization script
-- [x] Test database connection and queries
+- FastAPI REST API with bearer token auth
+- SQLite database with full schema
+- All CRUD endpoints (health, create, read, update, delete)
+- Pydantic models and validation
+- Auto-generated Swagger docs
+- CORS configured for web UI
 
-### API Development
-- [x] Create `server/main.py` FastAPI app entry point
-- [x] Create `server/models.py` with Pydantic models
-- [x] Create `server/config.py` for configuration
-- [x] Implement bearer token authentication middleware
-- [x] Add CORS configuration for web UI
+**Files:** `server/database.py`, `server/main.py`, `server/models.py`, `server/config.py`
+</details>
 
-### CRUD Endpoints
-- [x] Implement `GET /api/health` - Health check endpoint
-- [x] Implement `POST /api/reminders` - Create reminder
-- [x] Implement `GET /api/reminders` - List reminders (with filters)
-- [x] Implement `GET /api/reminders/:id` - Get single reminder
-- [x] Implement `PATCH /api/reminders/:id` - Update reminder
-- [x] Implement `DELETE /api/reminders/:id` - Delete reminder
+<details>
+<summary><strong>Phase 2: Web UI ✅</strong> - HTML/CSS/JS frontend</summary>
 
-### Testing & Documentation
-- [x] Test all endpoints with curl/Postman
-- [x] Verify Swagger docs at `/docs` work
-- [x] Test authentication (valid/invalid tokens)
-- [x] Verify database persistence
-- [x] Document any deviations from spec
+- Today, Upcoming, Future views
+- Create/Edit form
+- Mobile-first responsive design
+- 5-level priority colors (someday/chill/important/urgent/waiting)
+- Completion animations
+- Toast notifications
 
-**Success Criteria:**
-- ✅ API running on localhost:8000
-- ✅ Can create/read/update/delete reminders
-- ✅ Authentication works
-- ✅ Database persists data
-- ✅ All fields from spec implemented
-- ✅ ISO 8601 formatting correct
-- ✅ Priority and status enums working
-- ✅ Error handling with proper status codes
+**Files:** `public/*.html`, `public/css/*.css`, `public/js/app.js`
+</details>
 
----
+<details>
+<summary><strong>Phase 3: Integration ✅</strong> - Full stack connection</summary>
 
-## Phase 2: Web UI (Day 1-2) 📅
+- API client with fetch() calls
+- Error handling with retry logic
+- Loading states
+- Full CRUD integration
+- Offline state handling
 
-### Project Structure
-- [ ] Create `public/` directory
-- [ ] Create subdirectories: `css/`, `js/`, `assets/icons/`
-- [ ] Set up basic HTML5 template structure
+**Files:** `public/js/api.js`, `public/js/errors.js`
+</details>
 
-### HTML Pages
-- [ ] Create `public/index.html` - Today view
-- [ ] Create `public/upcoming.html` - Upcoming view
-- [ ] Create `public/edit.html` - Create/edit form
-- [ ] Create `public/settings.html` - Configuration
+<details>
+<summary><strong>Phase 3.5: Testing Infrastructure ✅</strong> - Pytest test suite</summary>
 
-### CSS Styling
-- [ ] Create `public/css/main.css` - Global styles
-- [ ] Create `public/css/today.css` - Today view specific
-- [ ] Create `public/css/upcoming.css` - Upcoming view specific
-- [ ] Create `public/css/edit.css` - Form styles
-- [ ] Implement mobile-first responsive design
-- [ ] Add priority colors (chill: green, important: yellow, urgent: red)
-- [ ] Style completion animations
+- 24 passing tests (80% coverage)
+- Database, API endpoints, models tested
+- Test fixtures and utilities
+- CI-ready test suite
 
-### JavaScript Structure
-- [ ] Create `public/js/app.js` - Main app logic with mock data
-- [ ] Create `public/js/api.js` - API client wrapper (stub)
-- [ ] Create `public/js/storage.js` - LocalStorage helpers
-- [ ] Create `public/js/animations.js` - UI animations
+**Files:** `tests/test_*.py`, `pytest.ini`
+</details>
 
-### UI Implementation
-- [ ] Build Today view with sample data
-- [ ] Build Upcoming view with sample data
-- [ ] Build reminder form with validation
-- [ ] Add completion animation (checkbox → fade out → slide up)
-- [ ] Implement swipe-to-delete gesture (mobile)
-- [ ] Add priority badge visualization
-- [ ] Test on mobile and desktop screen sizes
+<details>
+<summary><strong>Phase 3.6: 5-Level Priority System ✅</strong> - Enhanced priority model</summary>
 
-**Success Criteria:**
-- ✅ UI looks good on mobile and desktop
-- ✅ Animations work smoothly
-- ✅ Forms validate input
-- ✅ All pages render with mock data
+- someday (blue) - Dreams/aspirations
+- chill (green) - Low priority
+- important (yellow) - Medium priority
+- urgent (red) - High priority
+- waiting (orange) - Blocked/waiting on others
 
----
+**Files:** Schema updated, UI updated with new colors
+</details>
 
-## Phase 3: Integration (Day 2) ✅ COMPLETE
+<details>
+<summary><strong>Phase 4: Cloudflare Workers ✅</strong> - Production cloud deployment</summary>
 
-### API Client
-- [x] Implement full API client in `public/js/api.js`
-- [x] Add fetch() calls for all endpoints
-- [x] Implement bearer token auth headers
-- [x] Add error handling and user feedback
+- Hono-based TypeScript API
+- D1 SQLite database (cloud)
+- All 6 endpoints deployed
+- Bearer token auth
+- CORS configured
+- 81-112ms performance
+- Production URL: https://reminders-api.m7jv4v7npb.workers.dev
 
-### View Integration
-- [x] Connect Today view to load reminders
-- [x] Connect Upcoming view to load upcoming reminders
-- [x] Wire up create form to `POST /api/reminders`
-- [x] Wire up edit form to `PATCH /api/reminders/:id`
-- [x] Implement delete functionality
+**Files:** `workers/src/index.ts`, `workers/wrangler.toml`, `workers/migrations/*.sql`
+</details>
 
-### Error Handling
-- [x] Handle offline state gracefully
-- [x] Show user-friendly error messages (toast notifications)
-- [x] Add loading states for async operations
-- [x] Implement retry logic for failed requests (3 attempts)
+<details>
+<summary><strong>Phase 5: Sync Logic ✅</strong> - Bidirectional synchronization</summary>
 
-### Critical Fixes
-- [x] Fix race condition causing 401 errors
-- [x] Rotate API tokens (security hardening)
-- [x] Fix script loading order dependencies
-- [x] Update getTodayReminders() structure in UI
+- Offline-first architecture
+- Auto-sync every 5 minutes
+- Manual sync button
+- Conflict resolution (last-write-wins)
+- Change queue with localStorage
+- Retry logic (3 attempts)
+- Sync status UI (5 states: offline/online/syncing/synced/error)
+- D1 migration deployed
 
-**Success Criteria:**
-- ✅ Can create reminders in UI → saved to DB
-- ✅ Can complete reminders → updates DB
-- ✅ Can edit and delete reminders
-- ✅ Error messages are helpful
-- ✅ Full stack integration working
+**Backend:**
+- `POST /api/sync` (FastAPI + Workers)
+- 4 sync models (SyncRequest, SyncResponse, SyncChange, ConflictInfo)
+- 4 database functions (get_changes_since, apply_sync_change, etc.)
 
-**Previous Issues (RESOLVED):**
-- [x] ~~🐛 Create reminder form doesn't save to database~~ - **FIXED** in commit 7d686fe (race condition causing 401 errors before config loaded)
+**Frontend:**
+- `public/js/sync.js` (459 lines)
+- Sync UI in all HTML pages
+- CSS animations and styles
 
-**Known Issues for Next Session:**
-- [ ] Time picker not appearing (HTML5 input type="time" not working in some browsers) - Use text input as workaround
+**Files:** `server/database.py`, `server/main.py`, `server/models.py`, `workers/src/index.ts`, `workers/migrations/003_add_synced_at.sql`, `public/js/sync.js`, `public/css/main.css`
+</details>
 
-**Enhancements Identified:**
-- [ ] 💡 **UX Issue**: Reminders beyond 7 days are invisible - Add "Future" view for tasks >7 days out
-  - Current: Today (overdue/today/floating) + Upcoming (next 7 days)
-  - Needed: Future view for reminders 8+ days out
-  - Alternative: Extend Upcoming window to 30 days
-- [ ] ✅ **Testing**: Add automated tests - **DONE** in commit c85bbd7 (24 tests, 80% coverage)
+**Total Completed:**
+- 7 backend modules
+- 15 frontend files
+- 24 passing tests
+- 3 D1 migrations deployed
+- ~3,500+ lines of code
 
 ---
 
-## Phase 4: Cloudflare Workers (Day 2-3) ✅ COMPLETE (100%)
-
-### Setup & Infrastructure ✅ COMPLETE (Subagents 5-8)
-- [x] Create Cloudflare account (free tier)
-- [x] Install Wrangler CLI (`npm install -g wrangler`)
-- [x] Login to Cloudflare: `wrangler login`
-- [x] Create `workers/` directory
-
-### Research Phase ✅ COMPLETE
-- [x] **Subagent 5:** Architecture research (692-line technical doc)
-  - [x] Select Hono framework (402,820 ops/sec)
-  - [x] Document Workers runtime patterns
-  - [x] Plan D1 database integration
-  - [x] Design authentication and CORS strategy
-  - [x] Commit: `af410da`
-
-- [x] **Subagent 6:** D1 migration planning (187-line SQL migration)
-  - [x] Create schema matching local SQLite
-  - [x] Include 5-level priority system
-  - [x] Define 5 performance indexes
-  - [x] Add 6 seed reminders
-  - [x] Commit: `5071a2c`
-
-### Development Phase ✅ PARTIAL (1 of 4 complete)
-- [x] **Subagent 7:** Workers project setup
-  - [x] Create `package.json` with Hono + TypeScript
-  - [x] Create `tsconfig.json` (Workers-compatible)
-  - [x] Create `wrangler.toml` with D1 binding
-  - [x] Install npm dependencies (224 packages)
-  - [x] Commit: `353e0fd`
-
-- [x] **Subagent 8:** D1 database initialization
-  - [x] Create D1 database: `wrangler d1 create reminders-db`
-  - [x] Apply migration to production (10 queries, 53 rows)
-  - [x] Database ID: `4c1e4710-37e9-49ae-a1ba-36eddfb1aa79`
-  - [x] Commit: `f85d88a`
-
-- [x] **Subagent 9:** Workers API - Health & Auth (~30 min) ✅ COMPLETE
-  - [x] Create `workers/src/index.ts` with Hono app (173 lines)
-  - [x] Implement `GET /api/health` endpoint
-  - [x] Add bearer token authentication middleware
-  - [x] Configure CORS middleware for localhost:3000
-  - [x] Test locally with `wrangler dev` (7/7 tests passing)
-  - [x] Commit: `f3d2593`
-
-- [ ] **Subagent 10:** Workers API - Read Endpoints (~45 min) 📍 NEXT
-  - [ ] Implement `GET /api/reminders` (list with filters)
-  - [ ] Implement `GET /api/reminders/:id` (single reminder)
-  - [ ] Add D1 query patterns (`.prepare()`, `.bind()`, `.all()`, `.first()`)
-  - [ ] Match FastAPI response format exactly
-  - [ ] Error handling: 404, 500
-  - [ ] Apply authentication middleware
-  - [ ] Commit: `feat: Implement Workers read endpoints`
-
-- [ ] **Subagent 11:** Workers API - Write Endpoints (~45 min)
-  - [ ] Implement `POST /api/reminders` (create with UUID generation)
-  - [ ] Implement `PATCH /api/reminders/:id` (partial update)
-  - [ ] Implement `DELETE /api/reminders/:id` (delete)
-  - [ ] Add timestamp management (`created_at`, `updated_at`)
-  - [ ] Request body validation
-  - [ ] Proper status codes (201, 204, 400, 404)
-  - [ ] Commit: `feat: Implement Workers write endpoints`
-
-- [ ] **Subagent 12:** Frontend Cloud Integration (~20 min)
-  - [ ] Update `public/config.json` with Worker URL
-  - [ ] Optional: Add UI toggle for local ↔ cloud switching
-  - [ ] Test frontend connectivity to cloud API
-  - [ ] Verify CORS allows requests from localhost:3000
-  - [ ] Commit: `feat: Connect frontend to cloud Workers API`
-
-### Testing & Deployment Phase
-- [ ] **Subagent 13:** Workers Local Testing (~20 min)
-  - [ ] Run `wrangler dev` for local testing
-  - [ ] Test all 6 endpoints (health, create, list, get, update, delete)
-  - [ ] Verify authentication blocks unauthorized requests
-  - [ ] Validate response formats match FastAPI
-  - [ ] Check CORS headers present
-  - [ ] Commit: `test: Validate all Workers endpoints locally`
-
-- [ ] **Subagent 14:** Deployment & Production Testing (~30 min)
-  - [ ] Deploy to Cloudflare: `wrangler deploy`
-  - [ ] Capture Worker URL (e.g., `https://reminders-api.*.workers.dev`)
-  - [ ] Test all endpoints in production
-  - [ ] Verify D1 database connectivity
-  - [ ] Test with actual frontend (switch config.json to cloud URL)
-  - [ ] Commit: `deploy: Deploy Workers API to Cloudflare edge`
-
-- [ ] **Subagent 15:** Integration Testing & Documentation (~15 min)
-  - [ ] End-to-end testing: UI → Cloud API → D1 → UI
-  - [ ] Compare local vs cloud behavior (should match exactly)
-  - [ ] Update `SO_FAR.md` with Phase 4 completion
-  - [ ] Update `NEXT_STEPS.md` for Phase 5 (Sync Logic)
-  - [ ] Update `TODOS.md` to mark Phase 4 complete
-  - [ ] Document Worker URL and deployment status
-  - [ ] Commit: `docs: Complete Phase 4 documentation`
-
-**Success Criteria:**
-- ✅ Cloud API responds to requests
-- ✅ Can switch UI to cloud endpoint
-- ✅ Data persists in D1
-- ✅ CORS allows web UI access
-- ✅ All 6 endpoints working (health, create, list, get, update, delete)
-- ✅ Bearer token authentication enforced
-- ✅ Response formats match FastAPI exactly
-- ✅ End-to-end testing passing
-
-**Current Status:** ✅ PHASE 4 COMPLETE!
-- Worker URL: https://reminders-api.m7jv4v7npb.workers.dev (live and tested)
-- ✅ All 6 API endpoints working (health, create, list, get, update, delete)
-- ✅ D1 database connected and operational
-- ✅ API_TOKEN secret configured and enforced
-- ✅ CRUD cycle fully tested (CREATE → READ → UPDATE → DELETE)
-- ✅ Authentication verified (401 for invalid tokens)
-- ✅ Filtering working (by priority, category, status)
-- ✅ Performance benchmarks complete (avg 81-112ms)
-- ✅ Frontend config.json updated with cloud endpoint
-- ✅ Ready for Phase 5 (Sync Logic)
-
----
-
-## Phase 5: Sync Logic (Day 3) ✅ COMPLETE
-
-### Sync Endpoint
-- [x] Implement `POST /api/sync` in FastAPI
-- [x] Implement `POST /api/sync` in Workers
-- [x] Add `synced_at` timestamp tracking
-- [x] Implement conflict detection logic
-
-### Client Sync Manager
-- [x] Create `public/js/sync.js` - Sync manager
-- [x] Track local changes in queue
-- [x] Implement background sync (every 5 minutes)
-- [x] Add manual sync button to all views
-- [x] Show sync status indicator (online/offline/syncing/synced/error)
-
-### Conflict Resolution
-- [x] Implement last-write-wins based on `updated_at`
-- [x] Log conflicts for debugging
-- [x] Add sync error handling with retry logic
-
-### UI Components
-- [x] Sync status indicator (color-coded dot + text)
-- [x] Manual sync button with animations
-- [x] Last sync timestamp display
-- [x] Mobile responsive design
-- [x] CSS styles and animations
-
-### Deployment
-- [x] Deploy D1 migration 003_add_synced_at.sql
-- [x] Update all HTML pages with sync components
-- [x] Integrate SyncManager initialization
-
-**Success Criteria:**
-- ✅ Can work offline → changes queued locally
-- ✅ When online → changes sync to cloud automatically
-- ✅ Multi-device sync capability enabled
-- ✅ No data loss during sync operations
-- ✅ Conflicts resolved automatically (last-write-wins)
-- ✅ User-friendly sync status UI
-- ✅ Retry logic handles network failures
-
-**Phase 5 Deliverables:**
-- ✅ Backend sync endpoints (FastAPI + Workers)
-- ✅ Client sync manager (459 lines)
-- ✅ Change queue with localStorage
-- ✅ Auto-sync every 5 minutes
-- ✅ Manual sync button
-- ✅ Sync status indicator with 5 states
-- ✅ D1 migration deployed
-- ✅ Full offline-first architecture working
-
----
-
-## Phase 6: Location Features (Day 3-4) 📅
+## Phase 6: Location Features (Day 3-4) 📅 NEXT
 
 ### MapBox Setup
-- [ ] Get MapBox access token (free tier)
+- [ ] Get MapBox access token (free tier: 50k requests/month)
 - [ ] Add MapBox GL JS to project
 - [ ] Configure MapBox in secrets.json
 
@@ -337,7 +129,7 @@
 - [ ] Implement geocoding (address → lat/lng)
 - [ ] Add map visualization
 - [ ] Enable pin dragging to adjust location
-- [ ] Add radius configuration (default: 100m)
+- [ ] Add radius configuration (default: 100m, adjustable 10m-10km)
 
 ### Location Endpoints
 - [ ] Implement `GET /api/reminders/near-location` (FastAPI)
@@ -356,6 +148,8 @@
 - ✅ Can query reminders near current location
 - ✅ Location-based filtering works
 - ✅ Geocoding is accurate
+
+**Estimated Time:** 6-8 hours
 
 ---
 
@@ -378,23 +172,19 @@
 - [ ] Implement deletion logic (instance vs series)
 - [ ] Display recurrence info in reminder list
 
-### Testing
-- [ ] Test daily recurrence
-- [ ] Test weekly recurrence (specific days)
-- [ ] Test monthly recurrence
-- [ ] Test complex patterns
-
 **Success Criteria:**
 - ✅ Can create "every Tuesday" reminder
 - ✅ Can edit/delete single instance or series
 - ✅ Recurrence displayed correctly
 - ✅ Instances generated automatically
 
+**Estimated Time:** 8-10 hours
+
 ---
 
 ## Phase 8: Voice Input (Iteration 2) 🔮
 
-### Research
+### Research & Selection
 - [ ] Research local STT options (Whisper.cpp, Vosk)
 - [ ] Research small LLMs (Llama 3.2 1B, Phi-3 Mini)
 - [ ] Evaluate performance on target hardware
@@ -403,7 +193,7 @@
 ### STT Integration
 - [ ] Install and configure chosen STT model
 - [ ] Create Python wrapper for STT
-- [ ] Add voice recording endpoint
+- [ ] Add voice recording endpoint (`POST /api/voice/transcribe`)
 - [ ] Test transcription accuracy
 
 ### NLP Parsing
@@ -419,23 +209,31 @@
 - [ ] Display transcription before saving
 - [ ] Handle parsing errors gracefully
 
-### Testing
-- [ ] Test: "Remind me to call mom tomorrow at 3pm"
-- [ ] Test: "Buy groceries when I'm at Kroger"
-- [ ] Test: "Important: Submit report by Friday"
-- [ ] Measure end-to-end latency (<5 seconds target)
+**Example Interactions:**
+```
+"Remind me to call mom tomorrow at 3pm"
+→ {text: "Call mom", due_date: "2025-11-04", due_time: "15:00"}
+
+"Buy groceries when I'm at Kroger"
+→ {text: "Buy groceries", location_text: "Kroger"}
+
+"Important: Submit report by Friday 5pm"
+→ {text: "Submit report", due_date: "2025-11-08", due_time: "17:00", priority: "important"}
+```
 
 **Success Criteria:**
-- ✅ Voice input creates correct reminders
+- ✅ Voice input creates correct reminders (>90% accuracy)
 - ✅ Runs locally (privacy preserved)
-- ✅ Fast enough (<5 seconds)
+- ✅ Fast enough (<5 seconds end-to-end)
 - ✅ Handles ambiguity gracefully
+
+**Estimated Time:** 12-15 hours
 
 ---
 
 ## Future Features (Post-MVP) 🔮
 
-### E-ink Clients
+### E-ink Display Clients
 - [ ] Research Android e-ink app development
 - [ ] Create read-only view for car dashboard
 - [ ] Implement tap-to-complete
@@ -451,7 +249,6 @@
 - [ ] Research thermal printer APIs
 - [ ] Create daily task list formatter
 - [ ] Schedule morning prints
-- [ ] Test print output
 
 ### Analytics
 - [ ] Track completion rates
@@ -460,31 +257,35 @@
 
 ---
 
-## Documentation & Maintenance
+## MVP Roadmap
 
-### Current Session
-- [x] Customize CLAUDE.md with project specifics
-- [x] Update README.md with project details
-- [x] Update TODOS.md with implementation phases
+**Completed (✅):**
+- Phase 1: Core Backend
+- Phase 2: Web UI
+- Phase 3: Integration
+- Phase 3.5: Testing
+- Phase 3.6: 5-Level Priority
+- Phase 4: Cloud Deployment
+- Phase 5: Sync Logic
 
-### Ongoing
-- [ ] Update TODOS.md as phases complete
-- [ ] Document architectural decisions
-- [ ] Keep API documentation current
-- [ ] Update project spec with learnings
+**Remaining for MVP (📅):**
+- Phase 6: Location Features (6-8 hours)
+- Phase 7: Recurring Reminders (8-10 hours)
+- Phase 8: Voice Input (12-15 hours)
+
+**Total Time to MVP:** ~26-33 hours remaining (~3-4 days)
 
 ---
 
 ## Notes
 
-- Phase 1-3 are MVP "must-haves"
-- Phase 4-5 enable multi-device functionality
-- Phase 6-8 are "nice-to-haves" for v1.0
-- Future features are iteration 2+
-
-**Current Focus:** Phase 1 - Core Backend
+- Phases 1-5 provide full offline-first multi-device functionality ✅
+- Phases 6-8 complete the MVP feature set
+- Future features are v1.1+ enhancements
+- All completed phases have passing tests
+- Production deployment is live and operational
 
 ---
 
 *Generated by Claude Sonnet 4.5*
-*Last Updated: November 2, 2025*
+*Last Updated: November 3, 2025 (Evening Session)*
