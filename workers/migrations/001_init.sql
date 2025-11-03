@@ -118,7 +118,7 @@ CREATE INDEX idx_reminders_location ON reminders(location_lat, location_lng);
 -- Insert sample reminders demonstrating each priority level and key features.
 -- These can be deleted by users once they start creating their own reminders.
 
-INSERT INTO reminders (id, text, category, priority, status, created_at, updated_at, notes) VALUES
+INSERT INTO reminders (id, text, category, priority, status, created_at, updated_at) VALUES
     -- Welcome reminder (chill priority)
     ('seed-00000000-0000-0000-0000-000000000001',
      'Welcome to Voice Reminders! Delete this sample when ready.',
@@ -126,8 +126,7 @@ INSERT INTO reminders (id, text, category, priority, status, created_at, updated
      'chill',
      'pending',
      datetime('now'),
-     datetime('now'),
-     'This is a sample reminder. Tap the checkmark to complete it!'),
+     datetime('now')),
 
     -- Urgent priority example
     ('seed-00000000-0000-0000-0000-000000000002',
@@ -136,8 +135,7 @@ INSERT INTO reminders (id, text, category, priority, status, created_at, updated
      'urgent',
      'pending',
      datetime('now'),
-     datetime('now'),
-     'Demonstrates URGENT priority - highest importance, time-sensitive'),
+     datetime('now')),
 
     -- Important priority example
     ('seed-00000000-0000-0000-0000-000000000003',
@@ -146,8 +144,7 @@ INSERT INTO reminders (id, text, category, priority, status, created_at, updated
      'important',
      'pending',
      datetime('now'),
-     datetime('now'),
-     'Demonstrates IMPORTANT priority - high priority, should be done soon'),
+     datetime('now')),
 
     -- Chill priority example
     ('seed-00000000-0000-0000-0000-000000000004',
@@ -156,8 +153,7 @@ INSERT INTO reminders (id, text, category, priority, status, created_at, updated
      'chill',
      'pending',
      datetime('now'),
-     datetime('now'),
-     'Demonstrates CHILL priority - default, get to it when you can'),
+     datetime('now')),
 
     -- Someday priority example
     ('seed-00000000-0000-0000-0000-000000000005',
@@ -166,8 +162,7 @@ INSERT INTO reminders (id, text, category, priority, status, created_at, updated
      'someday',
      'pending',
      datetime('now'),
-     datetime('now'),
-     'Demonstrates SOMEDAY priority - aspirational, no pressure'),
+     datetime('now')),
 
     -- Waiting priority example
     ('seed-00000000-0000-0000-0000-000000000006',
@@ -176,8 +171,7 @@ INSERT INTO reminders (id, text, category, priority, status, created_at, updated
      'waiting',
      'pending',
      datetime('now'),
-     datetime('now'),
-     'Demonstrates WAITING priority - blocked, waiting on someone else');
+     datetime('now'));
 
 -- =============================================================================
 -- Migration Complete

@@ -6,7 +6,7 @@ compatibility_date = "2024-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "reminders-db"
-database_id = ""  # Will be filled after: wrangler d1 create reminders-db
+database_id = "4c1e4710-37e9-49ae-a1ba-36eddfb1aa79"
 
 # Environment Variables (for secrets)
 [vars]
