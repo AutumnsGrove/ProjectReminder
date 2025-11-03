@@ -306,7 +306,8 @@ app.get('/', async (c) => {
       createReminder: 'POST /api/reminders',
       updateReminder: 'PATCH /api/reminders/:id',
       deleteReminder: 'DELETE /api/reminders/:id',
-      testAuth: '/api/test-auth (protected endpoint for testing)'
+      testAuth: '/api/test-auth (protected endpoint for testing)',
+      voiceTranscribe: 'POST /api/voice/transcribe (local-only, 501 Not Implemented)'
     },
     documentation: 'See workers/ARCHITECTURE.md for full API specification'
   })
@@ -1294,7 +1295,8 @@ app.notFound((c) => {
       'DELETE /api/reminders/:id',
       'POST /api/sync',
       'GET /api/reminders/near-location',
-      'GET /api/test-auth'
+      'GET /api/test-auth',
+      'POST /api/voice/transcribe'
     ]
   }, 404)
 })
@@ -1410,4 +1412,39 @@ app.get('/api/reminders/near-location', authMiddleware, async (c) => {
     }, 500)
   }
 })
+/**
+ * Voice Transcription Endpoint (501 Not Implemented)
+ *
+ * POST /api/voice/transcribe
+ *
+ * Stub endpoint to maintain API parity
+ *
+ * Response format (501 Not Implemented):
+ * {
+ *   "detail": "Voice transcription requires local server",
+ *   "error": "not_implemented",
+ *   "suggestion": "Ensure local FastAPI server is running with Whisper.cpp",
+ *   "feature": "voice_transcription",
+ *   "available_on": "local_only"
+ * }
+ */
+app.post('/api/voice/transcribe', authMiddleware, async (c) => {
+  return c.json(
+    {
+      detail: "Voice transcription requires local server. Please connect to local API at http://localhost:8000",
+      error: "not_implemented",
+      suggestion: "Ensure your local FastAPI server is running with Whisper.cpp installed",
+      feature: "voice_transcription",
+      available_on: "local_only"
+    },
+    {
+      status: 501,
+      headers: {
+        'X-Feature-Availability': 'local-only',
+        'X-Reason': 'Whisper.cpp requires native binaries (incompatible with Workers runtime)'
+      }
+    }
+  )
+})
+
 export default app
