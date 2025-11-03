@@ -21,8 +21,14 @@ const API = (function() {
      */
     function getEndpoint() {
         if (!config) {
-            console.warn('API not initialized, using default endpoint');
-            return 'http://localhost:8000/api';
+            // Try to load config synchronously from localStorage as fallback
+            const savedConfig = localStorage.getItem('reminders_config');
+            if (savedConfig) {
+                const parsedConfig = JSON.parse(savedConfig);
+                return parsedConfig.api.use_cloud ? parsedConfig.api.cloud_endpoint : parsedConfig.api.local_endpoint;
+            }
+            console.warn('API not initialized and no saved config, using default endpoint');
+            return 'http://100.114.120.17:8000/api'; // Match current deployment
         }
         return config.api.use_cloud ? config.api.cloud_endpoint : config.api.local_endpoint;
     }

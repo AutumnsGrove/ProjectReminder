@@ -38,7 +38,7 @@ const Storage = (function() {
     function getDefaultConfig() {
         return {
             api: {
-                local_endpoint: 'http://localhost:8000/api',
+                local_endpoint: 'http://100.114.120.17:8000/api', // Match current deployment
                 cloud_endpoint: '',
                 use_cloud: false,
                 token: ''

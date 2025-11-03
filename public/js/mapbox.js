@@ -21,16 +21,16 @@ const MapBoxUtils = (() => {
    */
   async function init() {
     try {
-      // Load MapBox token from API config
-      const response = await fetch('/api/config/mapbox');
-      const data = await response.json();
+      // Load MapBox token from config.json
+      const config = await Storage.loadConfig();
+      const mapboxAccessToken = config.location?.mapbox_token;
 
-      if (data.mapbox_access_token) {
-        mapboxToken = data.mapbox_access_token;
+      if (mapboxAccessToken) {
+        mapboxToken = mapboxAccessToken;
         mapboxgl.accessToken = mapboxToken;
         return true;
       } else {
-        console.error('MapBox access token not found');
+        console.error('MapBox access token not found in config');
         return false;
       }
     } catch (error) {

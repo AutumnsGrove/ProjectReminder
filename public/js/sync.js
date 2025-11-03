@@ -375,7 +375,7 @@ const SyncManager = (function() {
             };
 
             // Call sync API endpoint
-            const apiUrl = localStorage.getItem('apiUrl') || 'http://localhost:8000';
+            const apiUrl = API.getEndpoint().replace('/api', '');
             const apiToken = localStorage.getItem('apiToken');
 
             if (!apiToken) {
