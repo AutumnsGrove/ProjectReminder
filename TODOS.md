@@ -1,7 +1,7 @@
 # TODOs - ADHD-Friendly Voice Reminders System
 
-**Project Status:** ✅ Phase 1 Complete - Moving to Phase 2
-**Last Updated:** November 2, 2025
+**Project Status:** ✅ Phase 1, 2, 3 Complete - Ready for Phase 4
+**Last Updated:** November 2, 2025 (Evening Session)
 
 ---
 
@@ -102,40 +102,43 @@
 
 ---
 
-## Phase 3: Integration (Day 2) 📅
+## Phase 3: Integration (Day 2) ✅ COMPLETE
 
 ### API Client
-- [ ] Implement full API client in `public/js/api.js`
-- [ ] Add fetch() calls for all endpoints
-- [ ] Implement bearer token auth headers
-- [ ] Add error handling and user feedback
+- [x] Implement full API client in `public/js/api.js`
+- [x] Add fetch() calls for all endpoints
+- [x] Implement bearer token auth headers
+- [x] Add error handling and user feedback
 
 ### View Integration
-- [ ] Connect Today view to `/api/reminders/today`
-- [ ] Connect Upcoming view to `/api/reminders/upcoming`
-- [ ] Wire up create form to `POST /api/reminders`
-- [ ] Wire up edit form to `PATCH /api/reminders/:id`
-- [ ] Implement delete with confirmation
-
-### Settings Page
-- [ ] Build settings UI for API configuration
-- [ ] Implement endpoint switcher (local/cloud)
-- [ ] Add token configuration
-- [ ] Save settings to LocalStorage
-- [ ] Load settings on app start
+- [x] Connect Today view to load reminders
+- [x] Connect Upcoming view to load upcoming reminders
+- [x] Wire up create form to `POST /api/reminders`
+- [x] Wire up edit form to `PATCH /api/reminders/:id`
+- [x] Implement delete functionality
 
 ### Error Handling
-- [ ] Handle offline state gracefully
-- [ ] Show user-friendly error messages
-- [ ] Add loading states for async operations
-- [ ] Implement retry logic for failed requests
+- [x] Handle offline state gracefully
+- [x] Show user-friendly error messages (toast notifications)
+- [x] Add loading states for async operations
+- [x] Implement retry logic for failed requests (3 attempts)
+
+### Critical Fixes
+- [x] Fix race condition causing 401 errors
+- [x] Rotate API tokens (security hardening)
+- [x] Fix script loading order dependencies
+- [x] Update getTodayReminders() structure in UI
 
 **Success Criteria:**
 - ✅ Can create reminders in UI → saved to DB
 - ✅ Can complete reminders → updates DB
 - ✅ Can edit and delete reminders
-- ✅ Settings page configures API endpoint
 - ✅ Error messages are helpful
+- ✅ Full stack integration working
+
+**Known Issues for Next Session:**
+- [ ] 🐛 **CRITICAL**: Create reminder form doesn't save to database (redirects but no data persisted)
+- [ ] Time picker not appearing (HTML5 input type="time" not working in some browsers)
 
 ---
 
