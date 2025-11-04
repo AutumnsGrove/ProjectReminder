@@ -1,423 +1,252 @@
 # TODOs - ADHD-Friendly Voice Reminders System
 
-**Project Status:** ✅ Phase 1-8 Complete | 🚀 Phase 8.1 Next (LLM Parsing)
-**Last Updated:** November 3, 2025 (Voice-to-Text MVP Complete!)
-**Worker URL:** https://reminders-api.m7jv4v7npb.workers.dev
+**Status:** 🚀 Phase 1-8 Complete (87.5% to MVP) | Phase 8.1 Next
+**Last Updated:** November 4, 2025
+**Cloud API:** https://reminders-api.m7jv4v7npb.workers.dev
 
 ---
 
-## ✅ Completed Phases (Summary)
+## 🎯 NEXT: Phase 8.1 - LLM Natural Language Parsing
+
+**Goal:** Auto-extract reminder metadata from voice transcriptions using local LLM.
+
+**What It Does:**
+```
+Voice → "Call mom about Thanksgiving tomorrow at 3pm, this is urgent"
+Currently → Text: "Call mom about Thanksgiving tomorrow at 3pm, this is urgent" (manual fields)
+After 8.1 → Text: "Call mom about Thanksgiving"
+           Due Date: 2025-11-05 (parsed "tomorrow")
+           Due Time: 15:00:00 (parsed "3pm")
+           Priority: urgent (parsed "this is urgent")
+           Category: Calls (inferred from "call")
+```
+
+### Tasks
+
+- [ ] Install and configure Llama 3.2 1B or Phi-3 Mini
+- [ ] Design system prompt for reminder parsing (dates, times, priorities, locations)
+- [ ] Create `POST /api/voice/parse` endpoint (FastAPI)
+- [ ] Implement parsing pipeline: text → structured JSON
+- [ ] Add fallback to manual edit if parse confidence is low
+- [ ] Integrate with voice recorder UI (auto-fill form fields)
+- [ ] Test with 20+ varied natural language inputs
+- [ ] Add Workers endpoint (or return 501 for MVP)
+
+### Success Criteria
+
+- ✅ Auto-extract dates: "tomorrow", "next Friday", "Dec 25"
+- ✅ Auto-extract times: "at 3pm", "9:30am", "noon"
+- ✅ Auto-extract priority: "urgent", "important", "this is critical"
+- ✅ Auto-extract locations: "at Kroger", "when I'm at Home Depot"
+- ✅ Auto-extract categories: "call" → Calls, "buy" → Shopping
+- ✅ Handle ambiguity gracefully (fallback to manual)
+- ✅ <3 second parsing time (local inference)
+
+**Estimated Time:** 8-10 hours (1-2 days with subagents)
+
+**Tech Stack:**
+- Llama 3.2 1B or Phi-3 Mini (local, offline)
+- llama.cpp or llama-cpp-python
+- Custom system prompt + JSON output mode
+
+**Documentation:** Create `docs/phase8.1_completion.md` when done
+
+---
+
+## ✅ Completed Phases
 
 <details>
-<summary><strong>Phase 1: Core Backend ✅</strong> - FastAPI + SQLite + CRUD endpoints</summary>
+<summary><strong>Phase 1-3.6: Foundation (Backend + Frontend + Testing)</strong></summary>
 
-- FastAPI REST API with bearer token auth
-- SQLite database with full schema
-- All CRUD endpoints (health, create, read, update, delete)
-- Pydantic models and validation
-- Auto-generated Swagger docs
-- CORS configured for web UI
+**Phase 1: Core Backend**
+- FastAPI REST API, SQLite database, CRUD endpoints, bearer auth, Swagger docs
 
-**Files:** `server/database.py`, `server/main.py`, `server/models.py`, `server/config.py`
-</details>
+**Phase 2: Web UI**
+- Today/Upcoming/Future views, mobile-responsive, 5-level priorities, animations
 
-<details>
-<summary><strong>Phase 2: Web UI ✅</strong> - HTML/CSS/JS frontend</summary>
+**Phase 3: Integration**
+- API client, error handling, offline state, full CRUD integration
 
-- Today, Upcoming, Future views
-- Create/Edit form
-- Mobile-first responsive design
-- 5-level priority colors (someday/chill/important/urgent/waiting)
-- Completion animations
-- Toast notifications
+**Phase 3.5: Testing**
+- 24 pytest tests, 80% coverage, CI-ready
 
-**Files:** `public/*.html`, `public/css/*.css`, `public/js/app.js`
-</details>
-
-<details>
-<summary><strong>Phase 3: Integration ✅</strong> - Full stack connection</summary>
-
-- API client with fetch() calls
-- Error handling with retry logic
-- Loading states
-- Full CRUD integration
-- Offline state handling
-
-**Files:** `public/js/api.js`, `public/js/errors.js`
-</details>
-
-<details>
-<summary><strong>Phase 3.5: Testing Infrastructure ✅</strong> - Pytest test suite</summary>
-
-- 24 passing tests (80% coverage)
-- Database, API endpoints, models tested
-- Test fixtures and utilities
-- CI-ready test suite
-
-**Files:** `tests/test_*.py`, `pytest.ini`
-</details>
-
-<details>
-<summary><strong>Phase 3.6: 5-Level Priority System ✅</strong> - Enhanced priority model</summary>
-
-- someday (blue) - Dreams/aspirations
-- chill (green) - Low priority
-- important (yellow) - Medium priority
-- urgent (red) - High priority
-- waiting (orange) - Blocked/waiting on others
-
-**Files:** Schema updated, UI updated with new colors
+**Phase 3.6: 5-Level Priorities**
+- someday/chill/important/urgent/waiting with color coding
 </details>
 
 <details>
 <summary><strong>Phase 4: Cloudflare Workers ✅</strong> - Production cloud deployment</summary>
 
-- Hono-based TypeScript API
-- D1 SQLite database (cloud)
-- All 6 endpoints deployed
-- Bearer token auth
-- CORS configured
-- 81-112ms performance
-- Production URL: https://reminders-api.m7jv4v7npb.workers.dev
-
-**Files:** `workers/src/index.ts`, `workers/wrangler.toml`, `workers/migrations/*.sql`
+- Hono TypeScript API on Cloudflare Workers
+- D1 database (cloud SQLite) with 3 migrations
+- All 6 REST endpoints deployed
+- 81-112ms edge performance
+- Production: https://reminders-api.m7jv4v7npb.workers.dev
 </details>
 
 <details>
 <summary><strong>Phase 5: Sync Logic ✅</strong> - Bidirectional synchronization</summary>
 
-- Offline-first architecture
-- Auto-sync every 5 minutes
-- Manual sync button
+- Offline-first with auto-sync every 5 minutes
+- Manual sync button with UI status (5 states)
 - Conflict resolution (last-write-wins)
-- Change queue with localStorage
-- Retry logic (3 attempts)
-- Sync status UI (5 states: offline/online/syncing/synced/error)
-- D1 migration deployed
-
-**Backend:**
-- `POST /api/sync` (FastAPI + Workers)
-- 4 sync models (SyncRequest, SyncResponse, SyncChange, ConflictInfo)
-- 4 database functions (get_changes_since, apply_sync_change, etc.)
-
-**Frontend:**
-- `public/js/sync.js` (459 lines)
-- Sync UI in all HTML pages
-- CSS animations and styles
-
-**Files:** `server/database.py`, `server/main.py`, `server/models.py`, `workers/src/index.ts`, `workers/migrations/003_add_synced_at.sql`, `public/js/sync.js`, `public/css/main.css`
+- Change queue in localStorage
+- `POST /api/sync` endpoint (FastAPI + Workers)
+- 459-line sync manager (`public/js/sync.js`)
 </details>
 
-**Total Completed:**
-- 7 backend modules
-- 15 frontend files
-- 24 passing tests
-- 3 D1 migrations deployed
-- ~3,500+ lines of code
+<details>
+<summary><strong>Phase 6: Location Features ✅</strong> - MapBox integration</summary>
+
+- MapBox GL JS location picker in edit form
+- Geocoding (address → lat/lng) and reverse geocoding
+- Map visualization with draggable pin
+- Radius configuration (10m-10km, default 100m)
+- `GET /api/reminders/near-location` endpoint
+- Haversine distance calculation
+- Browser Geolocation API integration
+</details>
+
+<details>
+<summary><strong>Phase 7: Recurring Reminders ✅</strong> - Recurrence patterns</summary>
+
+- Daily, weekly, monthly, yearly frequencies
+- Advanced scheduling (specific days of week, day of month)
+- 3 end conditions (never, until date, after N occurrences)
+- Server-side instance generation (90-day horizon)
+- Live UI preview showing next 3 occurrences
+- `recurrence_patterns` table with CRUD functions
+- 350-line recurrence module (`public/js/recurrence.js`)
+
+**Testing:** ⚠️ Needs manual testing when available (daily/weekly/monthly patterns, end conditions)
+</details>
+
+<details>
+<summary><strong>Phase 8: Voice Input ✅</strong> - Voice-to-text transcription (November 3, 2025)</summary>
+
+- Whisper.cpp integration (base.en model, 23x realtime, local/offline)
+- `POST /api/voice/transcribe` endpoint (FastAPI)
+- Browser audio recording (`public/js/voice-recorder.js`)
+- Voice button (🎤) with 3 states (idle/recording/processing)
+- 85-90% transcription accuracy (2-8 seconds end-to-end)
+- 14 pytest tests (100% pass, 97% coverage)
+- Comprehensive error handling (permissions, timeouts, failures)
+
+**User Flow:** Click 🎤 → Speak → Auto-transcribe → Manual field completion
+
+**Docs:** See `docs/phase8_*.md` for architecture, requirements, completion report
+</details>
+
+**Summary:** 8 phases complete, ~5,000 lines of code, 24+ tests passing, production deployed
 
 ---
 
-## Phase 6: Location Features (Day 3-4) 📅 NEXT
+## 🔮 Post-MVP Features (Phase 9+)
 
-### MapBox Setup
-- [x] Get MapBox access token (free tier: 50k requests/month)
-- [x] Add MapBox GL JS to project
-- [x] Configure MapBox in secrets.json
+### Phase 7.1: Enhanced Recurring Reminders
+- Edit/delete single instance vs entire series
+- Display recurrence indicator (♻️) in reminder lists
+- View/edit original recurrence pattern
 
-### Location Picker
-- [x] Create location picker component in edit form
-- [x] Implement geocoding (address → lat/lng)
-- [x] Add map visualization
-- [x] Enable pin dragging to adjust location
-- [x] Add radius configuration (default: 100m, adjustable 10m-10km)
+### Phase 9: E-ink Display Clients
+- Android e-ink app for car dashboard
+- Read-only view with tap-to-complete
+- Optimized for e-ink refresh rates
 
-### Location Endpoints
-- [x] Implement `GET /api/reminders/near-location` (FastAPI)
-- [x] Implement `GET /api/reminders/near-location` (Workers)
-- [x] Add Haversine distance calculation
-- [x] Test location-based filtering
+### Phase 10: Smart Features
+- Auto-categorization via LLM
+- Duplicate detection
+- Reminder templates
+- Priority suggestions
 
-### Geolocation
-- [x] Integrate browser Geolocation API
-- [x] Add "Use my location" button
-- [x] Handle permission denied gracefully
-- [x] Display location reminders on map (optional view)
+### Phase 11: Analytics & Insights
+- Completion rate tracking
+- Time-of-day patterns
+- Productivity insights dashboard
 
-**Success Criteria:**
-- ✅ Can set reminder location via text or map
-- ✅ Can query reminders near current location
-- ✅ Location-based filtering works
-- ✅ Geocoding is accurate
-
-**Estimated Time:** 6-8 hours (Completed)
+### Future Ideas
+- Receipt printer integration (daily task list printouts)
+- Habit tracking
+- Integration with calendar apps
+- Siri/Google Assistant shortcuts
 
 ---
 
-## Phase 7: Recurring Reminders ✅ COMPLETED
+## 📚 Quick Reference
 
-### Database ✅
-- [x] Create `recurrence_patterns` table (already existed in schema)
-- [x] Add foreign key relationship to reminders (already existed)
-- [x] Implement recurrence pattern CRUD functions
-- [x] Implement instance generation function (90-day horizon)
+### Development Commands
 
-### Backend API ✅
-- [x] Add RecurrencePatternCreate and RecurrencePatternResponse models
-- [x] Update POST /api/reminders to accept embedded recurrence_pattern
-- [x] Implement server-side instance generation (FastAPI)
-- [x] Mirror all changes to Cloudflare Workers TypeScript
+```bash
+# Start local API server
+uv run uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
 
-### Recurrence UI ✅
-- [x] Add recurrence section to edit form (5 frequencies: none/daily/weekly/monthly/yearly)
-- [x] Create UI for pattern selection with visual badges
-- [x] Add interval configuration (every N days/weeks/months/years)
-- [x] Add days of week selector (for weekly)
-- [x] Add day of month selector (for monthly)
-- [x] Add end conditions (never/on date/after N occurrences)
-- [x] Add live preview showing next 3 occurrences
+# Serve frontend
+python serve_ui.py
+# OR open public/index.html directly
 
-### Frontend Logic ✅
-- [x] Create recurrence.js module for UI state management
-- [x] Implement frequency change handlers
-- [x] Implement preview generation logic
-- [x] Integrate with form submission (app.js)
-- [x] Add recurrence pattern extraction
+# Run tests
+pytest
+pytest --cov=server --cov-report=html
 
-### Implementation Details
-- **Instance Horizon:** 90 days ahead
-- **Supported Frequencies:** daily, weekly, monthly, yearly
-- **Weekly:** Select specific days (Mon-Sun)
-- **Monthly:** Select day of month (1-31)
-- **End Conditions:** Never, specific date, or after N occurrences
-- **MVP Editing:** All future instances affected (no "this instance only" yet)
+# Deploy to Cloudflare
+cd workers && npx wrangler deploy
+```
 
-**Files Modified:**
-1. `server/database.py` - Added 5 recurrence functions (~350 lines)
-2. `server/models.py` - Added 2 recurrence models (~60 lines)
-3. `server/main.py` - Updated POST endpoint with instance generation (~40 lines modified)
-4. `workers/src/index.ts` - Mirrored backend logic (~200 lines)
-5. `public/edit.html` - Added recurrence UI section (~150 lines)
-6. `public/css/edit.css` - Added recurrence styles (~260 lines)
-7. `public/js/recurrence.js` - New file for recurrence logic (~350 lines)
-8. `public/js/app.js` - Updated form submission (~20 lines modified)
+### Project URLs
 
-**Total New/Modified Code:** ~1,430 lines
+- **Local API:** http://localhost:8000
+- **Cloud API:** https://reminders-api.m7jv4v7npb.workers.dev
+- **API Docs:** http://localhost:8000/docs (Swagger)
+- **GitHub:** https://github.com/AutumnsGrove/ProjectReminder
 
-**Success Criteria:**
-- ✅ Can create "every day" reminder
-- ✅ Can create "every Tuesday" reminder (weekly with specific days)
-- ✅ Can create "15th of every month" reminder
-- ✅ Can set end conditions (never, date, count)
-- ✅ Preview shows next 3 occurrences
-- ✅ Instances generated server-side on creation
-- ⚠️ Edit/delete single instance vs series (deferred to Phase 7.1)
-- ⚠️ Display recurrence info in reminder list (deferred to Phase 7.1)
+### Secrets Required
 
-**Testing Status:** ⚠️ **Needs manual testing when available:**
-- Daily recurrence patterns
-- Weekly with specific days (Mon, Wed, Fri)
-- Monthly on specific day (15th)
-- End conditions (never/date/count)
-- Preview accuracy
+Stored in `secrets.json` (see `secrets_template.json`):
+- `mapbox_access_token` - MapBox GL JS (get at https://account.mapbox.com/)
+- `api_token` - Bearer token for API auth (strong random string)
 
-**Completed:** November 3, 2025 (Evening Session)
-**Estimated Time:** 8-10 hours → **Actual:** ~6 hours (autonomous execution)
+### Database Schema
+
+SQLite tables (local + cloud D1):
+- `reminders` - Main reminder instances (id, text, due_date, due_time, location, priority, status, etc.)
+- `recurrence_patterns` - Recurrence definitions (frequency, interval, days_of_week, end_condition, etc.)
+
+### Architecture Patterns
+
+- **Database:** All SQL isolated in `server/database.py` (function-based interface)
+- **Models:** Pydantic models in `server/models.py` (request/response contracts)
+- **Auth:** Bearer token via `verify_token()` dependency injection
+- **Frontend:** Modular JS (api.js, sync.js, storage.js, recurrence.js, voice-recorder.js)
+- **CSS:** Mobile-first with CSS variables for theming
 
 ---
 
-## Phase 8: Voice Input (MVP - Voice-to-Text Only) ✅ COMPLETE
+## 🛠️ Development Best Practices
 
-**Status**: ✅ Complete (November 3, 2025)
-**Implementation Time**: ~5-6 hours (8 subagents)
-**Documentation**: See `docs/phase8_completion.md` for full details
+**For All Future Work:**
 
-**Tech Stack:**
-- ✅ STT: Whisper.cpp (local, offline, base.en model)
-- ✅ LLM: Llama 3.2 1B (deferred to Phase 8.1)
+1. **Use subagents** - Follow `ClaudeUsage/subagent_usage.md` for focused, atomic tasks
+2. **Commit atomically** - One logical change = one commit (conventional format)
+3. **Test locally first** - Run pytest, test in browser before deploying
+4. **Document as you go** - Create completion reports for major phases
+5. **Reference guides** - Check `ClaudeUsage/` for patterns (git, testing, database, etc.)
+6. **Update TODOS** - Mark tasks complete, add new discoveries
 
-**MVP Scope:** Voice transcription only (manual field completion)
-**Architecture:** See `docs/phase8_architecture.md` for full plan
+**Git Commit Format:**
+```
+<type>: <description>
 
-### Research & Selection ✅
-- [x] Research local STT options (Whisper.cpp chosen)
-- [x] Research small LLMs (Llama 3.2 1B chosen, deferred)
-- [x] Architecture plan created with house-planner
-- [x] Choose final stack (Whisper.cpp for MVP)
+🤖 Generated with [Claude Code](https://claude.ai/code)
+via [Happy](https://happy.engineering)
 
-### Whisper.cpp Integration ✅
-- [x] Install and configure Whisper.cpp (base.en model, 23x realtime)
-- [x] Create Python wrapper for Whisper.cpp (`server/voice/whisper.py`)
-- [x] Add voice recording endpoint (`POST /api/voice/transcribe`)
-- [x] Test transcription accuracy (85-90% for clear speech)
+Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: Happy <yesreply@happy.engineering>
+```
 
-### UI Integration ✅
-- [x] Add voice button (🎤) to edit form with 3 states (idle/recording/processing)
-- [x] Implement audio recording in browser (`public/js/voice-recorder.js`)
-- [x] Send audio to backend for transcription (FormData multipart)
-- [x] Display transcription in text field (auto-populate)
-- [x] Add comprehensive error handling (permissions, failures, toast notifications)
-
-### Backend Integration ✅
-- [x] FastAPI endpoint: `POST /api/voice/transcribe` (bearer auth, 10MB max)
-- [x] Cloudflare Workers endpoint: `POST /api/voice/transcribe` (501 Not Implemented)
-- [x] VoiceTranscriptionResponse model (text, model, language, file_size)
-- [x] Comprehensive error codes (400, 413, 422, 500, 503, 504)
-
-### Testing & Documentation ✅
-- [x] 14 pytest tests (100% pass, 97% endpoint coverage)
-- [x] Requirements document (`docs/phase8_requirements.md`)
-- [x] Technical research (`docs/phase8_technical_research.md`)
-- [x] Completion report (`docs/phase8_completion.md`)
-
-**Phase 8 MVP Success Criteria (All Met):**
-- ✅ Voice transcription to text (85-90% accuracy achieved)
-- ✅ Runs locally (privacy preserved, offline-first)
-- ✅ Fast enough (2-8 seconds end-to-end, 23x realtime processing)
-- ✅ User manually fills date, time, priority (as expected)
-- ✅ Graceful error handling (browser permissions, network, transcription)
-
-**User Flow:**
-1. Click 🎤 button → Browser requests permission
-2. User speaks: "Buy groceries at Kroger tomorrow"
-3. Recording stops (manual or auto 30s)
-4. Audio uploads → Whisper.cpp transcribes (2-8s)
-5. Text appears: "Buy groceries at Kroger tomorrow"
-6. User manually sets date, priority, location
+Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`
 
 ---
 
-## Phase 8.1: LLM Parsing (Natural Language Understanding) 📅 NEXT
-
-**Goal**: Auto-extract reminder metadata from transcribed text using local LLM.
-
-**Example**:
-- **Voice**: "Call mom about Thanksgiving tomorrow at 3pm, this is urgent"
-- **Phase 8 Output**: Text: "Call mom about Thanksgiving tomorrow at 3pm, this is urgent"
-- **Phase 8.1 Output**:
-  - Text: "Call mom about Thanksgiving"
-  - Due Date: 2025-11-04 (parsed "tomorrow")
-  - Due Time: 15:00:00 (parsed "3pm")
-  - Priority: urgent (parsed "this is urgent")
-  - Category: Calls (inferred from "call")
-  - Time Required: false
-
-**Tech Stack:**
-- Llama 3.2 1B or Phi-3 Mini (local inference)
-- llama.cpp or llama-cpp-python
-- Custom system prompt for reminder parsing
-- New endpoint: `POST /api/voice/parse`
-
-**Tasks:**
-- [ ] Install and configure Llama 3.2 1B
-- [ ] Create prompt for reminder parsing
-- [ ] Implement parsing pipeline (text → structured data)
-- [ ] Add fallback to manual edit if parse fails
-- [ ] Add `POST /api/voice/parse` endpoint
-- [ ] Test with various natural language inputs
-
-**Phase 8.1 Success Criteria:**
-- ✅ Auto-extract date: "tomorrow" → "2025-11-04"
-- ✅ Auto-extract time: "at 3pm" → "15:00:00"
-- ✅ Auto-extract priority: "urgent" → "urgent"
-- ✅ Auto-extract location: "at Kroger" → geocoded
-- ✅ Auto-extract category: "call" → "Calls"
-
-**Estimated Time:** 8-10 hours (5-6 subagents)
-
----
-
-## Future Features (Post-MVP) 🔮
-
-### E-ink Display Clients
-- [ ] Research Android e-ink app development
-- [ ] Create read-only view for car dashboard
-- [ ] Implement tap-to-complete
-- [ ] Optimize for e-ink refresh
-
-### Smart Features
-- [ ] Auto-categorization via LLM
-- [ ] Priority suggestion based on keywords
-- [ ] Duplicate detection
-- [ ] Reminder templates
-
-### Receipt Printer
-- [ ] Research thermal printer APIs
-- [ ] Create daily task list formatter
-- [ ] Schedule morning prints
-
-### Analytics
-- [ ] Track completion rates
-- [ ] Generate productivity insights
-- [ ] Identify time-of-day patterns
-
----
-
-## MVP Roadmap
-
-**Completed (✅):**
-- Phase 1: Core Backend
-- Phase 2: Web UI
-- Phase 3: Integration
-- Phase 3.5: Testing
-- Phase 3.6: 5-Level Priority
-- Phase 4: Cloud Deployment
-- Phase 5: Sync Logic
-- Phase 6: Location Features
-- Phase 7: Recurring Reminders
-
-**Remaining for MVP (📅):**
-- Phase 8: Voice Input (12-15 hours)
-
-**Total Time to MVP:** ~12-15 hours remaining (~2 days)
-
----
-
-## Notes
-
-- Phases 1-7 provide full offline-first multi-device functionality with recurring reminders ✅
-- Phase 8 completes the MVP feature set (voice input)
-- Future features are v1.1+ enhancements
-- All completed phases have passing tests (Phase 7 needs manual testing)
-- Production deployment is live and operational
-
----
-
-## Development Workflow Best Practices
-
-### For All Future Phases
-
-1. **Follow subagent_usage.md guidelines** - Use specialized agents for focused tasks
-2. **Commit atomically** - Every logical change = one commit
-3. **Test locally first** - Ensure functionality before deployment
-4. **Document as you go** - Each major change produces documentation
-5. **Ask questions** - Use `house-planner` if architecture is unclear
-6. **Check ClaudeUsage/** - Comprehensive guides for all patterns
-
-### Current Project State
-
-**Repository:** https://github.com/AutumnsGrove/ProjectReminder
-**Local Server:** `uv run uvicorn server.main:app --reload --host 0.0.0.0 --port 8000`
-**Frontend:** `public/*.html` (open directly or use `python serve_ui.py`)
-**Cloud Deployment:** https://reminders-api.m7jv4v7npb.workers.dev
-
-**Database Schema:** SQLite with tables:
-- `reminders` - Main reminder instances
-- `recurrence_patterns` - Recurrence definitions (Phase 7)
-- Both in local SQLite (`server/reminders.db`) and cloud D1
-
-**Secrets Required:** (stored in `secrets.json`)
-- `mapbox_access_token` - For location features (MapBox GL JS)
-- `api_token` - Bearer token for API authentication
-
-### Key Architecture Patterns
-
-- Database functions isolated in `server/database.py`
-- Pydantic models in `server/models.py`
-- Bearer token auth via `verify_token()` dependency
-- Frontend modular JS (storage.js, api.js, sync.js, recurrence.js, voice-recorder.js)
-- Mobile-first CSS with CSS variables
-
----
-
-*Generated by Claude Sonnet 4.5*
 *Last Updated: November 4, 2025*
+*Model: Claude Sonnet 4.5*
+*Phase 8 Complete ✅ | Phase 8.1 Next 🚀 | 87.5% to MVP*
