@@ -12,3 +12,4 @@ whisper.cpp/
 htmlcov/
 .coverage
 node_modules/
+.vscode/settings.json
