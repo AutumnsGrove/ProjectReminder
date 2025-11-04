@@ -8,7 +8,7 @@
 
 ## 🎯 NEXT: Phase 8.1 - LLM Natural Language Parsing
 
-**Goal:** Auto-extract reminder metadata from voice transcriptions using local LLM.
+**Goal:** Auto-extract reminder metadata from voice transcriptions using local LLM OR cloud (Cloudflare Workers AI).
 
 **What It Does:**
 ```
@@ -21,16 +21,49 @@ After 8.1 → Text: "Call mom about Thanksgiving"
            Category: Calls (inferred from "call")
 ```
 
-### Tasks
+**Architecture:** Dual-mode (local Llama 3.2 1B OR Cloudflare Workers AI)
 
-- [ ] Install and configure Llama 3.2 1B or Phi-3 Mini
+### Phase 1: Research ✅ COMPLETE
+
+- [x] **1.1** Requirements Analysis - Extract requirements, define success criteria, dual-mode architecture
+  - **Commit:** `bd69465` - `docs/phase8.1_requirements.md` (1,145 lines)
+  - Defined 8 functional requirements, API contracts, success criteria (>85% accuracy)
+
+- [x] **1.2** Cloudflare Workers AI Research - API patterns, Llama 3.2 1B availability, JSON mode
+  - **Commit:** `ccecf30` - `docs/phase8.1_cloudflare_ai_research.md` (1,474 lines)
+  - Confirmed Llama 3.2 1B available, JSON mode support, free tier 10k requests/day
+  - Performance: 2-5s cloud vs 8-15s local, cost $0.31/month for 1,000 reminders
+
+- [x] **1.3** Architecture Planning - Dual-mode design, endpoints, confidence scoring, fallback strategy
+  - **Commit:** `bdbe594` - `docs/phase8.1_architecture.md` (1,115 lines)
+  - Designed dual-mode architecture (auto/local/cloud), confidence scoring, fallback logic
+
+- [x] **1.4** Edge Case Analysis - Date parsing, timezone handling, ambiguity resolution
+  - **Commit:** `932d984` - `docs/phase8.1_edge_cases.md` (1,284 lines)
+  - Identified 27+ edge cases, recommended `dateparser` library, 4-level degradation
+  - Test plan: 81+ test cases across 7 categories
+
+### Phase 2: Development (After Research Complete)
+
+- [ ] Install and configure Llama 3.2 1B (local)
+    Note: Already installed Via LM Studio. Can be accessed on http://127.0.0.1:1234 `llama-3.2-1b-instruct`
 - [ ] Design system prompt for reminder parsing (dates, times, priorities, locations)
-- [ ] Create `POST /api/voice/parse` endpoint (FastAPI)
+- [ ] Create `POST /api/voice/parse` endpoint (FastAPI with local LLM)
+- [ ] Create `POST /api/voice/parse` endpoint (Workers with Cloudflare AI)
 - [ ] Implement parsing pipeline: text → structured JSON
+- [ ] Add configuration toggle (local vs cloud mode)
 - [ ] Add fallback to manual edit if parse confidence is low
 - [ ] Integrate with voice recorder UI (auto-fill form fields)
+- [ ] Add date/time normalization utilities
+
+### Phase 3: Testing (After Development Complete)
+
+- [ ] Create comprehensive test plan
+- [ ] Write unit tests for parsing module
+- [ ] Write integration tests for both endpoints
 - [ ] Test with 20+ varied natural language inputs
-- [ ] Add Workers endpoint (or return 501 for MVP)
+- [ ] Run full test suite and document results
+- [ ] Create Phase 8.1 completion report
 
 ### Success Criteria
 
