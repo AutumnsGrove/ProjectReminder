@@ -91,7 +91,7 @@ def test_create_reminder_full_data(client, auth_headers, sample_reminder_data):
     assert data["due_date"] == sample_reminder_data["due_date"]
     assert data["due_time"] == sample_reminder_data["due_time"]
     assert data["time_required"] == sample_reminder_data["time_required"]
-    assert data["location_text"] == sample_reminder_data["location_text"]
+    assert data["location_name"] == sample_reminder_data["location_name"]
 
 
 @pytest.mark.api

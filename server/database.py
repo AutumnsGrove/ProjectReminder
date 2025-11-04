@@ -444,9 +444,10 @@ def get_table_schema(table_name: str, db_path: Optional[str] = None) -> str:
     return results[0]['sql'] if results else ""
 
 
-def count_rows(table_name: str) -> int:
+def count_rows(table_name: str, db_path: Optional[str] = None) -> int:
     """Count rows in table."""
-    results = db_query(f"SELECT COUNT(*) as count FROM {table_name}")
+    db_path = _get_default_db_path(db_path)
+    results = db_query(f"SELECT COUNT(*) as count FROM {table_name}", db_path=db_path)
     return results[0]['count']
 
 

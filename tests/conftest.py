@@ -38,12 +38,21 @@ def test_db():
 
 
 @pytest.fixture(scope="function")
-def client():
+def client(test_db):
     """
     FastAPI test client with authentication.
+    Uses test_db to ensure tests run against isolated database.
     """
-    with TestClient(app) as test_client:
-        yield test_client
+    # Override database path to use test database
+    original_db_path = db.DB_PATH
+    db.DB_PATH = test_db
+
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        # Restore original database path
+        db.DB_PATH = original_db_path
 
 
 @pytest.fixture(scope="function")
@@ -88,7 +97,7 @@ def sample_reminder_data():
         "due_date": "2025-11-15",
         "due_time": "14:30:00",
         "time_required": False,
-        "location_text": "Home"
+        "location_name": "Home"
     }
 
 
