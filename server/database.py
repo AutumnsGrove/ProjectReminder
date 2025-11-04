@@ -16,7 +16,23 @@ from pathlib import Path
 DB_PATH = Path(__file__).parent.parent / "reminders.db"
 
 
-def get_connection(db_path: str = str(DB_PATH)) -> sqlite3.Connection:
+def _get_default_db_path(override: Optional[str] = None) -> str:
+    """
+    Get the database path, with optional override.
+
+    This allows runtime evaluation of DB_PATH instead of binding at import time.
+    Pass override=None to use the current DB_PATH value.
+
+    Args:
+        override: Optional database path override
+
+    Returns:
+        Database path to use
+    """
+    return override if override is not None else str(DB_PATH)
+
+
+def get_connection(db_path: Optional[str] = None) -> sqlite3.Connection:
     """
     Get database connection with proper configuration.
 
@@ -26,12 +42,13 @@ def get_connection(db_path: str = str(DB_PATH)) -> sqlite3.Connection:
     Returns:
         Configured SQLite connection
     """
+    db_path = _get_default_db_path(db_path)
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row  # Return rows as dictionaries
     return conn
 
 
-def init_db(db_path: str = str(DB_PATH), force: bool = False) -> None:
+def init_db(db_path: Optional[str] = None, force: bool = False) -> None:
     """
     Initialize database with schema.
 
@@ -39,6 +56,7 @@ def init_db(db_path: str = str(DB_PATH), force: bool = False) -> None:
         db_path: Path to SQLite database file
         force: If True, drop existing tables and recreate
     """
+    db_path = _get_default_db_path(db_path)
     conn = get_connection(db_path)
     cursor = conn.cursor()
 
@@ -144,7 +162,7 @@ def init_db(db_path: str = str(DB_PATH), force: bool = False) -> None:
         conn.close()
 
 
-def db_query(query: str, params: Tuple = (), db_path: str = str(DB_PATH)) -> List[Dict[str, Any]]:
+def db_query(query: str, params: Tuple = (), db_path: Optional[str] = None) -> List[Dict[str, Any]]:
     """
     Execute SELECT query and return results as list of dictionaries.
 
@@ -156,6 +174,7 @@ def db_query(query: str, params: Tuple = (), db_path: str = str(DB_PATH)) -> Lis
     Returns:
         List of rows as dictionaries
     """
+    db_path = _get_default_db_path(db_path)
     conn = get_connection(db_path)
     cursor = conn.cursor()
 
@@ -169,7 +188,7 @@ def db_query(query: str, params: Tuple = (), db_path: str = str(DB_PATH)) -> Lis
         conn.close()
 
 
-def db_execute(query: str, params: Tuple = (), db_path: str = str(DB_PATH)) -> int:
+def db_execute(query: str, params: Tuple = (), db_path: Optional[str] = None) -> int:
     """
     Execute INSERT/UPDATE/DELETE and return affected row count.
 
@@ -181,6 +200,7 @@ def db_execute(query: str, params: Tuple = (), db_path: str = str(DB_PATH)) -> i
     Returns:
         Number of affected rows
     """
+    db_path = _get_default_db_path(db_path)
     conn = get_connection(db_path)
     cursor = conn.cursor()
 
@@ -195,7 +215,7 @@ def db_execute(query: str, params: Tuple = (), db_path: str = str(DB_PATH)) -> i
         conn.close()
 
 
-def db_insert(query: str, params: Tuple = (), db_path: str = str(DB_PATH)) -> int:
+def db_insert(query: str, params: Tuple = (), db_path: Optional[str] = None) -> int:
     """
     Execute INSERT and return the last inserted row ID.
 
@@ -207,6 +227,7 @@ def db_insert(query: str, params: Tuple = (), db_path: str = str(DB_PATH)) -> in
     Returns:
         Last inserted row ID (for INTEGER PRIMARY KEY)
     """
+    db_path = _get_default_db_path(db_path)
     conn = get_connection(db_path)
     cursor = conn.cursor()
 
@@ -396,13 +417,15 @@ def seed_default_categories() -> None:
 # Utility Functions
 # =============================================================================
 
-def db_exists(db_path: str = str(DB_PATH)) -> bool:
+def db_exists(db_path: Optional[str] = None) -> bool:
     """Check if database file exists."""
+    db_path = _get_default_db_path(db_path)
     return os.path.exists(db_path)
 
 
-def get_table_names(db_path: str = str(DB_PATH)) -> List[str]:
+def get_table_names(db_path: Optional[str] = None) -> List[str]:
     """Get list of all table names."""
+    db_path = _get_default_db_path(db_path)
     results = db_query(
         "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name",
         db_path=db_path
@@ -410,8 +433,9 @@ def get_table_names(db_path: str = str(DB_PATH)) -> List[str]:
     return [row['name'] for row in results]
 
 
-def get_table_schema(table_name: str, db_path: str = str(DB_PATH)) -> str:
+def get_table_schema(table_name: str, db_path: Optional[str] = None) -> str:
     """Get CREATE statement for table."""
+    db_path = _get_default_db_path(db_path)
     results = db_query(
         "SELECT sql FROM sqlite_master WHERE type='table' AND name = ?",
         (table_name,),
@@ -542,7 +566,7 @@ def create_recurrence_pattern(
     month_of_year: Optional[int] = None,
     end_date: Optional[str] = None,
     end_count: Optional[int] = None,
-    db_path: str = str(DB_PATH)
+    db_path: Optional[str] = None
 ) -> str:
     """
     Create a new recurrence pattern.
@@ -561,6 +585,7 @@ def create_recurrence_pattern(
     Returns:
         Pattern ID
     """
+    db_path = _get_default_db_path(db_path)
     conn = get_connection(db_path)
     cursor = conn.cursor()
 
@@ -591,7 +616,7 @@ def create_recurrence_pattern(
         conn.close()
 
 
-def get_recurrence_pattern(pattern_id: str, db_path: str = str(DB_PATH)) -> Optional[Dict[str, Any]]:
+def get_recurrence_pattern(pattern_id: str, db_path: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """
     Get recurrence pattern by ID.
 
@@ -602,6 +627,7 @@ def get_recurrence_pattern(pattern_id: str, db_path: str = str(DB_PATH)) -> Opti
     Returns:
         Pattern dictionary or None if not found
     """
+    db_path = _get_default_db_path(db_path)
     conn = get_connection(db_path)
     cursor = conn.cursor()
 
@@ -626,7 +652,7 @@ def update_recurrence_pattern(
     month_of_year: Optional[int] = None,
     end_date: Optional[str] = None,
     end_count: Optional[int] = None,
-    db_path: str = str(DB_PATH)
+    db_path: Optional[str] = None
 ) -> bool:
     """
     Update recurrence pattern.
@@ -645,6 +671,7 @@ def update_recurrence_pattern(
     Returns:
         True if updated, False if not found
     """
+    db_path = _get_default_db_path(db_path)
     conn = get_connection(db_path)
     cursor = conn.cursor()
 
@@ -695,7 +722,7 @@ def update_recurrence_pattern(
         conn.close()
 
 
-def delete_recurrence_pattern(pattern_id: str, db_path: str = str(DB_PATH)) -> bool:
+def delete_recurrence_pattern(pattern_id: str, db_path: Optional[str] = None) -> bool:
     """
     Delete recurrence pattern and unlink from reminders.
 
@@ -706,6 +733,7 @@ def delete_recurrence_pattern(pattern_id: str, db_path: str = str(DB_PATH)) -> b
     Returns:
         True if deleted, False if not found
     """
+    db_path = _get_default_db_path(db_path)
     conn = get_connection(db_path)
     cursor = conn.cursor()
 
@@ -736,7 +764,7 @@ def generate_recurrence_instances(
     base_reminder: Dict[str, Any],
     pattern: Dict[str, Any],
     horizon_days: int = 90,
-    db_path: str = str(DB_PATH)
+    db_path: Optional[str] = None
 ) -> List[str]:
     """
     Generate recurring reminder instances based on pattern.
@@ -753,6 +781,7 @@ def generate_recurrence_instances(
     from datetime import date, timedelta
     import uuid
 
+    db_path = _get_default_db_path(db_path)
     conn = get_connection(db_path)
     cursor = conn.cursor()
     generated_ids = []
