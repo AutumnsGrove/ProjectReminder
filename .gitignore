@@ -1,6 +1,7 @@
 secrets.json
 public/config.json
-reminders.db
+*.db
+!server/reminders.db
 *.log
 __pycache__/
 .DS_Store
@@ -8,3 +9,6 @@ __pycache__/
 .venv/
 *.pyc
 whisper.cpp/
+htmlcov/
+.coverage
+node_modules/

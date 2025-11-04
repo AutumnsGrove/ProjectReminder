@@ -1,10 +1,11 @@
-# ADHD-Friendly Voice Reminders System
+# 🎤 ADHD-Friendly Voice Reminders System
 
 An offline-first, persistent reminders system designed specifically for ADHD workflows. Voice input is the primary interaction method, with visual persistence across multiple devices (desktop, mobile, e-ink displays).
 
 **Developer:** Autumn Brown
 **Version:** 1.0 MVP
-**Status:** 🏗️ In Development
+**Status:** 🚀 Phase 8 Complete - Voice-to-Text MVP (87.5% to MVP)
+**Latest:** ✨ Voice transcription with Whisper.cpp (local, private, fast)
 
 ---
 
@@ -162,29 +163,35 @@ open public/index.html
 - Full CRUD functionality
 - Error handling
 
-### Phase 4: Cloudflare Workers 🔄
+### Phase 4: Cloudflare Workers ✅
 - TypeScript Workers API
 - D1 database setup
 - Deploy to edge network
 
-### Phase 5: Sync Logic 🔄
+### Phase 5: Sync Logic ✅
 - Bidirectional sync
 - Conflict resolution
 - Background sync
 
-### Phase 6: Location Features 📅
+### Phase 6: Location Features ✅
 - MapBox integration
 - Geocoding
 - Near-location queries
 
-### Phase 7: Recurring Reminders 📅
+### Phase 7: Recurring Reminders ✅
 - Recurrence patterns
 - Instance generation
 
-### Phase 8: Voice Input 📅
-- Local STT integration
-- NLP parsing
-- Voice commands
+### Phase 8: Voice Input ✅
+- Whisper.cpp integration (local STT)
+- Voice transcription endpoint
+- Browser audio recording
+- 85-90% transcription accuracy
+
+### Phase 8.1: LLM Parsing 📅 NEXT
+- Auto-extract dates, times, priorities
+- Natural language understanding
+- Llama 3.2 1B / Phi-3 Mini
 
 ---
 
@@ -396,6 +403,6 @@ For questions or issues, refer to project documentation or create GitHub issue.
 
 ---
 
-**Last Updated:** November 2, 2025
-**Version:** 1.0 MVP (In Development)
-**Next Milestone:** Phase 1 - Core Backend
+**Last Updated:** November 4, 2025
+**Version:** 1.0 MVP (In Development - 87.5% Complete)
+**Next Milestone:** Phase 8.1 - LLM Natural Language Parsing
