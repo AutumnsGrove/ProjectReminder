@@ -23,6 +23,37 @@ After 8.1 → Text: "Call mom about Thanksgiving"
 
 **Architecture:** Dual-mode (local Llama 3.2 1B OR Cloudflare Workers AI)
 
+---
+
+### 📊 Phase 8.1 Progress Summary
+
+**Current Status:** Phase 1 Research ✅ Complete → Phase 2 Development Ready
+**Progress:** 25% (4/18 subagents complete)
+**Time Invested:** ~2 hours (research)
+**Time Remaining:** ~6-8 hours (development + testing)
+
+**Completed:**
+- ✅ Research Phase (4 subagents, 4 commits, 5,018 lines of docs)
+- ✅ Requirements analysis, architecture design, edge cases identified
+- ✅ Technology choices made (dateparser, LM Studio, Cloudflare AI)
+
+**Next:** Phase 2 Development (8 subagents) → Phase 3 Testing (6 subagents)
+
+**Key Documents for Next Agent:**
+- `docs/phase8.1_requirements.md` - What to build
+- `docs/phase8.1_architecture.md` - How to build it
+- `docs/phase8.1_cloudflare_ai_research.md` - Cloudflare integration
+- `docs/phase8.1_edge_cases.md` - What to test
+
+**Autonomous Execution Notes:**
+- All tasks are self-contained and documented
+- Each subagent commits before handoff
+- Follow `ClaudeUsage/subagent_usage.md` strictly
+- LM Studio is running at `http://127.0.0.1:1234`
+- Can proceed without user intervention
+
+---
+
 ### Phase 1: Research ✅ COMPLETE
 
 - [x] **1.1** Requirements Analysis - Extract requirements, define success criteria, dual-mode architecture
@@ -43,27 +74,159 @@ After 8.1 → Text: "Call mom about Thanksgiving"
   - Identified 27+ edge cases, recommended `dateparser` library, 4-level degradation
   - Test plan: 81+ test cases across 7 categories
 
-### Phase 2: Development (After Research Complete)
+### Phase 2: Development (Ready to Start)
 
-- [ ] Install and configure Llama 3.2 1B (local)
-    Note: Already installed Via LM Studio. Can be accessed on http://127.0.0.1:1234 `llama-3.2-1b-instruct`
-- [ ] Design system prompt for reminder parsing (dates, times, priorities, locations)
-- [ ] Create `POST /api/voice/parse` endpoint (FastAPI with local LLM)
-- [ ] Create `POST /api/voice/parse` endpoint (Workers with Cloudflare AI)
-- [ ] Implement parsing pipeline: text → structured JSON
-- [ ] Add configuration toggle (local vs cloud mode)
-- [ ] Add fallback to manual edit if parse confidence is low
-- [ ] Integrate with voice recorder UI (auto-fill form fields)
-- [ ] Add date/time normalization utilities
+**Prerequisites:** Phase 1 Research complete ✅ (4 docs, 5,018 lines)
+**LM Studio:** Already running at `http://127.0.0.1:1234` with `llama-3.2-1b-instruct`
+**Estimated Time:** 4-5 hours (8 subagents)
+**Commit Format:** `feat:` for new features, follow `ClaudeUsage/git_guide.md`
+
+#### Development Subagents (Sequential Order)
+
+- [ ] **2.1** Install Dependencies & Setup
+  - Add `dateparser` to pyproject.toml dependencies
+  - Add `python-dateutil` for ISO 8601 fallback
+  - Run `uv sync` to install
+  - Test imports and basic functionality
+  - **Output:** Updated `pyproject.toml`, `uv.lock`
+  - **Commit:** `chore: Add dateparser and date utilities for NLP parsing`
+
+- [ ] **2.2** System Prompt Engineering
+  - Create `server/voice/prompts.py` with system prompt
+  - Design prompt based on `docs/phase8.1_requirements.md` examples
+  - Include JSON schema, few-shot examples
+  - Test with LM Studio API (manual verification)
+  - Document prompt design decisions
+  - **Output:** `server/voice/prompts.py`
+  - **Commit:** `feat: Add LLM system prompt for reminder metadata extraction`
+
+- [ ] **2.3** Date/Time Utilities Module
+  - Create `server/voice/date_utils.py`
+  - Implement `parse_natural_date(text, reference_date)` using dateparser
+  - Implement `parse_natural_time(text)` for time extraction
+  - Handle relative dates ("tomorrow", "next Friday")
+  - Convert to ISO 8601 format
+  - Add timezone awareness (use zoneinfo)
+  - **Output:** `server/voice/date_utils.py` with 5+ functions
+  - **Commit:** `feat: Add date/time parsing utilities with dateparser`
+
+- [ ] **2.4** Local LLM Parser Module
+  - Create `server/voice/parser.py`
+  - Implement `LocalLLMParser` class
+  - Connect to LM Studio at `http://127.0.0.1:1234`
+  - Implement `parse_reminder_text(text: str) -> dict` method
+  - Add JSON validation and error handling
+  - Calculate confidence scores per field
+  - Use date_utils for normalization
+  - **Output:** `server/voice/parser.py` (200-300 lines)
+  - **Commit:** `feat: Implement local LLM parser with confidence scoring`
+
+- [ ] **2.5** Cloudflare AI Parser Module
+  - Create `server/voice/cloudflare_parser.py`
+  - Implement `CloudflareAIParser` class
+  - Use `@cf/meta/llama-3.2-1b-instruct` model
+  - Add API authentication from `secrets.json`
+  - Implement same interface as LocalLLMParser
+  - Add retry logic and timeout handling
+  - **Output:** `server/voice/cloudflare_parser.py` (150-200 lines)
+  - **Commit:** `feat: Implement Cloudflare Workers AI parser`
+
+- [ ] **2.6** FastAPI Parse Endpoint
+  - Add `ReminderParseRequest` and `ReminderParseResponse` models to `server/models.py`
+  - Implement `POST /api/voice/parse` in `server/main.py`
+  - Support mode parameter (auto/local/cloud)
+  - Implement fallback logic (auto mode)
+  - Add bearer token authentication
+  - Return parsed data with confidence scores
+  - **Output:** Updated `server/main.py`, `server/models.py`
+  - **Commit:** `feat: Add POST /api/voice/parse endpoint with dual-mode support`
+
+- [ ] **2.7** Frontend Integration
+  - Add `parseReminderText(text, mode)` to `public/js/api.js`
+  - Update `initVoiceRecorder()` in voice recorder integration
+  - Auto-populate form fields from parse results
+  - Add confidence indicators (green/yellow/red borders)
+  - Show parsing status (loading spinner)
+  - Allow manual override of parsed fields
+  - **Output:** Updated `public/js/api.js`, voice integration code
+  - **Commit:** `feat: Integrate NLP parsing with voice recorder UI`
+
+- [ ] **2.8** Settings & Configuration UI
+  - Create settings panel in UI (or update existing config)
+  - Add mode selector: Auto / Local Only / Cloud Only
+  - Store preference in localStorage (`nlp_mode`)
+  - Add privacy notice for cloud mode
+  - Update `public/config.json` with default mode
+  - **Output:** Settings UI component, config updates
+  - **Commit:** `feat: Add NLP mode configuration UI with privacy notice`
+
+**After All Development:** Phase 3 Testing begins (test plan in `docs/phase8.1_edge_cases.md`)
 
 ### Phase 3: Testing (After Development Complete)
 
-- [ ] Create comprehensive test plan
-- [ ] Write unit tests for parsing module
-- [ ] Write integration tests for both endpoints
-- [ ] Test with 20+ varied natural language inputs
-- [ ] Run full test suite and document results
-- [ ] Create Phase 8.1 completion report
+**Prerequisites:** Phase 2 Development complete ✅ (8 subagents, all features implemented)
+**Test Plan:** See `docs/phase8.1_edge_cases.md` (81+ test cases defined)
+**Estimated Time:** 2-3 hours (4-5 subagents)
+**Commit Format:** `test:` for tests, `docs:` for reports
+
+#### Testing Subagents (Sequential Order)
+
+- [ ] **3.1** Unit Tests - Date/Time Utilities
+  - Create `server/tests/test_date_utils.py`
+  - Test `parse_natural_date()` with 20+ cases
+  - Test `parse_natural_time()` with 15+ cases
+  - Test timezone handling and DST transitions
+  - Test edge cases (ambiguous dates, past dates)
+  - **Output:** `server/tests/test_date_utils.py` (150+ lines)
+  - **Commit:** `test: Add unit tests for date/time parsing utilities`
+
+- [ ] **3.2** Unit Tests - Parser Modules
+  - Create `server/tests/test_parser.py`
+  - Test LocalLLMParser with mock LM Studio responses
+  - Test CloudflareAIParser with mock API responses
+  - Test confidence scoring algorithm
+  - Test JSON validation and error handling
+  - Test fallback logic (auto mode)
+  - **Output:** `server/tests/test_parser.py` (200+ lines)
+  - **Commit:** `test: Add unit tests for LLM parser modules`
+
+- [ ] **3.3** Integration Tests - API Endpoints
+  - Create `server/tests/test_parse_endpoint.py`
+  - Test `POST /api/voice/parse` with varied inputs
+  - Test all 3 modes (auto/local/cloud)
+  - Test authentication (valid/invalid tokens)
+  - Test error scenarios (LLM unavailable, timeout)
+  - Test response schema compliance
+  - **Output:** `server/tests/test_parse_endpoint.py` (150+ lines)
+  - **Commit:** `test: Add integration tests for parse endpoint`
+
+- [ ] **3.4** Manual Testing & Validation
+  - Test 20+ real-world voice inputs (from `docs/phase8.1_edge_cases.md`)
+  - Verify accuracy: dates >90%, times >85%, priority >75%
+  - Test frontend auto-population with confidence indicators
+  - Test settings UI (mode switching)
+  - Document failures and accuracy metrics
+  - **Output:** `docs/phase8.1_manual_test_results.md`
+  - **Commit:** `docs: Add Phase 8.1 manual testing results`
+
+- [ ] **3.5** Test Suite Execution & Coverage
+  - Run full test suite: `pytest --cov=server --cov-report=html`
+  - Verify >85% code coverage for new modules
+  - Fix any failing tests
+  - Generate coverage report
+  - **Output:** Coverage report, all tests passing
+  - **Commit:** `test: Achieve >85% coverage for Phase 8.1 modules`
+
+- [ ] **3.6** Phase 8.1 Completion Report
+  - Create `docs/phase8.1_completion.md`
+  - Document implementation details (architecture, tech stack)
+  - Record performance metrics (latency, accuracy)
+  - List known limitations and future enhancements
+  - Include commit log (all Phase 8.1 commits)
+  - **Output:** `docs/phase8.1_completion.md` (similar to `phase8_completion.md`)
+  - **Commit:** `docs: Add Phase 8.1 completion report`
+
+**After Testing:** Update `TODOS.md` to mark Phase 8.1 complete ✅
 
 ### Success Criteria
 
