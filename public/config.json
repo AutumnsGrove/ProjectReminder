@@ -17,5 +17,8 @@
     "enabled": false,
     "mapbox_token": "pk.eyJ1IjoiYXV0dW1uc2dhcmRlbiIsImEiOiJjbWhpNWJjc2kxMHZ2MmhxNm13MTE2OTN3In0.HHjohgRHw8ZqMSH4H2dohg"
   },
-  "_comment": "Configuration for the reminders app. Edit as needed for your setup. Set use_cloud to true to use Cloudflare Workers API instead of local backend."
+  "nlp": {
+    "mode": "auto"
+  },
+  "_comment": "Configuration for the reminders app. Edit as needed for your setup. Set use_cloud to true to use Cloudflare Workers API instead of local backend. NLP mode: auto (try local→cloud), local (LM Studio only), cloud (Cloudflare AI only)."
 }

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ADHD-friendly reminders app - Settings">
+    <title>Settings - Reminders</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/edit.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <button class="btn-icon btn-back" id="backBtn" aria-label="Go back">
+                <span class="icon">←</span>
+            </button>
+            <h1 class="page-title">Settings</h1>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="settings-section">
+                <h2 class="section-title">NLP Parsing (Phase 8.1)</h2>
+                <p class="section-description">
+                    Choose how voice reminders are analyzed to extract dates, times, and priorities.
+                </p>
+
+                <div class="form-group">
+                    <label class="form-label">Parsing Mode</label>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="nlp_mode" value="auto" checked>
+                            <div class="radio-content">
+                                <strong>Auto (Recommended)</strong>
+                                <small>Try local first, use cloud as fallback</small>
+                            </div>
+                        </label>
+
+                        <label class="radio-option">
+                            <input type="radio" name="nlp_mode" value="local">
+                            <div class="radio-content">
+                                <strong>Local Only</strong>
+                                <small>Always use local LM Studio (offline, private)</small>
+                            </div>
+                        </label>
+
+                        <label class="radio-option">
+                            <input type="radio" name="nlp_mode" value="cloud">
+                            <div class="radio-content">
+                                <strong>Cloud Only</strong>
+                                <small>Always use Cloudflare AI (requires internet)</small>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="privacy-notice" style="margin-top: 16px; padding: 12px; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
+                        <strong>Privacy Note:</strong> Cloud mode sends your voice text to Cloudflare for processing.
+                        Local mode keeps all data on your device.
+                    </div>
+                </div>
+
+                <div class="form-actions" style="margin-top: 24px;">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveBtn">Save Settings</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/errors.js"></script>
+    <script src="js/animations.js"></script>
+    <script>
+        // Load saved settings
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedMode = localStorage.getItem('nlp_mode') || 'auto';
+            const radio = document.querySelector(`input[name="nlp_mode"][value="${savedMode}"]`);
+            if (radio) {
+                radio.checked = true;
+            }
+        });
+
+        // Save settings
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            const selectedMode = document.querySelector('input[name="nlp_mode"]:checked').value;
+            localStorage.setItem('nlp_mode', selectedMode);
+
+            // Show success toast
+            const toast = document.getElementById('toast-container');
+            const toastEl = document.createElement('div');
+            toastEl.className = 'toast toast-success';
+            toastEl.textContent = `Settings saved! NLP mode: ${selectedMode}`;
+            toast.appendChild(toastEl);
+
+            setTimeout(() => {
+                toastEl.remove();
+                window.history.back();
+            }, 2000);
+        });
+
+        // Cancel button
+        document.getElementById('cancelBtn').addEventListener('click', () => {
+            window.history.back();
+        });
+
+        // Back button
+        document.getElementById('backBtn').addEventListener('click', () => {
+            window.history.back();
+        });
+    </script>
+
+    <style>
+        .settings-section {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .section-description {
+            color: #6b7280;
+            margin-bottom: 24px;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: flex-start;
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .radio-option:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .radio-option input[type="radio"] {
+            margin-top: 4px;
+            margin-right: 12px;
+        }
+
+        .radio-option input[type="radio"]:checked + .radio-content {
+            color: #1f2937;
+        }
+
+        .radio-option:has(input:checked) {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .radio-content {
+            flex: 1;
+        }
+
+        .radio-content strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .radio-content small {
+            color: #6b7280;
+        }
+    </style>
+</body>
+</html>
