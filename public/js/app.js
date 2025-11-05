@@ -638,6 +638,28 @@ const App = (function() {
     }
 
     /**
+     * Apply confidence indicator styling to form fields (Phase 8.1)
+     * @param {HTMLElement} field - The form field element
+     * @param {number} confidence - Confidence score (0.0-1.0)
+     */
+    function applyConfidenceIndicator(field, confidence) {
+        // Remove existing confidence classes
+        field.classList.remove('confidence-high', 'confidence-medium', 'confidence-low');
+
+        // Apply confidence class based on score
+        if (confidence >= 0.8) {
+            field.classList.add('confidence-high');  // Green border
+        } else if (confidence >= 0.6) {
+            field.classList.add('confidence-medium');  // Yellow border
+        } else {
+            field.classList.add('confidence-low');  // Red border
+        }
+
+        // Add tooltip showing confidence
+        field.title = `Auto-filled (${Math.round(confidence * 100)}% confidence)`;
+    }
+
+    /**
      * Initialize Voice Recorder for the Edit view
      */
     function initVoiceRecorder() {
@@ -672,22 +694,77 @@ const App = (function() {
                 voiceRecorderTimer.style.display = 'none';
 
                 try {
-                    // Transcribe audio
-                    const result = await API.transcribeAudio(audioBlob);
+                    // Step 1: Transcribe audio
+                    showToast('Transcribing...', 'info');
+                    const transcribeResult = await API.transcribeAudio(audioBlob);
 
-                    // Update text field if transcription successful
-                    if (result && result.text) {
-                        reminderText.value = result.text.trim();
-
-                        // Optional: Show toast or notification
-                        showToast(`Transcribed: ${result.text}`, 'success');
+                    if (!transcribeResult || !transcribeResult.text) {
+                        throw new Error('No transcription text received');
                     }
+
+                    const transcribedText = transcribeResult.text.trim();
+
+                    // Step 2: Parse reminder text with NLP (Phase 8.1)
+                    showToast('Analyzing...', 'info');
+                    const nlpMode = localStorage.getItem('nlp_mode') || 'auto';
+                    const parseResult = await API.parseReminderText(transcribedText, nlpMode);
+
+                    // Step 3: Auto-populate form fields with confidence-based validation
+                    reminderText.value = parseResult.text || transcribedText;
+
+                    // Auto-fill date (if confidence > 0.7)
+                    if (parseResult.due_date && parseResult.confidence > 0.7) {
+                        const dueDateField = document.getElementById('dueDate');
+                        if (dueDateField) {
+                            dueDateField.value = parseResult.due_date;
+                            applyConfidenceIndicator(dueDateField, parseResult.confidence);
+                        }
+                    }
+
+                    // Auto-fill time (if confidence > 0.7)
+                    if (parseResult.due_time && parseResult.confidence > 0.7) {
+                        const dueTimeField = document.getElementById('dueTime');
+                        const timeRequiredField = document.getElementById('timeRequired');
+                        if (dueTimeField) {
+                            // Convert HH:MM:SS to HH:MM for HTML input
+                            const timeHHMM = parseResult.due_time.substring(0, 5);
+                            dueTimeField.value = timeHHMM;
+                            applyConfidenceIndicator(dueTimeField, parseResult.confidence);
+                        }
+                        if (timeRequiredField) {
+                            timeRequiredField.checked = parseResult.time_required;
+                        }
+                    }
+
+                    // Auto-fill priority (if confidence > 0.6)
+                    if (parseResult.priority && parseResult.confidence > 0.6) {
+                        const priorityRadio = document.querySelector(`input[name="priority"][value="${parseResult.priority}"]`);
+                        if (priorityRadio) {
+                            priorityRadio.checked = true;
+                        }
+                    }
+
+                    // Auto-fill category (if provided)
+                    if (parseResult.category) {
+                        const categoryField = document.getElementById('category');
+                        if (categoryField) {
+                            categoryField.value = parseResult.category;
+                            applyConfidenceIndicator(categoryField, parseResult.confidence);
+                        }
+                    }
+
+                    // Show success toast with parse mode
+                    const modeLabel = parseResult.parse_mode === 'local' ? '🖥️ Local' : '☁️ Cloud';
+                    showToast(`Parsed with ${modeLabel} mode (confidence: ${Math.round(parseResult.confidence * 100)}%)`, 'success');
+
                 } catch (error) {
-                    // Show error in case of transcription failure
+                    // Show error in case of transcription or parse failure
+                    console.error('Voice processing error:', error);
                     showToast(error.message, 'error');
                 } finally {
                     // Reset button state
                     voiceRecorderBtn.classList.remove('processing');
+                    formGroup.classList.remove('processing');
                 }
             },
             onRecordingUpdate: (elapsedTime) => {

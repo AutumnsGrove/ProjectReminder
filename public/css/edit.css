@@ -560,3 +560,33 @@ select.form-control {
 .form-group.recording .form-control {
     border-color: var(--color-danger-light);
 }
+/* =============================================================================
+   Phase 8.1: NLP Parsing Confidence Indicators
+   ============================================================================= */
+
+/* High confidence - Green border (80%+) */
+.confidence-high {
+    border-color: #10b981 !important;
+    border-width: 2px !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Medium confidence - Yellow border (60-80%) */
+.confidence-medium {
+    border-color: #f59e0b !important;
+    border-width: 2px !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+/* Low confidence - Red border (<60%) */
+.confidence-low {
+    border-color: #ef4444 !important;
+    border-width: 2px !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Smooth transitions for confidence indicators */
+.form-control,
+.form-control-sm {
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}

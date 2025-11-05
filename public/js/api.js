@@ -454,6 +454,35 @@ const API = (function() {
         }
     }
 
+    /**
+     * Parse reminder text with NLP (Phase 8.1)
+     * @param {string} text - Natural language reminder text
+     * @param {string} mode - Parsing mode: 'auto', 'local', or 'cloud' (default: 'auto')
+     * @returns {Promise<{text, due_date, due_time, priority, category, location, confidence, parse_mode}>}
+     */
+    async function parseReminderText(text, mode = 'auto') {
+        try {
+            const response = await fetch(`${getEndpoint()}/voice/parse`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${config.api.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text, mode })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || `Parse failed (${response.status})`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Parse error:', error);
+            throw error;
+        }
+    }
+
     // Public API
     return {
         init,
@@ -469,7 +498,8 @@ const API = (function() {
         getFutureReminders,
         getNearbyReminders,
         healthCheck,
-        transcribeAudio  // New function
+        transcribeAudio,
+        parseReminderText  // Phase 8.1: NLP parsing
     };
 })();
 
