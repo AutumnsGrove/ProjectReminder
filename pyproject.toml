@@ -3,6 +3,7 @@
 addopts = "-v --doctest-modules --cov=server --cov-report=term-missing"
 testpaths = ["server/tests"]
 python_files = ["test_*.py"]
+asyncio_mode = "auto"
 
 [tool.coverage.run]
 source = ["server"]
@@ -16,3 +17,8 @@ exclude_lines = [
     "raise NotImplementedError",
     "if __name__ == .__main__.:"
 ]
+
+[tool.ruff]
+# Optional: Ruff configuration for code formatting and linting
+line-length = 120
+target-version = "py311"
