@@ -664,3 +664,52 @@ class VoiceTranscriptionResponse(BaseModel):
             }
         }
     )
+
+
+# =============================================================================
+# NLP Parsing Models (Phase 8.1)
+# =============================================================================
+
+
+class ReminderParseRequest(BaseModel):
+    """Request for parsing natural language reminder text."""
+    text: str = Field(..., min_length=1, max_length=1000, description="Reminder text to parse")
+    mode: Literal["auto", "local", "cloud"] = Field("auto", description="Parsing mode selection")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "text": "Call mom tomorrow at 3pm, this is urgent",
+                "mode": "auto"
+            }
+        }
+    )
+
+
+class ReminderParseResponse(BaseModel):
+    """Response from reminder text parsing endpoint."""
+    text: str = Field(..., description="Cleaned reminder text")
+    due_date: Optional[str] = Field(None, description="Extracted due date (YYYY-MM-DD)")
+    due_time: Optional[str] = Field(None, description="Extracted due time (HH:MM:SS)")
+    time_required: bool = Field(False, description="Is specific time required?")
+    priority: Optional[str] = Field(None, description="Extracted priority level")
+    category: Optional[str] = Field(None, description="Inferred category")
+    location: Optional[str] = Field(None, description="Extracted location")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Overall confidence score (0.0-1.0)")
+    parse_mode: Literal["local", "cloud"] = Field(..., description="Mode used for parsing")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "text": "Call mom",
+                "due_date": "2025-11-05",
+                "due_time": "15:00:00",
+                "time_required": True,
+                "priority": "urgent",
+                "category": "Calls",
+                "location": None,
+                "confidence": 0.95,
+                "parse_mode": "local"
+            }
+        }
+    )

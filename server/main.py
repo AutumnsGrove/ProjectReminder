@@ -30,7 +30,9 @@ from .models import (
     ConflictInfo,
     RecurrencePatternCreate,
     RecurrencePatternResponse,
-    VoiceTranscriptionResponse
+    VoiceTranscriptionResponse,
+    ReminderParseRequest,
+    ReminderParseResponse
 )
 
 
@@ -532,6 +534,112 @@ async def transcribe_voice(
                 os.remove(temp_path)
             except Exception as e:
                 print(f"Warning: Failed to cleanup temp file {temp_path}: {e}")
+
+
+@app.post(
+    "/api/voice/parse",
+    response_model=ReminderParseResponse,
+    tags=["Voice"],
+    summary="Parse reminder text with NLP",
+    description="Extract structured metadata (dates, times, priorities, categories) from natural language reminder text using local LLM or Cloudflare AI"
+)
+async def parse_reminder(
+    request: ReminderParseRequest,
+    token: str = Depends(verify_token)
+):
+    """
+    Parse natural language reminder text into structured metadata.
+
+    Uses either local LM Studio (offline) or Cloudflare Workers AI (online) depending on mode:
+    - auto: Try local first, fallback to cloud
+    - local: Local LM Studio only (fails if unavailable)
+    - cloud: Cloudflare Workers AI only (requires internet)
+
+    Returns extracted metadata with confidence scores to guide auto-fill vs manual review.
+
+    Requires bearer token authentication.
+    """
+    try:
+        # Import parsers lazily to avoid startup overhead
+        from server.voice.parser import LocalLLMParser
+        from server.voice.cloudflare_parser import CloudflareAIParser
+
+        result = None
+        parse_errors = []
+
+        # AUTO MODE: Try local → fallback to cloud
+        if request.mode == "auto":
+            # Try local first
+            try:
+                print("[Parse] Attempting local LLM parse...")
+                local_parser = LocalLLMParser()
+                result = await local_parser.parse_reminder_text(request.text)
+                await local_parser.close()
+
+                # Check if parse was successful (confidence > 0.2)
+                if result.get("confidence", 0.0) > 0.2:
+                    print(f"[Parse] Local parse successful (confidence: {result['confidence']})")
+                    return ReminderParseResponse(**result)
+                else:
+                    parse_errors.append(f"Local parse returned low confidence: {result.get('confidence', 0.0)}")
+
+            except Exception as e:
+                parse_errors.append(f"Local parse failed: {str(e)}")
+                print(f"[Parse] Local parse failed: {e}")
+
+            # Fallback to cloud
+            try:
+                print("[Parse] Attempting Cloudflare AI parse...")
+                cloud_parser = CloudflareAIParser()
+                result = await cloud_parser.parse_reminder_text(request.text)
+                await cloud_parser.close()
+
+                print(f"[Parse] Cloud parse successful (confidence: {result['confidence']})")
+                return ReminderParseResponse(**result)
+
+            except Exception as e:
+                parse_errors.append(f"Cloud parse failed: {str(e)}")
+                print(f"[Parse] Cloud parse failed: {e}")
+
+            # Both failed - return empty parse
+            print(f"[Parse] Both parsers failed: {parse_errors}")
+            return ReminderParseResponse(
+                text=request.text,
+                due_date=None,
+                due_time=None,
+                time_required=False,
+                priority=None,
+                category=None,
+                location=None,
+                confidence=0.0,
+                parse_mode="local"  # Default
+            )
+
+        # LOCAL MODE ONLY
+        elif request.mode == "local":
+            local_parser = LocalLLMParser()
+            result = await local_parser.parse_reminder_text(request.text)
+            await local_parser.close()
+            return ReminderParseResponse(**result)
+
+        # CLOUD MODE ONLY
+        elif request.mode == "cloud":
+            cloud_parser = CloudflareAIParser()
+            result = await cloud_parser.parse_reminder_text(request.text)
+            await cloud_parser.close()
+            return ReminderParseResponse(**result)
+
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+
+    except Exception as e:
+        # Log and return graceful error
+        print(f"[Parse] Unexpected error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Parse failed: {str(e)}"
+        )
 
 
 @app.get(
