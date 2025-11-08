@@ -263,7 +263,7 @@ async def create_reminder(reminder: ReminderCreate):
 
                 # Return the first generated instance
                 if generated_ids:
-                    first_instance = db.get_reminder(generated_ids[0])
+                    first_instance = db.get_reminder_by_id(generated_ids[0])
                     if first_instance:
                         return ReminderResponse(**first_instance)
 
