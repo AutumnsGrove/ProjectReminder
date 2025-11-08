@@ -13,7 +13,7 @@ from pathlib import Path
 public_dir = Path(__file__).parent / "public"
 os.chdir(public_dir)
 
-PORT = 3000
+PORT = 3077
 
 Handler = http.server.SimpleHTTPRequestHandler
 

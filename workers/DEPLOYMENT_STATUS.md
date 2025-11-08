@@ -62,7 +62,7 @@ The Cloudflare Workers API is **fully implemented and ready for deployment**, bu
 
 4. **Come back and run:**
    ```bash
-   cd /Users/mini/Documents/Projects/ProjectReminder/workers
+   cd workers
    ./deploy.sh
    ```
 
@@ -79,7 +79,7 @@ Once subdomain is registered:
 
 ```bash
 # Navigate to workers directory
-cd /Users/mini/Documents/Projects/ProjectReminder/workers
+cd workers
 
 # Run interactive deployment
 ./deploy.sh
@@ -270,7 +270,7 @@ This runs 8 comprehensive tests:
 8. CORS preflight
 
 ### 4. Frontend Integration Test
-1. Start UI: `python ../serve_ui.py`
+1. Start UI: `python serve_ui.py` (from project root)
 2. Open: http://localhost:3000
 3. Open browser console
 4. Set cloud mode: `config.api.use_cloud = true`

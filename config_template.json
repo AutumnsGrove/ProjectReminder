@@ -1,0 +1,21 @@
+{
+    "api": {
+        "local_endpoint": "http://localhost:8000/api",
+        "cloud_endpoint": "https://YOUR_WORKER_SUBDOMAIN.workers.dev/api",
+        "use_cloud": false,
+        "token": "YOUR_API_TOKEN_HERE"
+    },
+    "sync": {
+        "enabled": false,
+        "interval_minutes": 5
+    },
+    "ui": {
+        "theme": "dark",
+        "animations_enabled": true
+    },
+    "location": {
+        "enabled": false,
+        "mapbox_token": ""
+    },
+    "comment": "Copy this file to config.json and fill in real values. Never commit config.json! Generate a strong random token for api.token. Get your Cloudflare Worker subdomain from the Cloudflare dashboard after deployment."
+}

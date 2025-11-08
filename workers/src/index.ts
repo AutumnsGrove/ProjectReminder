@@ -30,11 +30,11 @@ const app = new Hono<{ Bindings: Bindings }>()
 /**
  * CORS Middleware
  *
- * Allows requests from localhost:3000 (frontend dev server)
+ * Allows requests from localhost:3077 (frontend dev server)
  * Enables credentials for authentication
  */
 app.use('/*', cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  origin: ['http://localhost:3077', 'http://127.0.0.1:3077'],
   allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
   credentials: true,

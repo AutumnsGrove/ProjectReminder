@@ -1,12 +1,15 @@
 import pytest
 import json
+from pathlib import Path
 from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch
 from server.main import app
 from server.models import ReminderParseResponse
 
-# Load test token from secrets
-with open('/Users/mini/Documents/Projects/ProjectReminder/secrets.json', 'r') as f:
+# Load test token from secrets (using relative path from project root)
+project_root = Path(__file__).parent.parent.parent
+secrets_path = project_root / 'secrets.json'
+with open(secrets_path, 'r') as f:
     secrets = json.load(f)
     TEST_API_TOKEN = secrets['api_token']
 

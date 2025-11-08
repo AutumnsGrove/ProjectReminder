@@ -45,15 +45,18 @@ API_TOKEN = SECRETS.get("api_token", os.getenv("API_TOKEN", ""))
 MAPBOX_ACCESS_TOKEN = SECRETS.get("mapbox_access_token", os.getenv("MAPBOX_ACCESS_TOKEN", ""))
 
 # CORS (allow local development)
+# Add your Tailscale/VPN IP to this list if needed for remote access
 CORS_ORIGINS = [
-    "http://localhost:3000",
+    "http://localhost:3077",
     "http://localhost:8080",
-    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3077",
     "http://127.0.0.1:8080",
-    "http://100.114.120.17:3000",  # Tailscale IP for main frontend
-    "http://100.114.120.17:8080",  # Tailscale IP for alternative port
     "null"  # For file:// protocol during development
 ]
+
+# Optionally add custom origins from environment
+if custom_origin := os.getenv("CUSTOM_CORS_ORIGIN"):
+    CORS_ORIGINS.append(custom_origin)
 
 # Server
 HOST = "0.0.0.0"

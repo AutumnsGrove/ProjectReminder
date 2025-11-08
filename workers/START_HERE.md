@@ -46,7 +46,7 @@ That's it! Cloudflare will activate your subdomain in a few seconds.
 Once your subdomain is registered, run:
 
 ```bash
-cd /Users/mini/Documents/Projects/ProjectReminder/workers
+cd workers
 ./deploy.sh
 ```
 

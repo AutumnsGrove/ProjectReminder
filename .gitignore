@@ -1,4 +1,5 @@
 secrets.json
+config.json
 public/config.json
 *.db
 !server/reminders.db

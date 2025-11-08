@@ -22,7 +22,7 @@ npx wrangler whoami
 Once subdomain is registered:
 
 ```bash
-cd /Users/mini/Documents/Projects/ProjectReminder/workers
+cd workers
 npx wrangler deploy
 ```
 

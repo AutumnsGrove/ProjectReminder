@@ -62,7 +62,7 @@ Created comprehensive deployment infrastructure for Phase 4
 
 - **Usage:**
   ```bash
-  cd /Users/mini/Documents/Projects/ProjectReminder/workers
+  cd workers
   ./deploy.sh
   ```
 
@@ -266,7 +266,7 @@ Expected headers in response:
 
 ### 2. Deploy (Automated - 5 minutes)
 ```bash
-cd /Users/mini/Documents/Projects/ProjectReminder/workers
+cd workers
 ./deploy.sh
 ```
 
@@ -289,8 +289,8 @@ Edit `public/config.json`:
 
 ### 4. Test Integration (3 minutes)
 ```bash
-# Start UI server
-python /Users/mini/Documents/Projects/ProjectReminder/serve_ui.py
+# Start UI server (from project root)
+python serve_ui.py
 
 # In browser console:
 config.api.use_cloud = true;
