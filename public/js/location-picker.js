@@ -41,6 +41,7 @@ const LocationPicker = (() => {
     els.locationDisplayName = document.getElementById('locationDisplayName');
     els.locationDisplayAddress = document.getElementById('locationDisplayAddress');
     els.clearLocationBtn = document.getElementById('clearLocationBtn');
+    els.useLocationBtn = document.getElementById('useLocationBtn');
 
     // Hidden form fields
     els.locationName = document.getElementById('locationName');
@@ -86,6 +87,14 @@ const LocationPicker = (() => {
     els.clearLocationBtn.addEventListener('click', () => {
       clearLocation();
     });
+
+    // Use This Location button - confirms selection and closes map
+    if (els.useLocationBtn) {
+      els.useLocationBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        handleUseThisLocation();
+      });
+    }
   }
 
   /**
@@ -170,6 +179,40 @@ const LocationPicker = (() => {
     // Update radius circle on map
     if (map && currentLocation.lat && currentLocation.lng) {
       updateRadiusCircle(currentLocation.lat, currentLocation.lng, radius);
+    }
+  }
+
+  /**
+   * Handle "Use This Location" button click
+   * Confirms location selection and closes the map
+   */
+  function handleUseThisLocation() {
+    if (!currentLocation.lat || !currentLocation.lng) {
+      alert('Please select a location on the map first');
+      return;
+    }
+
+    // Location is already saved in form fields by setLocation()
+    // Just provide visual feedback by collapsing the map
+    els.mapContainer.style.display = 'none';
+
+    // Show a brief visual confirmation
+    showConfirmationFeedback();
+  }
+
+  /**
+   * Show visual confirmation that location was accepted
+   */
+  function showConfirmationFeedback() {
+    if (els.locationDisplay) {
+      // Add a brief highlight to show the location was confirmed
+      const originalBackground = els.locationDisplay.style.backgroundColor;
+      els.locationDisplay.style.backgroundColor = '#e8f5e9';
+
+      // Remove highlight after 1 second
+      setTimeout(() => {
+        els.locationDisplay.style.backgroundColor = originalBackground;
+      }, 1000);
     }
   }
 
