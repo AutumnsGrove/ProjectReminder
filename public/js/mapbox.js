@@ -50,8 +50,8 @@ const MapBoxUtils = (() => {
     const defaults = {
       container: containerId,
       style: 'mapbox://styles/mapbox/streets-v12',
-      center: options.center || [-98.5795, 39.8283], // Center of US
-      zoom: options.zoom || 12
+      center: options.center || [0, 0], // World center
+      zoom: options.zoom || 1.5 // Zoom level to show whole world
     };
 
     mapInstance = new mapboxgl.Map({ ...defaults, ...options });
