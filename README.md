@@ -4,8 +4,8 @@ An offline-first, persistent reminders system designed specifically for ADHD wor
 
 **Developer:** Autumn Brown
 **Version:** 1.0 MVP
-**Status:** 🚀 Phase 8 Complete - Voice-to-Text MVP (87.5% to MVP)
-**Latest:** ✨ Voice transcription with Whisper.cpp (local, private, fast)
+**Status:** 🚀 100% Production Ready - MVP Complete!
+**Latest:** ✨ Phase 9.0 Complete - Security hardened, fully tested, ready to launch
 
 ---
 
@@ -91,6 +91,69 @@ An offline-first, persistent reminders system designed specifically for ADHD wor
 
 ---
 
+## 📁 Project Structure
+
+Clear, organized, ADHD-friendly directory layout:
+
+```
+ProjectReminder/
+├── 📄 README.md              # You are here!
+├── 📄 CLAUDE.md              # AI assistant instructions
+├── 🔧 pyproject.toml         # Python dependencies (UV)
+├── 🔧 secrets.json           # API keys (create from template)
+├── 🔧 secrets_template.json  # Template for secrets
+│
+├── 🖥️  server/               # FastAPI backend
+│   ├── main.py              # API server
+│   ├── database.py          # SQLite operations
+│   ├── models.py            # Pydantic models
+│   ├── tests/               # 248 tests, 100% passing
+│   └── voice/               # Voice & NLP processing
+│
+├── 🌐 public/                # Frontend (HTML/CSS/JS)
+│   ├── index.html           # Today view
+│   ├── upcoming.html        # Upcoming reminders
+│   ├── future.html          # Future reminders
+│   ├── edit.html            # Create/edit form
+│   ├── settings.html        # App settings
+│   ├── js/                  # Vanilla JavaScript
+│   └── css/                 # Stylesheets
+│
+├── ☁️  workers/              # Cloudflare Workers (cloud sync)
+│   ├── src/index.ts         # Workers API
+│   ├── wrangler.toml        # Cloudflare config
+│   └── README.md            # Deployment guide
+│
+├── 📚 docs/                  # All documentation
+│   ├── testing/             # Test reports
+│   ├── architecture/        # Design docs
+│   ├── guides/              # How-to guides
+│   └── archives/            # Historical docs
+│
+├── 🧰 ClaudeUsage/          # Claude Code guidelines
+│   └── *.md                 # Best practices for AI assistance
+│
+├── 🧪 test-artifacts/       # Test data (gitignored)
+│   ├── recordings/          # 8 voice samples
+│   ├── transcriptions/      # Test transcriptions
+│   └── coverage/            # Coverage reports
+│
+└── 💾 data/                 # Runtime data (gitignored)
+    ├── databases/           # SQLite files
+    └── config/              # Local config
+```
+
+### Key Directories
+
+- **`server/`** - Python backend (FastAPI + SQLite)
+- **`public/`** - Frontend web app (vanilla JS, no frameworks)
+- **`workers/`** - Cloud sync service (Cloudflare Workers + D1)
+- **`docs/`** - All documentation in one place
+- **`test-artifacts/`** - Test data (not committed)
+- **`data/`** - Runtime data (not committed)
+
+---
+
 ## Getting Started
 
 ### Prerequisites
@@ -111,11 +174,11 @@ uv init
 uv add fastapi uvicorn sqlalchemy pydantic
 
 # 3. Create secrets file
-cp ClaudeUsage/templates/secrets_template.json secrets.json
+cp secrets_template.json secrets.json
 # Edit secrets.json with your MapBox token and generate API token
 
-# 4. Initialize database
-python server/database.py  # Creates reminders.db with schema
+# 4. Database is created automatically on first run
+# No manual initialization needed!
 
 # 5. Start local API server
 uvicorn server.main:app --reload --host 0.0.0.0 --port 8000 OR
@@ -194,32 +257,28 @@ open public/index.html
 
 ---
 
-## Project Structure
+## 📖 Documentation
 
-```
-ProjectReminder/
-├── server/                 # FastAPI backend
-│   ├── main.py            # API server entry point
-│   ├── database.py        # SQLite interface
-│   ├── models.py          # Pydantic models
-│   └── config.py          # Configuration
-├── workers/               # Cloudflare Workers
-│   ├── src/
-│   │   └── index.ts       # Workers API
-│   └── wrangler.toml      # Cloudflare config
-├── public/                # Web UI
-│   ├── index.html         # Today view
-│   ├── upcoming.html      # Upcoming view
-│   ├── edit.html          # Create/edit form
-│   ├── settings.html      # Configuration
-│   ├── css/               # Stylesheets
-│   └── js/                # JavaScript
-├── ClaudeUsage/           # Development guides
-├── CLAUDE.md              # Project instructions
-├── TODOS.md               # Task tracking
-├── reminders-project-spec.md  # Full specification
-└── secrets.json           # API keys (gitignored)
-```
+### Getting Started
+- [Quick Start Guide](#getting-started) - Setup instructions above
+- [Secrets Template](secrets_template.json) - API key configuration
+
+### Testing & Quality
+- [Comprehensive Test Report](docs/testing/COMPREHENSIVE_TEST_REPORT.md) - 248 tests, 100% passing, 36% coverage
+- [Test Artifacts](test-artifacts/README.md) - Voice samples and test data
+
+### Development Guides
+- [Project Roadmap](docs/guides/PROJECT_ROADMAP.md) - Current status and future plans
+- [Contributing Guide](docs/guides/CONTRIBUTING.md) - How to contribute
+- [Claude Usage Guides](ClaudeUsage/README.md) - AI-assisted development best practices
+
+### Architecture & Design
+- [Architecture Docs](docs/architecture/) - System design and technical decisions
+- [Workers Deployment](workers/README.md) - Cloudflare Workers setup
+
+### Data & Configuration
+- [Data Directory](data/README.md) - Database and config files
+- [Test Artifacts](test-artifacts/README.md) - Test recordings and results
 
 ---
 

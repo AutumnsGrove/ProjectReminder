@@ -23,20 +23,25 @@ venv/
 ENV/
 
 # Testing artifacts
-htmlcov/
 .coverage
 .pytest_cache/
 .tox/
 
-# Test data (from testing sessions)
-EXAMPLE_RECORDINGS/
-audio_converted/
-compression_test/
-nlp_results/
-transcriptions/
+# Data directories (not committed)
+/data/
+!/data/.gitkeep
+!/data/*/
+!/data/*/.gitkeep
+
+# Test artifacts (not committed)
+/test-artifacts/
+!/test-artifacts/.gitkeep
+!/test-artifacts/recordings/
+!/test-artifacts/recordings/*.m4a
+
+# Audio files
 *.wav
 *.opus
-*.m4a
 *.webm
 
 # Logs
