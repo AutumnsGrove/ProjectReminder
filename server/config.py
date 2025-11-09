@@ -51,6 +51,8 @@ CORS_ORIGINS = [
     "http://localhost:8080",
     "http://127.0.0.1:3077",
     "http://127.0.0.1:8080",
+    "http://100.114.120.17:3077",  # Tailscale mesh network
+    "http://100.114.120.17:8080",  # Tailscale mesh network
     "null"  # For file:// protocol during development
 ]
 

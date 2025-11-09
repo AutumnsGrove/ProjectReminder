@@ -376,7 +376,9 @@ const SyncManager = (function() {
 
             // Call sync API endpoint
             const apiUrl = API.getEndpoint().replace('/api', '');
-            const apiToken = localStorage.getItem('apiToken');
+
+            // Get token from API module's getAuthToken function
+            const apiToken = API.getAuthToken ? API.getAuthToken() : null;
 
             if (!apiToken) {
                 throw new Error('API token not configured');

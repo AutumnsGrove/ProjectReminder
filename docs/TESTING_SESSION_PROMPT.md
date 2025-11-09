@@ -376,12 +376,34 @@ Cloud sync (Cloudflare D1) is the backup/multi-device solution, so syncing will 
 
 ## 🎬 START HERE
 
-**First Command:**
+**Step 1: Start Backend and Frontend in Background**
+
+Start both servers in background so they run while you work:
+
 ```bash
-# Verify environment
-uv run pytest --version && echo "---" && uv run python --version
+# Start backend server (FastAPI on port 8000)
+uv run uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+# (Use run_in_background: true in Bash tool)
+
+# Start frontend server (UI on port 3077)
+python serve_ui.py
+# (Use run_in_background: true in Bash tool)
 ```
 
-**Then run the testing phases sequentially** or use multiple agents in parallel for faster results.
+**Step 2: Verify Environment**
+```bash
+# Check servers are running
+curl -s http://localhost:8000/api/health
+curl -s http://localhost:3077 | head -5
+
+# Verify pytest works
+uv run pytest --version
+```
+
+**Step 3: Run Testing Phases**
+
+Then proceed through the testing phases sequentially or use multiple agents in parallel for faster results.
+
+**Important:** Both servers must remain running in background throughout the entire testing session!
 
 **Good luck! 🚀**

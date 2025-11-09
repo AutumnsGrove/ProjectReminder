@@ -1,9 +1,9 @@
 {
   "api": {
-    "local_endpoint": "http://100.114.120.17:8000/api",
+    "local_endpoint": "http://localhost:8000/api",
     "cloud_endpoint": "https://reminders-api.m7jv4v7npb.workers.dev/api",
     "use_cloud": false,
-    "token": "c27d0f34a3fbbb12faf361328615bfd42033b4adfc80732b30bdbaa7d3d0bc60"
+    "token": "008223a499e66c474928a628c8d523a5a286a8decf0782ed6a90768ed6a1a564"
   },
   "sync": {
     "enabled": false,
@@ -14,7 +14,7 @@
     "animations_enabled": true
   },
   "location": {
-    "enabled": false,
+    "enabled": true,
     "mapbox_token": "pk.eyJ1IjoiYXV0dW1uc2dhcmRlbiIsImEiOiJjbWhpNWJjc2kxMHZ2MmhxNm13MTE2OTN3In0.HHjohgRHw8ZqMSH4H2dohg"
   },
   "nlp": {

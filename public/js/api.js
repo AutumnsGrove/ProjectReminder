@@ -483,10 +483,19 @@ const API = (function() {
         }
     }
 
+    /**
+     * Get authentication token from config
+     * @returns {string|null} API token
+     */
+    function getAuthToken() {
+        return config?.api?.token || null;
+    }
+
     // Public API
     return {
         init,
         getEndpoint,
+        getAuthToken,
         getReminders,
         getReminder,
         createReminder,

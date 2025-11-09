@@ -1,199 +1,424 @@
 # TODOs - ADHD-Friendly Voice Reminders System
 
-**Status:** 🚀 Phase 1-8.1 Complete (100% MVP Feature Complete!) | Testing & Polish Next
+**Status:** 🚧 Phase 9.0 Production Hardening (Post-Testing Fixes)
 **Last Updated:** November 8, 2025
 **Cloud API:** https://reminders-api.m7jv4v7npb.workers.dev
 
 ---
 
-## 🎯 NEXT: Comprehensive Testing & Deployment
+## 🎯 NEXT: Phase 9.0 - Production Hardening (CRITICAL)
 
-**Goal:** Test all features end-to-end, verify integrations, prepare for production deployment
+**Goal:** Fix critical bugs and UX issues discovered during comprehensive testing before MVP launch
 
-**Priority Focus:**
-1. **Voice → NLP workflow** - End-to-end testing of Phase 8.1
-2. **MapBox location features** - Real-world testing (Phase 6)
-3. **Recurring reminders** - Pattern validation (Phase 7)
-4. **Multi-device sync** - Cloud/local synchronization
-5. **Performance & reliability** - Load testing, error handling
+**Testing Summary:**
+- ✅ 138/138 automated tests passing
+- ✅ Voice pipeline working (96% transcription accuracy)
+- ✅ NLP parsing functional (96% priority, 92% category)
+- ⚠️ 2 critical blockers found
+- ⚠️ 3 UX improvements needed
+- 📊 Overall: 90% production ready
+
+**Priority:** CRITICAL - Must complete before public launch
 
 ---
 
-## ✅ Phase 8.1 - LLM Natural Language Parsing - COMPLETE!
+## 📋 Phase 9.0 Tasks
 
-**Completed:** November 4, 2025
-**Status:** ✅ All Development & Testing Done (11 commits, 65 tests passing, 80-90% coverage)
+### Critical Blockers (Must Fix)
 
-**What It Does:**
-```
-Voice → "Call mom about Thanksgiving tomorrow at 3pm, this is urgent"
-Result → Text: "Call mom about Thanksgiving"
-         Due Date: 2025-11-05 (parsed "tomorrow")
-         Due Time: 15:00:00 (parsed "3pm")
-         Priority: urgent (parsed "this is urgent")
-         Category: Personal (inferred from "call")
-         Confidence: 95%
-```
+- [ ] **Fix Date Validation Bug** (45 min) - CRITICAL
+  - **Issue:** API accepts invalid dates like "invalid-date", "2025-13-32"
+  - **Impact:** Corrupts database with bad data
+  - **Location:** `server/models.py` - Add Pydantic validators
+  - **Testing:** Add tests in `tests/test_validation.py`
+  - **Acceptance:** All invalid dates rejected with HTTP 422
 
-**Architecture:** Dual-mode (local Llama 3.2 1B via LM Studio OR Cloudflare Workers AI)
+- [ ] **Sync Cloud API Token** (10 min) - HIGH
+  - **Issue:** Cloudflare Workers returns 401 (token mismatch)
+  - **Impact:** Cloud sync non-functional
+  - **Fix:** Run `cd workers && npx wrangler secret put API_TOKEN`
+  - **Testing:** Test sync to cloud endpoint
+  - **Acceptance:** Sync completes without 401 errors
 
-**Key Deliverables:**
-- ✅ 8 new Python modules (prompts, date_utils, parser, cloudflare_parser, tests)
-- ✅ Enhanced frontend with confidence indicators
-- ✅ Settings UI for mode selection
-- ✅ 65 tests passing (80-90% coverage)
-- ✅ Complete documentation in `docs/phase8.1_*.md`
+### UX Improvements (Should Fix)
 
-**Commits:** 11 conventional commits (e02347d → 58cedc9)
+- [ ] **MapBox Default View** (30 min) - MEDIUM
+  - **Issue:** Map starts blank instead of showing default view
+  - **Fix:** Add default center/zoom to MapBox initialization
+  - **Location:** `public/js/location.js` or wherever MapBox is initialized
+  - **Testing:** Open edit form, verify map shows world view by default
+  - **Acceptance:** Map shows zoomed-out earth on load
 
-<details>
-<summary><strong>View All Phase 8.1 Tasks (All Complete ✅)</strong></summary>
+- [ ] **MapBox Save Button Clarity** (20 min) - MEDIUM
+  - **Issue:** No clear "Save/Apply" button for selected location
+  - **Fix:** Add explicit "Use This Location" button to map UI
+  - **Location:** `public/edit.html` or location picker component
+  - **Testing:** Select location, click save button, verify persists
+  - **Acceptance:** Clear button makes location selection obvious
 
-### Research Phase ✅
-- [x] Requirements Analysis (`docs/phase8.1_requirements.md`)
-- [x] Cloudflare Workers AI Research (`docs/phase8.1_cloudflare_ai_research.md`)
-- [x] Architecture Planning (`docs/phase8.1_architecture.md`)
-- [x] Edge Case Analysis (`docs/phase8.1_edge_cases.md`)
+- [ ] **Future View Layout Fix** (30 min) - MEDIUM
+  - **Issue:** Future view layout differs from Today/Upcoming (items top-left)
+  - **Fix:** Align CSS with Today/Upcoming views
+  - **Location:** `public/css/main.css` or `public/future.html`
+  - **Testing:** Compare all 3 views side-by-side
+  - **Acceptance:** Consistent layout across all views
 
-### Development Phase ✅
-- [x] Install Dependencies (dateparser, python-dateutil, httpx)
-- [x] System Prompt Engineering (`server/voice/prompts.py`)
-- [x] Date/Time Utilities (`server/voice/date_utils.py`)
-- [x] Local LLM Parser (`server/voice/parser.py`)
-- [x] Cloudflare AI Parser (`server/voice/cloudflare_parser.py`)
-- [x] FastAPI Parse Endpoint (`POST /api/voice/parse`)
-- [x] Frontend Integration (auto-populate with confidence indicators)
-- [x] Settings UI (`public/settings.html`)
+### Performance Optimizations
 
-### Testing Phase ✅
-- [x] Unit Tests - Date/Time Utilities (36 tests, 78% coverage)
-- [x] Unit Tests - Parser Modules (20 tests, 80-85% coverage)
-- [x] Integration Tests - Parse Endpoint (5 tests)
-- [x] Test Suite Execution (65 tests passing, 100% success)
-- [x] Completion Report (`docs/phase8.1_completion.md`)
+- [ ] **Implement Opus Audio Compression** (60 min) - HIGH
+  - **Goal:** 81% file size reduction (116KB → 22KB avg)
+  - **Current:** Sending M4A files (2.9MB for 25 recordings)
+  - **Target:** Convert to Opus 24kbps before upload
+  - **Location:** `public/js/voice-recorder.js` - add conversion step
+  - **Testing:** Record audio, verify Opus upload, check transcription quality
+  - **Acceptance:** Audio files 5x smaller, no quality loss
 
-</details>
+---
 
-**Ready for:** End-to-end testing with real voice input!
+## 🔮 Phase 9.1 - NLP Enhancement (After 9.0)
+
+**Goal:** Improve temporal parsing accuracy from 40% dates / 28% times to 80%+ target
+
+**Current Performance:**
+- Priority: 96% ✅
+- Category: 92% ✅
+- Date: 40% ⚠️ (needs improvement)
+- Time: 28% ⚠️ (needs improvement)
+- Location: 28% ⚠️
+
+### Tasks
+
+- [ ] **Enhance Date Extraction** (2 hours)
+  - Add `dateparser` library integration
+  - Handle relative dates ("tomorrow", "next Monday", "in 3 days")
+  - Handle fuzzy dates ("sometime next week", "end of month")
+  - **Testing:** Re-run 25 test cases, target 80% accuracy
+
+- [ ] **Enhance Time Extraction** (2 hours)
+  - Add pattern matching for common phrases
+  - Context-aware defaults:
+    - "morning" → 9:00 AM
+    - "afternoon" → 3:00 PM
+    - "evening" → 6:00 PM
+    - "night" → 9:00 PM
+  - Handle "end of day" → 5:00 PM
+  - **Testing:** Re-run 25 test cases, target 80% accuracy
+
+- [ ] **Post-Processing Layer** (2 hours)
+  - Add rule-based fallbacks for LLM misses
+  - Implement regex patterns for common formats
+  - Add confidence boosting for matched patterns
+  - **Location:** New module `server/voice/post_processor.py`
+
+- [ ] **Update System Prompt** (30 min)
+  - Refine LLM prompt for better temporal extraction
+  - Add examples of date/time formats
+  - **Location:** `server/voice/prompts.py`
+
+- [ ] **Add NLP Tests** (1 hour)
+  - Create test suite for date/time parsing
+  - Cover edge cases (timezones, DST, relative dates)
+  - **Location:** `tests/test_nlp_parsing.py`
+
+**Estimated Time:** 7.5 hours
+**Success Criteria:** 80%+ date/time extraction accuracy
+
+---
+
+## 🔮 Phase 9.2 - Enhanced Recurring Reminders
+
+**Goal:** Allow editing single instances vs entire series, improve UX
+
+### Tasks
+
+- [ ] **Edit Single Instance** (3 hours)
+  - Add "Edit This Instance Only" vs "Edit Series" modal
+  - Database: Add `is_exception` flag to reminders table
+  - Store exception instances separately
+  - **Testing:** Edit single recurring event, verify series unaffected
+
+- [ ] **Delete Single Instance** (2 hours)
+  - Add "Delete This Instance" vs "Delete Series" modal
+  - Mark instance as deleted without removing series
+  - **Testing:** Delete single occurrence, verify series continues
+
+- [ ] **Recurrence Indicator** (1 hour)
+  - Add ♻️ icon to recurring reminders in list views
+  - Show recurrence pattern on hover/click
+  - **Location:** `public/js/ui.js` rendering functions
+
+- [ ] **View Original Pattern** (2 hours)
+  - Add "View Series" button to recurring instances
+  - Show recurrence pattern details modal
+  - Link to parent pattern for editing
+  - **Testing:** Click instance, view pattern, verify accuracy
+
+**Estimated Time:** 8 hours
+**Success Criteria:** Users can manage recurring series with granular control
+
+---
+
+## 🔮 Phase 10 - E-ink Display Clients
+
+**Goal:** Android e-ink app for car dashboard (read-only with tap-to-complete)
+
+### Research Phase (4 hours)
+
+- [ ] E-ink Display Research
+  - Test devices: BOOX, Remarkable, Kindle Fire mods
+  - Refresh rate optimization strategies
+  - Power consumption analysis
+
+- [ ] Android E-ink SDK Evaluation
+  - Compare frameworks (Jetpack Compose, React Native, Flutter)
+  - E-ink-specific libraries (REGAL, A2 mode)
+  - Decide on tech stack
+
+### Development Phase (20-30 hours)
+
+- [ ] **Read-Only Reminder Display** (8 hours)
+  - Fetch reminders from API (local or cloud)
+  - Display Today/Overdue lists
+  - Optimize for e-ink (high contrast, minimal redraws)
+
+- [ ] **Tap-to-Complete Gesture** (4 hours)
+  - Single tap marks reminder complete
+  - Haptic feedback confirmation
+  - Optimized for e-ink refresh
+
+- [ ] **Auto-Sync Background Service** (4 hours)
+  - Poll API every 5 minutes
+  - Minimal battery drain
+  - Show sync status
+
+- [ ] **Dashboard Mode** (4 hours)
+  - Car dashboard optimized layout
+  - Large touch targets for glances
+  - Dark mode for night driving
+
+- [ ] **Testing & Optimization** (4 hours)
+  - Test on real e-ink devices
+  - Optimize refresh rates (A2 mode for speed)
+  - Battery life testing
+
+**Estimated Time:** 24-34 hours
+**Success Criteria:** Functional Android e-ink app with <1% battery drain/hour
+
+---
+
+## 🔮 Phase 11 - Smart Features
+
+**Goal:** AI-powered automation and intelligence
+
+### Tasks
+
+- [ ] **Auto-Categorization** (4 hours)
+  - Use LLM to suggest category based on text
+  - Learn from user corrections
+  - **Location:** Extend `server/voice/parser.py`
+
+- [ ] **Duplicate Detection** (3 hours)
+  - Fuzzy matching for similar reminders
+  - Suggest merging duplicates
+  - **Algorithm:** TF-IDF + cosine similarity
+
+- [ ] **Reminder Templates** (4 hours)
+  - Save common reminders as templates
+  - Quick-create from template library
+  - **UI:** Template picker in edit form
+
+- [ ] **Priority Suggestions** (3 hours)
+  - Learn priority patterns from user behavior
+  - Suggest priority based on keywords/timing
+  - **ML:** Simple classification model
+
+- [ ] **Smart Defaults** (2 hours)
+  - "Buy milk" → auto-set location to grocery store
+  - "Call" → auto-set category to Personal
+  - Learn from user patterns
+
+**Estimated Time:** 16 hours
+**Success Criteria:** 80% auto-category accuracy, 50% fewer manual edits
+
+---
+
+## 🔮 Phase 12 - Analytics & Insights
+
+**Goal:** Help users understand their productivity patterns
+
+### Tasks
+
+- [ ] **Completion Rate Tracking** (3 hours)
+  - Calculate daily/weekly/monthly completion %
+  - Show trends over time
+  - **Database:** Add analytics table
+
+- [ ] **Time-of-Day Patterns** (3 hours)
+  - When are reminders most often created?
+  - When are they most often completed?
+  - Heatmap visualization
+
+- [ ] **Productivity Dashboard** (6 hours)
+  - Weekly summary view
+  - Category breakdown
+  - Priority distribution
+  - Completion streaks
+  - **UI:** New dashboard.html page
+
+- [ ] **Insights Engine** (4 hours)
+  - "You complete 80% more tasks when you add a time"
+  - "Your busiest day is Tuesday"
+  - "Most overdue tasks are in category: Work"
+
+- [ ] **Export Reports** (2 hours)
+  - CSV export for completed reminders
+  - Weekly summary email (optional)
+  - PDF reports
+
+**Estimated Time:** 18 hours
+**Success Criteria:** Actionable insights visible on dashboard
 
 ---
 
 ## ✅ Completed Phases
 
 <details>
-<summary><strong>Phase 1-3.6: Foundation (Backend + Frontend + Testing)</strong></summary>
+<summary><strong>Phase 1-8.1: Core MVP (ALL COMPLETE ✅)</strong></summary>
 
-**Phase 1: Core Backend**
-- FastAPI REST API, SQLite database, CRUD endpoints, bearer auth, Swagger docs
+### Phase 1-3: Foundation
+- ✅ FastAPI REST API
+- ✅ SQLite database
+- ✅ Web UI (Today/Upcoming/Future views)
+- ✅ CRUD operations
+- ✅ 5-level priority system
+- ✅ 138 automated tests (100% passing)
 
-**Phase 2: Web UI**
-- Today/Upcoming/Future views, mobile-responsive, 5-level priorities, animations
+### Phase 4: Cloudflare Workers
+- ✅ Hono TypeScript API
+- ✅ D1 cloud database
+- ✅ Edge deployment (81-112ms)
+- ✅ Production URL: https://reminders-api.m7jv4v7npb.workers.dev
 
-**Phase 3: Integration**
-- API client, error handling, offline state, full CRUD integration
+### Phase 5: Sync Logic
+- ✅ Offline-first architecture
+- ✅ Bidirectional sync (every 5 min)
+- ✅ Last-write-wins conflict resolution
+- ✅ Sync UI with 5 states
 
-**Phase 3.5: Testing**
-- 24 pytest tests, 80% coverage, CI-ready
+### Phase 6: Location Features
+- ✅ MapBox GL JS integration
+- ✅ Geocoding & reverse geocoding
+- ✅ Radius-based queries (Haversine)
+- ✅ Location picker UI
 
-**Phase 3.6: 5-Level Priorities**
-- someday/chill/important/urgent/waiting with color coding
+### Phase 7: Recurring Reminders
+- ✅ Daily/weekly/monthly/yearly patterns
+- ✅ Advanced scheduling (days of week, day of month)
+- ✅ 3 end conditions (never, until date, after N)
+- ✅ 90-day instance generation
+- ✅ Live preview (next 3 occurrences)
+
+### Phase 8: Voice Input
+- ✅ Whisper.cpp integration (base.en model)
+- ✅ Browser audio recording
+- ✅ 96% transcription accuracy
+- ✅ 0.32s avg processing time
+- ✅ 14 tests (100% passing)
+
+### Phase 8.1: NLP Parsing
+- ✅ LM Studio integration (llama-3.2-1b-instruct)
+- ✅ Dual-mode (local + Cloudflare Workers AI)
+- ✅ Priority extraction (96% accuracy)
+- ✅ Category classification (92% accuracy)
+- ✅ Confidence scoring
+- ✅ 65 tests (100% passing)
+
 </details>
-
-<details>
-<summary><strong>Phase 4: Cloudflare Workers ✅</strong> - Production cloud deployment</summary>
-
-- Hono TypeScript API on Cloudflare Workers
-- D1 database (cloud SQLite) with 3 migrations
-- All 6 REST endpoints deployed
-- 81-112ms edge performance
-- Production: https://reminders-api.m7jv4v7npb.workers.dev
-</details>
-
-<details>
-<summary><strong>Phase 5: Sync Logic ✅</strong> - Bidirectional synchronization</summary>
-
-- Offline-first with auto-sync every 5 minutes
-- Manual sync button with UI status (5 states)
-- Conflict resolution (last-write-wins)
-- Change queue in localStorage
-- `POST /api/sync` endpoint (FastAPI + Workers)
-- 459-line sync manager (`public/js/sync.js`)
-</details>
-
-<details>
-<summary><strong>Phase 6: Location Features ✅</strong> - MapBox integration</summary>
-
-- MapBox GL JS location picker in edit form
-- Geocoding (address → lat/lng) and reverse geocoding
-- Map visualization with draggable pin
-- Radius configuration (10m-10km, default 100m)
-- `GET /api/reminders/near-location` endpoint
-- Haversine distance calculation
-- Browser Geolocation API integration
-</details>
-
-<details>
-<summary><strong>Phase 7: Recurring Reminders ✅</strong> - Recurrence patterns</summary>
-
-- Daily, weekly, monthly, yearly frequencies
-- Advanced scheduling (specific days of week, day of month)
-- 3 end conditions (never, until date, after N occurrences)
-- Server-side instance generation (90-day horizon)
-- Live UI preview showing next 3 occurrences
-- `recurrence_patterns` table with CRUD functions
-- 350-line recurrence module (`public/js/recurrence.js`)
-
-**Testing:** ⚠️ Needs manual testing when available (daily/weekly/monthly patterns, end conditions)
-</details>
-
-<details>
-<summary><strong>Phase 8: Voice Input ✅</strong> - Voice-to-text transcription (November 3, 2025)</summary>
-
-- Whisper.cpp integration (base.en model, 23x realtime, local/offline)
-- `POST /api/voice/transcribe` endpoint (FastAPI)
-- Browser audio recording (`public/js/voice-recorder.js`)
-- Voice button (🎤) with 3 states (idle/recording/processing)
-- 85-90% transcription accuracy (2-8 seconds end-to-end)
-- 14 pytest tests (100% pass, 97% coverage)
-- Comprehensive error handling (permissions, timeouts, failures)
-
-**User Flow:** Click 🎤 → Speak → Auto-transcribe → Manual field completion
-
-**Docs:** See `docs/phase8_*.md` for architecture, requirements, completion report
-</details>
-
-**Summary:** 8 phases complete, ~5,000 lines of code, 24+ tests passing, production deployed
 
 ---
 
-## 🔮 Post-MVP Features (Phase 9+)
+## 📊 Testing Results Summary
 
-### Phase 7.1: Enhanced Recurring Reminders
-- Edit/delete single instance vs entire series
-- Display recurrence indicator (♻️) in reminder lists
-- View/edit original recurrence pattern
+### Comprehensive Testing Session (Nov 8, 2025)
 
-### Phase 9: E-ink Display Clients
-- Android e-ink app for car dashboard
-- Read-only view with tap-to-complete
-- Optimized for e-ink refresh rates
+**Automated Tests:**
+- 138/138 passing (100%)
+- 52% code coverage (80-90% for Phase 8.1)
+- 1.40s execution time
 
-### Phase 10: Smart Features
-- Auto-categorization via LLM
-- Duplicate detection
-- Reminder templates
-- Priority suggestions
+**Voice Pipeline:**
+- 25/25 audio files transcribed (100%)
+- 96% transcription accuracy (24/25 perfect)
+- 8 seconds total (0.32s avg per file)
 
-### Phase 11: Analytics & Insights
-- Completion rate tracking
-- Time-of-day patterns
-- Productivity insights dashboard
+**NLP Parsing:**
+- 25/25 parsed successfully (100%)
+- Priority: 96% accuracy ✅
+- Category: 92% accuracy ✅
+- Date: 40% accuracy ⚠️
+- Time: 28% accuracy ⚠️
+- Avg confidence: 0.858
 
-### Future Ideas
-- Receipt printer integration (daily task list printouts)
+**MapBox:**
+- ✅ Loading correctly
+- ✅ Geolocation working
+- ✅ Distance queries accurate
+- ⚠️ UX improvements needed (default view, save button)
+
+**Recurring Reminders:**
+- ✅ 725 reminders in database (includes instances)
+- ✅ All patterns generating correctly
+- ✅ 90-day horizon working
+- 🐛 Fixed: `get_reminder()` → `get_reminder_by_id()` (commit 9377c11)
+
+**Cloud Sync:**
+- ✅ Local sync working (526 changes)
+- ⚠️ Cloud sync failing (401 token mismatch)
+
+**Error Handling:**
+- 12/13 tests passing (92%)
+- ❌ Date validation missing (CRITICAL)
+
+**Audio Compression:**
+- Tested Opus 24kbps: 81% size reduction
+- No quality degradation
+- ✅ Recommended for production
+
+**UI Testing:**
+- ✅ 725 reminders loading
+- ✅ All navigation working
+- ✅ Sync status functional
+- ⚠️ Future view layout different
+
+**Production Readiness:** 90% (2 blockers, 3 UX improvements)
+
+---
+
+## 🚀 Future Ideas (Phase 13+)
+
+### Hardware Integration
+- Receipt printer for daily task lists
+- Smart home integration (Google Home, Alexa)
+- Wearable notifications (smartwatch)
+
+### Advanced Features
 - Habit tracking
-- Integration with calendar apps
+- Calendar app integration (Google Calendar, iCal)
 - Siri/Google Assistant shortcuts
+- Email-to-reminder (forward@reminders.app)
+- Collaborative reminders (shared with family)
+
+### AI Enhancements
+- Voice commands ("Show me today's tasks")
+- Proactive suggestions ("You usually buy groceries on Saturday")
+- Task dependencies ("Complete X before Y")
+- Smart scheduling (find optimal time based on calendar)
+
+### Mobile Apps
+- iOS native app
+- Android native app
+- Progressive Web App (PWA)
+- Offline-first mobile sync
 
 ---
 
@@ -206,23 +431,26 @@ Result → Text: "Call mom about Thanksgiving"
 uv run uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
 
 # Serve frontend
-python serve_ui.py
+python3 serve_ui.py
 # OR open public/index.html directly
 
 # Run tests
-pytest
-pytest --cov=server --cov-report=html
+uv run pytest
+uv run pytest --cov=server --cov-report=html
 
 # Deploy to Cloudflare
 cd workers && npx wrangler deploy
+
+# Update cloud secrets
+cd workers && npx wrangler secret put API_TOKEN
 ```
 
 ### Project URLs
 
 - **Local API:** http://localhost:8000
+- **Local Frontend:** http://localhost:3077
 - **Cloud API:** https://reminders-api.m7jv4v7npb.workers.dev
 - **API Docs:** http://localhost:8000/docs (Swagger)
-- **GitHub:** https://github.com/AutumnsGrove/ProjectReminder
 
 ### Secrets Required
 
@@ -233,16 +461,15 @@ Stored in `secrets.json` (see `secrets_template.json`):
 ### Database Schema
 
 SQLite tables (local + cloud D1):
-- `reminders` - Main reminder instances (id, text, due_date, due_time, location, priority, status, etc.)
-- `recurrence_patterns` - Recurrence definitions (frequency, interval, days_of_week, end_condition, etc.)
+- `reminders` - Main reminder instances
+- `recurrence_patterns` - Recurrence definitions
 
-### Architecture Patterns
+### Testing Files
 
-- **Database:** All SQL isolated in `server/database.py` (function-based interface)
-- **Models:** Pydantic models in `server/models.py` (request/response contracts)
-- **Auth:** Bearer token via `verify_token()` dependency injection
-- **Frontend:** Modular JS (api.js, sync.js, storage.js, recurrence.js, voice-recorder.js)
-- **CSS:** Mobile-first with CSS variables for theming
+- Test audio: `EXAMPLE_RECORDINGS/` (25 M4A files)
+- Transcriptions: `transcriptions/` (25 TXT files)
+- NLP results: `nlp_results/` (25 JSON files)
+- Test report: `COMPREHENSIVE_TEST_REPORT.md`
 
 ---
 
@@ -272,6 +499,34 @@ Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`
 
 ---
 
+## 📈 Progress Timeline
+
+- **November 1, 2025** - Phase 1-3 complete (Backend + Frontend + Testing)
+- **November 2, 2025** - Phase 4 complete (Cloudflare Workers)
+- **November 2, 2025** - Phase 5 complete (Sync Logic)
+- **November 3, 2025** - Phase 6 complete (MapBox Location)
+- **November 3, 2025** - Phase 7 complete (Recurring Reminders)
+- **November 3, 2025** - Phase 8 complete (Voice Transcription)
+- **November 4, 2025** - Phase 8.1 complete (NLP Parsing)
+- **November 8, 2025** - Comprehensive testing session complete
+- **November 8, 2025** - **NOW:** Phase 9.0 Production Hardening
+
+---
+
+## 🎯 Current Sprint: Phase 9.0 Production Hardening
+
+**Goal:** Fix 2 critical blockers + 3 UX improvements before MVP launch
+
+**Tasks:** 6 items (see Phase 9.0 section above)
+
+**Estimated Time:** ~3 hours total
+
+**Completion Target:** November 9, 2025
+
+**Next Sprint:** Phase 9.1 NLP Enhancement (7.5 hours)
+
+---
+
 *Last Updated: November 8, 2025*
 *Model: Claude Sonnet 4.5*
-*Phase 8.1 Complete ✅ | 100% MVP Feature Complete! 🎉 | Testing Phase Next 🧪*
+*Status: Testing Complete ✅ | Production Hardening Next 🔧*
