@@ -130,7 +130,12 @@ const App = (function() {
         if (reminder.due_time) {
             const timeItem = document.createElement('span');
             timeItem.className = 'meta-item time-badge';
-            timeItem.innerHTML = `<span class="meta-icon">🕐</span>${formatTime(reminder.due_time)}`;
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'meta-icon';
+            iconSpan.textContent = '🕐';
+            const timeText = document.createTextNode(formatTime(reminder.due_time));
+            timeItem.appendChild(iconSpan);
+            timeItem.appendChild(timeText);
             meta.appendChild(timeItem);
         }
 
@@ -147,7 +152,12 @@ const App = (function() {
             const locationItem = document.createElement('span');
             locationItem.className = 'meta-item location-badge';
             const locationText = reminder.location_name || reminder.location_address || 'Unknown Location';
-            locationItem.innerHTML = `<span class="meta-icon">📍</span>${locationText}`;
+            const locIconSpan = document.createElement('span');
+            locIconSpan.className = 'meta-icon';
+            locIconSpan.textContent = '📍';
+            const locTextNode = document.createTextNode(locationText);
+            locationItem.appendChild(locIconSpan);
+            locationItem.appendChild(locTextNode);
             locationItem.title = reminder.location_address || ''; // Show full address on hover
             meta.appendChild(locationItem);
         }
@@ -156,7 +166,12 @@ const App = (function() {
         if (reminder.time_required) {
             const timeReqItem = document.createElement('span');
             timeReqItem.className = 'meta-item';
-            timeReqItem.innerHTML = `<span class="meta-icon">⏱</span>Time-sensitive`;
+            const reqIconSpan = document.createElement('span');
+            reqIconSpan.className = 'meta-icon';
+            reqIconSpan.textContent = '⏱';
+            const reqTextNode = document.createTextNode('Time-sensitive');
+            timeReqItem.appendChild(reqIconSpan);
+            timeReqItem.appendChild(reqTextNode);
             meta.appendChild(timeReqItem);
         }
 
@@ -166,7 +181,10 @@ const App = (function() {
         // Priority badge
         const priority = document.createElement('div');
         priority.className = 'reminder-priority';
-        priority.innerHTML = createPriorityBadge(reminder.priority);
+        const priorityBadgeHTML = createPriorityBadge(reminder.priority);
+        const priorityTemplate = document.createElement('div');
+        priorityTemplate.innerHTML = priorityBadgeHTML;
+        priority.appendChild(priorityTemplate.firstChild);
 
         // Assemble card
         card.appendChild(checkboxContainer);
@@ -406,7 +424,12 @@ const App = (function() {
         if (reminder.due_time) {
             const timeItem = document.createElement('span');
             timeItem.className = 'meta-item time-badge';
-            timeItem.innerHTML = `<span class="meta-icon">🕐</span>${formatTime(reminder.due_time)}`;
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'meta-icon';
+            iconSpan.textContent = '🕐';
+            const timeText = document.createTextNode(formatTime(reminder.due_time));
+            timeItem.appendChild(iconSpan);
+            timeItem.appendChild(timeText);
             meta.appendChild(timeItem);
         }
 
@@ -423,7 +446,12 @@ const App = (function() {
             const locationItem = document.createElement('span');
             locationItem.className = 'meta-item location-badge';
             const locationText = reminder.location_name || reminder.location_address || 'Unknown Location';
-            locationItem.innerHTML = `<span class="meta-icon">📍</span>${locationText}`;
+            const locIconSpan = document.createElement('span');
+            locIconSpan.className = 'meta-icon';
+            locIconSpan.textContent = '📍';
+            const locTextNode = document.createTextNode(locationText);
+            locationItem.appendChild(locIconSpan);
+            locationItem.appendChild(locTextNode);
             locationItem.title = reminder.location_address || ''; // Show full address on hover
             meta.appendChild(locationItem);
         }
@@ -434,7 +462,10 @@ const App = (function() {
         // Priority badge
         const priority = document.createElement('div');
         priority.className = 'reminder-priority';
-        priority.innerHTML = createPriorityBadge(reminder.priority);
+        const priorityBadgeHTML = createPriorityBadge(reminder.priority);
+        const priorityTemplate = document.createElement('div');
+        priorityTemplate.innerHTML = priorityBadgeHTML;
+        priority.appendChild(priorityTemplate.firstChild);
 
         // Assemble card
         card.appendChild(content);
