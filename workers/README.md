@@ -1,13 +1,193 @@
 # Cloudflare Workers API - Deployment & Testing
 
-This directory contains the Cloudflare Workers API for the ADHD-Friendly Voice Reminders System.
+This directory contains the Cloudflare Workers API for the ADHD-Friendly Voice Reminders System, featuring:
+- **D1 Database** for multi-device sync and backup
+- **Workers AI** with GPT-OSS 20B for cloud-based NLP parsing
+- **Global Edge Deployment** via Cloudflare's network
+- **TypeScript** with Hono framework for type safety
 
 ## Quick Start
 
 ### Prerequisites
 - Node.js 16+ installed
 - Cloudflare account with Workers enabled
+- **Workers AI access** (requires paid plan or trial)
 - Logged in with `npx wrangler login`
+
+## Workers AI Configuration
+
+### Overview
+
+Workers AI is integrated for natural language parsing of reminder text. The system uses **GPT-OSS 20B** model for:
+- Extracting due dates and times from user input
+- Parsing task priority and categories
+- Understanding temporal expressions (e.g., "tomorrow at 3pm")
+- Converting voice transcripts to structured reminder data
+
+### AI Model Details
+
+**Model:** `@cf/openai/gpt-oss-20b`
+- **Purpose:** Natural language understanding and temporal extraction
+- **Context window:** 2048 tokens
+- **Performance:** Better temporal extraction than Llama 3.2 1B
+- **Latency:** ~500-1000ms per request (varies by input length)
+
+### Binding Configuration
+
+The AI binding is configured in `wrangler.toml`:
+
+```toml
+[ai]
+binding = "AI"
+```
+
+This creates an `AI` object accessible in Worker code via `env.AI`.
+
+### Using Workers AI in Code
+
+To use the AI model in `src/index.ts`:
+
+```typescript
+// Type definition for AI binding (add to Bindings type)
+type Bindings = {
+  DB: D1Database
+  API_TOKEN: string
+  AI: any  // Workers AI binding
+  ENVIRONMENT?: string
+}
+
+// Usage example: Parse reminder text
+async function parseReminderWithAI(env: any, text: string) {
+  try {
+    const response = await env.AI.run('@cf/openai/gpt-oss-20b', {
+      messages: [
+        {
+          role: 'system',
+          content: `You are a reminder parser. Extract structured data from user input.
+
+Return JSON with: {
+  "text": "cleaned task description",
+  "due_date": "YYYY-MM-DD or null",
+  "due_time": "HH:MM:SS or null",
+  "priority": "chill|important|urgent",
+  "category": "work|personal|health|home|shopping|finance|other",
+  "location": "location string or null",
+  "recurrence": "once|daily|weekly|monthly|yearly or null"
+}`
+        },
+        {
+          role: 'user',
+          content: text
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 400
+    })
+
+    // Parse response
+    const parsed = JSON.parse(response.response)
+    return parsed
+  } catch (error) {
+    console.error('AI parsing failed:', error)
+    // Fallback: return basic reminder with just text
+    return { text, priority: 'chill', category: 'personal' }
+  }
+}
+```
+
+### API Endpoint Example: Parse Text
+
+Future endpoint to leverage Workers AI:
+
+```bash
+POST /api/parse
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "text": "Buy milk tomorrow at 3pm"
+}
+
+Response:
+{
+  "text": "Buy milk",
+  "due_date": "2025-11-10",
+  "due_time": "15:00:00",
+  "priority": "chill",
+  "category": "shopping",
+  "location": null,
+  "recurrence": "once"
+}
+```
+
+### Model Capabilities & Limitations
+
+**Strengths:**
+- ✅ Accurate temporal expression parsing ("next Tuesday", "3 weeks from now")
+- ✅ Priority inference from keywords ("urgent", "ASAP", "eventually")
+- ✅ Location extraction for place-based reminders
+- ✅ Category classification for task organization
+- ✅ Recurrence pattern recognition
+
+**Limitations:**
+- ⚠️ Doesn't generate absolute dates (needs current date context)
+- ⚠️ Timezone-naive (returns times without timezone info)
+- ⚠️ May struggle with ambiguous inputs
+- ⚠️ Requires well-formed system prompts
+
+### Cost Estimates
+
+**Workers AI Pricing:**
+- **Pay-as-you-go model:** Charged per 1000 neurons (model-specific)
+- **GPT-OSS 20B:** ~$0.011 per inference (100 neurons per 1000)
+
+**Estimated Costs (MVP):**
+- 100 parses/day × 30 days = 3,000 parses/month
+- ~3,000 parses × $0.00011 = **~$0.33/month**
+- With local Llama as fallback: **<$1/month**
+
+**Limits:**
+- Free tier: 1,000 Workers AI calls/day
+- Paid tier: No daily limit, pay per inference
+- Recommended: Use local Llama for frequent parsing, Workers AI for fallback
+
+### Switching Models
+
+To use a different Workers AI model:
+
+1. Check available models: https://developers.cloudflare.com/workers-ai/models/
+2. Update model ID in code:
+   ```typescript
+   // Change from:
+   await env.AI.run('@cf/openai/gpt-oss-20b', {...})
+
+   // To:
+   await env.AI.run('@cf/meta/llama-2-7b-chat-int8', {...})
+   ```
+3. Adjust system prompt for model capabilities
+4. Test thoroughly (different models have different behaviors)
+
+### Troubleshooting AI
+
+**Error: "AI binding not found"**
+- Check `wrangler.toml` has `[ai]` section with `binding = "AI"`
+- Verify Cloudflare account has Workers AI access
+- Redeploy: `npx wrangler deploy`
+
+**Error: "Model not found" / 400 response**
+- Verify exact model ID: `@cf/openai/gpt-oss-20b`
+- Check Workers AI is enabled on your account
+- Review pricing/plan requirements for the model
+
+**Errors: API returns `null` or malformed JSON**
+- Increase `max_tokens` if response is cut off
+- Ensure JSON format in system prompt
+- Add error handling to parse invalid responses
+
+**High latency (>2 seconds)**
+- Workers AI queries can take 500ms-2s depending on model
+- Consider caching results for similar inputs
+- Use local Llama for time-sensitive operations
 
 ### One-Command Deployment
 ```bash
@@ -319,6 +499,16 @@ npx wrangler d1 list
 - Verify Worker URL is correct
 - Check Cloudflare dashboard for errors
 
+### Workers AI Issues
+
+**Problem:** AI endpoints fail or return 400/401 errors
+
+**Solutions:**
+- See "Troubleshooting AI" section above (detailed AI-specific guidance)
+- Verify Workers AI binding in wrangler.toml
+- Check Cloudflare account has Workers AI enabled
+- Review API documentation: https://developers.cloudflare.com/workers-ai/
+
 ## Project Structure
 
 ```
@@ -375,13 +565,16 @@ workers/
 ## Additional Resources
 
 - [Cloudflare Workers Docs](https://developers.cloudflare.com/workers/)
+- [Workers AI Documentation](https://developers.cloudflare.com/workers-ai/)
+- [Workers AI Models Catalog](https://developers.cloudflare.com/workers-ai/models/)
 - [D1 Database Docs](https://developers.cloudflare.com/d1/)
 - [Hono Framework](https://hono.dev/)
 - [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/)
 
 ---
 
-**Last Updated:** 2025-11-03
-**Phase:** 4 - Cloud Infrastructure
+**Last Updated:** 2025-11-09
+**Phase:** 4 - Cloud Infrastructure with AI Integration
 **Status:** Production Ready
 **Model:** Claude Sonnet 4.5
+**Workers AI Model:** GPT-OSS 20B
