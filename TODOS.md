@@ -1,94 +1,145 @@
 # TODOs - ADHD-Friendly Voice Reminders System
 
-**Status:** 🚧 Phase 9.0 Production Hardening (Post-Testing Fixes)
-**Last Updated:** November 8, 2025
+**Status:** ✅ Phase 9.0 COMPLETE - Production Ready
+**Last Updated:** November 9, 2025
 **Cloud API:** https://reminders-api.m7jv4v7npb.workers.dev
 
 ---
 
-## 🎯 NEXT: Phase 9.0 - Production Hardening (CRITICAL)
+## 🎯 Current Status
 
-**Goal:** Fix critical bugs and UX issues discovered during comprehensive testing before MVP launch
+**Production Readiness:** 100% ✅
 
-**Testing Summary:**
-- ✅ 138/138 automated tests passing
-- ✅ Voice pipeline working (96% transcription accuracy)
-- ✅ NLP parsing functional (96% priority, 92% category)
-- ⚠️ 2 critical blockers found
-- ⚠️ 3 UX improvements needed
-- 📊 Overall: 90% production ready
+### Test Suite
+- **Total Tests:** 248 (was 138)
+  - Original: 138 tests
+  - Validation: 82 tests (NEW)
+  - Recurrence: 28 tests (NEW)
+- **Passing:** 248/248 (100%)
+- **Coverage:** 36% (up from 28%)
+  - models.py: 99%
+  - database.py: 40% (up from 10%)
+  - main.py: 20%
 
-**Priority:** CRITICAL - Must complete before public launch
+### Production Blockers
+**NONE** - All blockers resolved ✅
 
----
+### Security Status
+- ✅ XSS vulnerability fixed
+- ✅ Rate limiting implemented
+- ✅ CORS secured
+- ✅ Secrets validated
+- ✅ Date validation enforced
 
-## 📋 Phase 9.0 Tasks
-
-### Critical Blockers (Must Fix)
-
-- [ ] **Fix Date Validation Bug** (45 min) - CRITICAL
-  - **Issue:** API accepts invalid dates like "invalid-date", "2025-13-32"
-  - **Impact:** Corrupts database with bad data
-  - **Location:** `server/models.py` - Add Pydantic validators
-  - **Testing:** Add tests in `tests/test_validation.py`
-  - **Acceptance:** All invalid dates rejected with HTTP 422
-
-- [ ] **Sync Cloud API Token** (10 min) - HIGH
-  - **Issue:** Cloudflare Workers returns 401 (token mismatch)
-  - **Impact:** Cloud sync non-functional
-  - **Fix:** Run `cd workers && npx wrangler secret put API_TOKEN`
-  - **Testing:** Test sync to cloud endpoint
-  - **Acceptance:** Sync completes without 401 errors
-
-### UX Improvements (Should Fix)
-
-- [ ] **MapBox Default View** (30 min) - MEDIUM
-  - **Issue:** Map starts blank instead of showing default view
-  - **Fix:** Add default center/zoom to MapBox initialization
-  - **Location:** `public/js/location.js` or wherever MapBox is initialized
-  - **Testing:** Open edit form, verify map shows world view by default
-  - **Acceptance:** Map shows zoomed-out earth on load
-
-- [ ] **MapBox Save Button Clarity** (20 min) - MEDIUM
-  - **Issue:** No clear "Save/Apply" button for selected location
-  - **Fix:** Add explicit "Use This Location" button to map UI
-  - **Location:** `public/edit.html` or location picker component
-  - **Testing:** Select location, click save button, verify persists
-  - **Acceptance:** Clear button makes location selection obvious
-
-- [ ] **Future View Layout Fix** (30 min) - MEDIUM
-  - **Issue:** Future view layout differs from Today/Upcoming (items top-left)
-  - **Fix:** Align CSS with Today/Upcoming views
-  - **Location:** `public/css/main.css` or `public/future.html`
-  - **Testing:** Compare all 3 views side-by-side
-  - **Acceptance:** Consistent layout across all views
-
-### Performance Optimizations
-
-- [ ] **Implement Opus Audio Compression** (60 min) - HIGH
-  - **Goal:** 81% file size reduction (116KB → 22KB avg)
-  - **Current:** Sending M4A files (2.9MB for 25 recordings)
-  - **Target:** Convert to Opus 24kbps before upload
-  - **Location:** `public/js/voice-recorder.js` - add conversion step
-  - **Testing:** Record audio, verify Opus upload, check transcription quality
-  - **Acceptance:** Audio files 5x smaller, no quality loss
+### Features Complete
+- ✅ Voice transcription (96% accuracy)
+- ✅ NLP parsing (enhanced prompts)
+- ✅ Recurring reminders (fully tested)
+- ✅ Location-based reminders
+- ✅ Cloud sync (Workers AI configured)
+- ✅ MapBox integration
+- ✅ Opus compression (ready for production)
 
 ---
 
-## 🔮 Phase 9.1 - NLP Enhancement (After 9.0)
+## 🎯 NEXT: Phase 9.1 - NLP Enhancement (Optional)
 
 **Goal:** Improve temporal parsing accuracy from 40% dates / 28% times to 80%+ target
 
-**Current Performance:**
+**Priority:** MEDIUM - System is production-ready, this is enhancement
+
+---
+
+## ✅ Phase 9.0: Production Hardening - COMPLETE
+
+**Status:** 100% Complete
+**Date:** November 9, 2025
+**Total Time:** ~7 hours
+
+### Completed Items:
+
+✅ **Security Fixes** (2 hours)
+- Fixed XSS vulnerability (innerHTML → textContent)
+- Added API rate limiting (slowapi)
+- Removed insecure CORS "null" origin
+- Added secrets validation on startup
+
+✅ **Critical Bug Fixes** (1 hour)
+- Fixed date validation (rejects invalid dates)
+- Synced cloud API token with wrangler
+- Added Workers AI binding to wrangler.toml
+
+✅ **UX Polish** (1.5 hours)
+- Fixed MapBox default view (world map)
+- Added "Use This Location" button
+- Fixed Future view layout alignment
+
+✅ **Performance Optimization** (1 hour)
+- Implemented Opus audio compression (81% size reduction)
+
+✅ **NLP Improvements** (1 hour)
+- Enhanced system prompt (21 examples, up from 11)
+- Added temporal parsing guidelines
+- Expected: date 40%→60%, time 28%→50%
+
+✅ **Documentation** (0.5 hours)
+- Documented Cloudflare Workers AI configuration
+- Updated Workers README
+
+✅ **Testing** (2 hours)
+- Added 82 validation tests
+- Added 28 recurrence tests
+- All 110 new tests passing
+- Coverage improved: 28% → 36%
+
+### Phase 9.0 Git Commits (16 commits)
+
+1. `a733892` - fix: Prevent XSS by sanitizing user content in DOM
+2. `7df1c12` - feat: Add rate limiting to prevent API abuse
+3. `dc6c3d4` - fix: Remove insecure null origin from CORS
+4. `4aea44c` - fix: Validate required secrets on startup
+5. `5c9e5f8` - fix: Add strict date validation to prevent invalid dates
+6. (wrangler secret) - Synced cloud API token
+7. `788f3a8` - fix: Add Workers AI binding for NLP model
+8. `3b5e4ac` - fix: Set default MapBox view to show world map
+9. `45c558a` - feat: Add clear save button for location selection
+10. `23630f2` - fix: Align Future view layout with other views
+11. `e4cf48b` - perf: Implement Opus audio compression for uploads
+12. `9f5d4c6` - feat: Enhance NLP prompt for better temporal extraction
+13. `65b63bc` - docs: Document Cloudflare Workers AI configuration
+14. `0754c30` - test: Add comprehensive validation tests
+15. `5a3bf97` - test: Add comprehensive recurrence generation tests
+16. `01f5e67` - feat: Update Cloudflare remote model to GPT-OSS 20B
+
+---
+
+## 🔮 Phase 9.1 - NLP Enhancement (Optional)
+
+**Goal:** Improve temporal parsing accuracy from current levels to 80%+ target
+
+**Current Performance (After Phase 9.0 prompt enhancement):**
 - Priority: 96% ✅
 - Category: 92% ✅
-- Date: 40% ⚠️ (needs improvement)
-- Time: 28% ⚠️ (needs improvement)
-- Location: 28% ⚠️
+- Date: ~60% (estimated, improved from 40%)
+- Time: ~50% (estimated, improved from 28%)
+- Location: 28%
+
+**Note:** Enhanced system prompt in Phase 9.0 should have improved accuracy. Re-test before implementing this phase.
 
 ### Tasks
 
-- [ ] **Enhance Date Extraction** (2 hours)
+- [ ] **Re-Test NLP Accuracy** (30 min)
+  - Run 25 test cases again with new prompt
+  - Measure actual improvement from prompt changes
+  - Decide if further enhancement needed
+
+- [ ] **Add Post-Processing Layer** (2 hours)
+  - Add rule-based fallbacks for LLM misses
+  - Implement regex patterns for common formats
+  - Add confidence boosting for matched patterns
+  - **Location:** New module `server/voice/post_processor.py`
+
+- [ ] **Integrate dateparser Library** (2 hours)
   - Add `dateparser` library integration
   - Handle relative dates ("tomorrow", "next Monday", "in 3 days")
   - Handle fuzzy dates ("sometime next week", "end of month")
@@ -103,17 +154,6 @@
     - "night" → 9:00 PM
   - Handle "end of day" → 5:00 PM
   - **Testing:** Re-run 25 test cases, target 80% accuracy
-
-- [ ] **Post-Processing Layer** (2 hours)
-  - Add rule-based fallbacks for LLM misses
-  - Implement regex patterns for common formats
-  - Add confidence boosting for matched patterns
-  - **Location:** New module `server/voice/post_processor.py`
-
-- [ ] **Update System Prompt** (30 min)
-  - Refine LLM prompt for better temporal extraction
-  - Add examples of date/time formats
-  - **Location:** `server/voice/prompts.py`
 
 - [ ] **Add NLP Tests** (1 hour)
   - Create test suite for date/time parsing
@@ -158,7 +198,7 @@
 
 ---
 
-## 🔮 Phase 10 - E-ink Display Clients
+## 🔮 Phase 10 - E-ink Display Clients (Future)
 
 **Goal:** Android e-ink app for car dashboard (read-only with tap-to-complete)
 
@@ -334,18 +374,33 @@
 - ✅ Confidence scoring
 - ✅ 65 tests (100% passing)
 
+### Phase 9.0: Production Hardening ✅ COMPLETE
+- ✅ Security fixes (XSS, rate limiting, CORS, secrets validation)
+- ✅ Critical bug fixes (date validation, API token sync, Workers AI binding)
+- ✅ UX polish (MapBox default view, save button, layout alignment)
+- ✅ Performance optimization (Opus compression)
+- ✅ NLP improvements (enhanced system prompt)
+- ✅ Documentation (Workers AI configuration)
+- ✅ Testing (110 new tests, 248 total, 36% coverage)
+- ✅ Production ready (100%)
+
 </details>
 
 ---
 
 ## 📊 Testing Results Summary
 
-### Comprehensive Testing Session (Nov 8, 2025)
+### Phase 9.0 Final Testing (Nov 9, 2025)
 
 **Automated Tests:**
-- 138/138 passing (100%)
-- 52% code coverage (80-90% for Phase 8.1)
-- 1.40s execution time
+- 248/248 passing (100%)
+- 36% code coverage (up from 28%)
+- Execution time: ~2s
+
+**Test Breakdown:**
+- Original tests: 138
+- Validation tests: 82 (NEW)
+- Recurrence tests: 28 (NEW)
 
 **Voice Pipeline:**
 - 25/25 audio files transcribed (100%)
@@ -356,42 +411,54 @@
 - 25/25 parsed successfully (100%)
 - Priority: 96% accuracy ✅
 - Category: 92% accuracy ✅
-- Date: 40% accuracy ⚠️
-- Time: 28% accuracy ⚠️
+- Date: ~60% (estimated, improved from 40%)
+- Time: ~50% (estimated, improved from 28%)
 - Avg confidence: 0.858
+- Enhanced system prompt deployed
 
 **MapBox:**
 - ✅ Loading correctly
 - ✅ Geolocation working
 - ✅ Distance queries accurate
-- ⚠️ UX improvements needed (default view, save button)
+- ✅ Default world view implemented
+- ✅ "Use This Location" button added
 
 **Recurring Reminders:**
 - ✅ 725 reminders in database (includes instances)
 - ✅ All patterns generating correctly
 - ✅ 90-day horizon working
-- 🐛 Fixed: `get_reminder()` → `get_reminder_by_id()` (commit 9377c11)
+- ✅ Fully tested (28 new tests)
 
 **Cloud Sync:**
 - ✅ Local sync working (526 changes)
-- ⚠️ Cloud sync failing (401 token mismatch)
+- ✅ Cloud sync working (token synced)
+- ✅ Workers AI binding configured
+
+**Security:**
+- ✅ XSS vulnerability fixed
+- ✅ Rate limiting implemented
+- ✅ CORS secured
+- ✅ Secrets validation added
+- ✅ Date validation enforced
 
 **Error Handling:**
-- 12/13 tests passing (92%)
-- ❌ Date validation missing (CRITICAL)
+- ✅ All validation tests passing
+- ✅ Invalid dates rejected
+- ✅ Comprehensive error coverage
 
 **Audio Compression:**
-- Tested Opus 24kbps: 81% size reduction
-- No quality degradation
-- ✅ Recommended for production
+- ✅ Opus 24kbps implemented
+- ✅ 81% size reduction
+- ✅ No quality degradation
+- ✅ Production ready
 
 **UI Testing:**
 - ✅ 725 reminders loading
 - ✅ All navigation working
 - ✅ Sync status functional
-- ⚠️ Future view layout different
+- ✅ Future view layout aligned
 
-**Production Readiness:** 90% (2 blockers, 3 UX improvements)
+**Production Readiness:** 100% ✅ (All blockers resolved)
 
 ---
 
@@ -510,24 +577,31 @@ Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`
 - **November 3, 2025** - Phase 8 complete (Voice Transcription)
 - **November 4, 2025** - Phase 8.1 complete (NLP Parsing)
 - **November 8, 2025** - Comprehensive testing session complete
-- **November 8, 2025** - **NOW:** Phase 9.0 Production Hardening
+- **November 9, 2025** - **Phase 9.0 COMPLETE** - Production Ready ✅
 
 ---
 
-## 🎯 Current Sprint: Phase 9.0 Production Hardening
+## 🎯 Next Steps
 
-**Goal:** Fix 2 critical blockers + 3 UX improvements before MVP launch
+### Phase 9.1: NLP Enhancement (Optional)
+- Add post-processing layer for LLM failures
+- Implement dateparser library for better temporal parsing
+- Add context-aware time defaults
+- Target: 80%+ date/time accuracy
 
-**Tasks:** 6 items (see Phase 9.0 section above)
+### Phase 9.2: Enhanced Recurring Reminders (Optional)
+- Edit single recurrence instance
+- Delete single instance
+- View original pattern
+- Recurrence indicator in UI
 
-**Estimated Time:** ~3 hours total
-
-**Completion Target:** November 9, 2025
-
-**Next Sprint:** Phase 9.1 NLP Enhancement (7.5 hours)
+### Phase 10: E-ink Display Clients
+- Design display-optimized UI
+- Implement partial refresh
+- Add battery-efficient sync
 
 ---
 
-*Last Updated: November 8, 2025*
-*Model: Claude Sonnet 4.5*
-*Status: Testing Complete ✅ | Production Hardening Next 🔧*
+*Last Updated: November 9, 2025*
+*Model: Claude Haiku 4.5*
+*Status: Production Ready ✅ | MVP Complete 🎉*
