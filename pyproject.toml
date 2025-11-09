@@ -10,6 +10,7 @@ dependencies = [
     "pydantic>=2.12.3",
     "python-dateutil>=2.8.0",
     "python-multipart>=0.0.20",
+    "slowapi>=0.1.9",
     "sqlalchemy>=2.0.44",
     "uvicorn>=0.38.0",
 ]

@@ -7,6 +7,9 @@ Phase 1: Core Backend REST API
 
 from fastapi import FastAPI, Depends, HTTPException, Header, Query, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from datetime import datetime, timezone
 from typing import Optional, List
 import uuid
@@ -56,6 +59,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 # =============================================================================
@@ -189,7 +197,8 @@ async def health_check():
     summary="Create a new reminder",
     dependencies=[Depends(verify_token)]
 )
-async def create_reminder(reminder: ReminderCreate):
+@limiter.limit("10/minute")
+async def create_reminder(reminder: ReminderCreate, request=None):
     """
     Create a new reminder.
 
@@ -282,6 +291,7 @@ async def create_reminder(reminder: ReminderCreate):
     summary="List reminders with filters",
     dependencies=[Depends(verify_token)]
 )
+@limiter.limit("60/minute")
 async def list_reminders(
     status: Optional[str] = Query(None, description="Filter by status (pending, completed, snoozed)"),
     category: Optional[str] = Query(None, description="Filter by category"),
@@ -352,6 +362,7 @@ async def list_reminders(
     summary="Find reminders near a location",
     dependencies=[Depends(verify_token)]
 )
+@limiter.limit("60/minute")
 async def get_reminders_near_location(
     lat: float = Query(..., ge=-90, le=90, description="Latitude of search location"),
     lng: float = Query(..., ge=-180, le=180, description="Longitude of search location"),
@@ -431,9 +442,11 @@ async def get_reminders_near_location(
     summary="Transcribe audio to text",
     description="Upload audio file (WebM/MP4/WAV) and receive transcribed text using Whisper.cpp"
 )
+@limiter.limit("30/minute")
 async def transcribe_voice(
     audio: UploadFile = File(..., description="Audio file (WebM/MP4/WAV, max 10MB)"),
-    token: str = Depends(verify_token)
+    token: str = Depends(verify_token),
+    request=None
 ):
     """
     Transcribe audio file to text using local Whisper.cpp.
@@ -543,6 +556,7 @@ async def transcribe_voice(
     summary="Parse reminder text with NLP",
     description="Extract structured metadata (dates, times, priorities, categories) from natural language reminder text using local LLM or Cloudflare AI"
 )
+@limiter.limit("30/minute")
 async def parse_reminder(
     request: ReminderParseRequest,
     token: str = Depends(verify_token)
@@ -650,7 +664,8 @@ async def parse_reminder(
     dependencies=[Depends(verify_token)],
     responses={404: {"model": ErrorResponse, "description": "Reminder not found"}}
 )
-async def get_reminder(reminder_id: str):
+@limiter.limit("60/minute")
+async def get_reminder(reminder_id: str, request=None):
     """
     Get a single reminder by ID.
 
@@ -687,7 +702,8 @@ async def get_reminder(reminder_id: str):
     dependencies=[Depends(verify_token)],
     responses={404: {"model": ErrorResponse, "description": "Reminder not found"}}
 )
-async def update_reminder(reminder_id: str, update: ReminderUpdate):
+@limiter.limit("20/minute")
+async def update_reminder(reminder_id: str, update: ReminderUpdate, request=None):
     """
     Update a reminder.
 
@@ -747,7 +763,8 @@ async def update_reminder(reminder_id: str, update: ReminderUpdate):
     dependencies=[Depends(verify_token)],
     responses={404: {"model": ErrorResponse, "description": "Reminder not found"}}
 )
-async def delete_reminder(reminder_id: str):
+@limiter.limit("20/minute")
+async def delete_reminder(reminder_id: str, request=None):
     """
     Delete a reminder.
 
@@ -793,7 +810,8 @@ async def delete_reminder(reminder_id: str):
     summary="Synchronize reminders between client and server",
     dependencies=[Depends(verify_token)]
 )
-async def sync_reminders(sync_request: SyncRequest):
+@limiter.limit("20/minute")
+async def sync_reminders(sync_request: SyncRequest, request=None):
     """
     Bidirectional sync endpoint for offline-first synchronization.
 
