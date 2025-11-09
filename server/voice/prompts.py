@@ -2,19 +2,26 @@
 System prompts for LLM-based natural language parsing of reminder text.
 
 This module contains carefully engineered prompts for extracting structured
-reminder metadata from natural language input. The prompts use few-shot examples
+reminder metadata from natural language input. The prompts use 21 few-shot examples
 to guide small language models (Local: Llama 3.2 1B/Phi-3 Mini, Remote: GPT-OSS 20B)
 toward consistent JSON output with confidence scores.
 
 Design Principles:
-- Few-shot learning: 10+ examples covering common patterns and edge cases
+- Few-shot learning: 21 examples covering temporal, location, and priority patterns
+- Enhanced temporal parsing: Relative dates, vague times, and flexible scheduling
+- Location-based reminders: "when I'm at/near" type location extraction
 - JSON schema enforcement: Explicit output format with field descriptions
 - ADHD-friendly keywords: "urgent", "important", "chill", "someday", "waiting"
 - Confidence scoring: 0.0-1.0 per field to guide auto-fill vs. manual review
 - Graceful degradation: When uncertain, return low confidence rather than guessing
 
-Author: Claude Sonnet 4.5 (Phase 8.1)
-Date: 2025-11-04
+Expected Accuracy Improvements (Phase 8.2):
+- Date extraction: 40% → 60-70% (relative dates, flexible scheduling)
+- Time extraction: 28% → 50-60% (vague times like "morning", "end of day")
+- Location extraction: 28% → 40-50% (location-based reminders)
+
+Author: Claude Sonnet 4.5 (Phase 8.2)
+Date: 2025-11-09
 """
 
 from datetime import datetime
@@ -242,6 +249,147 @@ Output:
   "confidence": 0.75
 }}
 
+Input: "Submit the report by end of next week"
+Output:
+{{
+  "text": "Submit the report",
+  "due_date": "2025-11-14",
+  "due_time": null,
+  "time_required": false,
+  "priority": "important",
+  "category": "Work",
+  "location": null,
+  "confidence": 0.8
+}}
+
+Input: "Call dentist first thing in the morning"
+Output:
+{{
+  "text": "Call dentist",
+  "due_date": null,
+  "due_time": "09:00:00",
+  "time_required": false,
+  "priority": "important",
+  "category": "Health",
+  "location": null,
+  "confidence": 0.8
+}}
+
+Input: "Send email by end of day"
+Output:
+{{
+  "text": "Send email",
+  "due_date": null,
+  "due_time": "17:00:00",
+  "time_required": false,
+  "priority": "important",
+  "category": "Work",
+  "location": null,
+  "confidence": 0.8
+}}
+
+Input: "Pick up package tomorrow afternoon"
+Output:
+{{
+  "text": "Pick up package",
+  "due_date": "{datetime.now().strftime('%Y-%m-')}{int(datetime.now().strftime('%d')) + 1:02d}",
+  "due_time": "14:00:00",
+  "time_required": false,
+  "priority": "chill",
+  "category": "Errands",
+  "location": null,
+  "confidence": 0.85
+}}
+
+Input: "Buy wood when I'm at Home Depot"
+Output:
+{{
+  "text": "Buy wood",
+  "due_date": null,
+  "due_time": null,
+  "time_required": false,
+  "priority": "chill",
+  "category": "Shopping",
+  "location": "Home Depot",
+  "confidence": 0.85
+}}
+
+Input: "Get milk when I'm near a grocery store"
+Output:
+{{
+  "text": "Get milk",
+  "due_date": null,
+  "due_time": null,
+  "time_required": false,
+  "priority": "chill",
+  "category": "Shopping",
+  "location": "grocery store",
+  "confidence": 0.75
+}}
+
+Input: "Clean garage this weekend"
+Output:
+{{
+  "text": "Clean garage",
+  "due_date": "2025-11-08",
+  "due_time": null,
+  "time_required": false,
+  "priority": "chill",
+  "category": "Home",
+  "location": null,
+  "confidence": 0.75
+}}
+
+Input: "Renew subscription next month"
+Output:
+{{
+  "text": "Renew subscription",
+  "due_date": "2025-12-01",
+  "due_time": null,
+  "time_required": false,
+  "priority": "important",
+  "category": "Personal",
+  "location": null,
+  "confidence": 0.75
+}}
+
+Input: "Pick up birthday cake from Bakers' Corner this evening"
+Output:
+{{
+  "text": "Pick up birthday cake",
+  "due_date": "{current_date}",
+  "due_time": "18:00:00",
+  "time_required": false,
+  "priority": "important",
+  "category": "Shopping",
+  "location": "Bakers' Corner",
+  "confidence": 0.85
+}}
+
+**TEMPORAL PARSING GUIDELINES**:
+- "tomorrow" = next calendar day
+- "next week" = Monday of following week (or Friday for "end of next week")
+- "this weekend" = upcoming Saturday
+- "next month" = 1st day of following month
+- "morning" = 09:00:00 (time_required=false, vague reference)
+- "afternoon" = 14:00:00 (time_required=false, vague reference)
+- "evening" / "tonight" = 18:00:00 (time_required=false, vague reference)
+- "end of day" = 17:00:00 (time_required=false, business hours context)
+- "first thing in the morning" = 09:00:00 (time_required=false)
+
+**LOCATION PARSING**:
+- Extract store names, places, addresses exactly as mentioned
+- Include "when I'm at/near" type phrases to identify location-based reminders
+- Keep location text concise but specific
+- If no location mentioned → null
+
+**CONFIDENCE CALIBRATION**:
+- 0.9-1.0: Explicit, clear values (e.g., "tomorrow at 3pm")
+- 0.75-0.85: Inferred temporal references (e.g., "morning", "next week")
+- 0.7-0.75: Moderate ambiguity (e.g., "this weekend", location-only reminders)
+- 0.5-0.7: Highly vague (e.g., "sometime next week")
+- 0.3-0.5: Very ambiguous or missing key context
+
 Now parse this reminder text and respond ONLY with the JSON object:
 """
 
@@ -263,10 +411,10 @@ def get_user_message(reminder_text: str) -> str:
 
 # Metadata about the prompt for monitoring/debugging
 PROMPT_METADATA: Dict[str, any] = {
-    "version": "1.0.0",
+    "version": "1.1.0",
     "model_target": "local: llama-3.2-1b-instruct, remote: @cf/openai/gpt-oss-20b",
-    "estimated_tokens": 1200,
-    "few_shot_examples": 11,
+    "estimated_tokens": 1800,
+    "few_shot_examples": 21,
     "supported_priorities": ["urgent", "important", "chill", "someday", "waiting"],
     "supported_categories": [
         "Personal", "Work", "Errands", "Home",
