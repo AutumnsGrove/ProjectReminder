@@ -150,6 +150,38 @@ class ReminderCreate(BaseModel):
     # Metadata
     source: Literal["manual", "voice", "api"] = Field("manual", description="Creation source")
 
+    @field_validator('due_date')
+    @classmethod
+    def validate_due_date(cls, v):
+        """Validate due_date is valid ISO 8601 format and represents a real date."""
+        if v is None:
+            return v
+
+        # Check format and parse to verify it's a real date
+        try:
+            datetime.strptime(v, "%Y-%m-%d")
+            return v
+        except ValueError as e:
+            raise ValueError(
+                f"due_date must be in ISO 8601 format (YYYY-MM-DD) and represent a valid date. "
+                f"Got: '{v}'"
+            ) from e
+
+    @field_validator('due_time')
+    @classmethod
+    def validate_due_time(cls, v):
+        """Validate due_time is valid ISO 8601 time format (HH:MM:SS)."""
+        if v is None:
+            return v
+
+        try:
+            datetime.strptime(v, "%H:%M:%S")
+            return v
+        except ValueError as e:
+            raise ValueError(
+                f"due_time must be in ISO 8601 format (HH:MM:SS). Got: '{v}'"
+            ) from e
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -212,6 +244,38 @@ class ReminderUpdate(BaseModel):
 
     # Recurrence
     recurrence_id: Optional[str] = None
+
+    @field_validator('due_date')
+    @classmethod
+    def validate_due_date(cls, v):
+        """Validate due_date is valid ISO 8601 format and represents a real date."""
+        if v is None:
+            return v
+
+        # Check format and parse to verify it's a real date
+        try:
+            datetime.strptime(v, "%Y-%m-%d")
+            return v
+        except ValueError as e:
+            raise ValueError(
+                f"due_date must be in ISO 8601 format (YYYY-MM-DD) and represent a valid date. "
+                f"Got: '{v}'"
+            ) from e
+
+    @field_validator('due_time')
+    @classmethod
+    def validate_due_time(cls, v):
+        """Validate due_time is valid ISO 8601 time format (HH:MM:SS)."""
+        if v is None:
+            return v
+
+        try:
+            datetime.strptime(v, "%H:%M:%S")
+            return v
+        except ValueError as e:
+            raise ValueError(
+                f"due_time must be in ISO 8601 format (HH:MM:SS). Got: '{v}'"
+            ) from e
 
     class Config:
         json_schema_extra = {
