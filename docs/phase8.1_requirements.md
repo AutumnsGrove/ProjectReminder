@@ -12,7 +12,7 @@
 Phase 8.1 implements intelligent natural language parsing to automatically extract reminder metadata (dates, times, priorities, locations, categories) from voice transcriptions using a dual-mode architecture:
 
 1. **Local Mode** - Llama 3.2 1B via LM Studio (offline, privacy-first)
-2. **Cloud Mode** - Cloudflare Workers AI (online fallback)
+2. **Cloud Mode** - GPT-OSS 20B via Cloudflare Workers AI (online fallback)
 
 This eliminates the manual form-filling step after voice input, transforming Phase 8's transcription-only workflow into a true voice-to-reminder pipeline.
 
@@ -350,22 +350,23 @@ Phase 8.1 Output (Target):
 
 ---
 
-### AR2: Cloud Mode (Cloudflare Workers AI)
+### AR2: Cloud Mode (Cloudflare Workers AI with GPT-OSS 20B)
 **ID**: AR2
 **Priority**: High
 
 **Configuration**:
-- **Model**: `@cf/meta/llama-3.2-1b-instruct` (Cloudflare's hosted version)
+- **Model**: `@cf/openai/gpt-oss-20b` (Cloudflare's hosted version)
 - **Access**: Workers AI API (requires Cloudflare account)
 - **Endpoint**: `POST /api/voice/parse` (Cloudflare Workers)
 - **Advantages**:
   - No local installation required
   - Accessible from cloud API (multi-device sync)
   - Automatic scaling
+  - Better performance than Llama 3.2 1B (20B parameter model)
 
 **Request Format** (Cloudflare Workers AI):
 ```typescript
-const response = await env.AI.run('@cf/meta/llama-3.2-1b-instruct', {
+const response = await env.AI.run('@cf/openai/gpt-oss-20b', {
   messages: [
     { role: 'system', content: systemPrompt },
     { role: 'user', content: reminderText }
@@ -379,7 +380,7 @@ const response = await env.AI.run('@cf/meta/llama-3.2-1b-instruct', {
 
 **Performance Requirements**:
 - Latency: <5 seconds end-to-end (includes network latency)
-- Accuracy: Same as local mode (same model)
+- Accuracy: Superior to local mode (GPT-OSS 20B is larger model)
 - Fallback: If Workers AI fails → Return 503 error
 
 **Cost Considerations**:
@@ -399,7 +400,7 @@ const response = await env.AI.run('@cf/meta/llama-3.2-1b-instruct', {
 1. User clicks voice button
 2. Check if local API (localhost:8000) is reachable
    ├─ Yes → Use local mode (Llama 3.2 1B via LM Studio)
-   └─ No → Use cloud mode (Cloudflare Workers AI)
+   └─ No → Use cloud mode (GPT-OSS 20B via Cloudflare Workers AI)
 3. If both fail → Manual entry fallback
 ```
 
@@ -600,7 +601,7 @@ Phase 8.1 is considered complete when ALL of the following criteria are met:
 
 ### SC8: Dual-Mode Operation
 - ✅ Local mode works with LM Studio (llama-3.2-1b-instruct)
-- ✅ Cloud mode works with Cloudflare Workers AI
+- ✅ Cloud mode works with Cloudflare Workers AI (GPT-OSS 20B)
 - ✅ Mode selection: auto-detect local availability → fallback to cloud
 - ✅ Configuration toggle in secrets.json
 

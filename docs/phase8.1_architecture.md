@@ -11,7 +11,7 @@
 
 Phase 8.1 adds intelligent NLP parsing to the voice transcription system established in Phase 8. Users will be able to speak naturally ("Important: Call mom tomorrow at 3pm") and have the system automatically extract structured data (priority, due date, due time, category, location) from the transcribed text.
 
-**Key Innovation:** Dual-mode architecture that supports both local (Llama 3.2 1B) and cloud (Cloudflare Workers AI) parsing, with user-configurable mode selection and intelligent fallback.
+**Key Innovation:** Dual-mode architecture that supports both local (Llama 3.2 1B via LM Studio) and cloud (Cloudflare Workers AI with GPT-OSS 20B) parsing, with user-configurable mode selection and intelligent fallback.
 
 **Design Goal:** Zero additional user friction - voice input becomes truly "speak and save" with minimal manual field filling.
 
@@ -38,7 +38,7 @@ Phase 8.1 adds intelligent NLP parsing to the voice transcription system establi
 │  ├─────────────────────┤      ├─────────────────────┤      │
 │  │ FastAPI Server      │      │ Cloudflare Workers  │      │
 │  │ Llama 3.2 1B        │      │ Workers AI          │      │
-│  │ @meta-llama/...     │      │ @cf/meta/llama-...  │      │
+│  │ @meta-llama/...     │      │ @cf/openai/gpt-...  │      │
 │  │                     │      │                     │      │
 │  │ POST /api/voice/    │      │ POST /api/voice/    │      │
 │  │      parse          │      │      parse          │      │
@@ -160,15 +160,15 @@ class VoiceParseResponse(BaseModel):
 **Endpoint:** `POST /api/voice/parse`
 
 **Responsibilities:**
-- Call Cloudflare Workers AI with Llama 3.2 1B Instruct
+- Call Cloudflare Workers AI with GPT-OSS 20B
 - Parse natural language text into structured fields
 - Return same response format as local endpoint
 - Handle Workers AI errors (quota exceeded, model unavailable)
 
 **Workers AI Integration:**
 ```typescript
-// Use @cf/meta/llama-3.2-1b-instruct model
-const response = await c.env.AI.run('@cf/meta/llama-3.2-1b-instruct', {
+// Use @cf/openai/gpt-oss-20b model
+const response = await c.env.AI.run('@cf/openai/gpt-oss-20b', {
   messages: [
     {
       role: 'system',
@@ -456,8 +456,8 @@ Form auto-populated (user reviews & saves)
 
   <p class="help-text">
     <strong>Auto:</strong> Best experience, tries local first for speed & privacy<br>
-    <strong>Local:</strong> Fastest, offline-capable, requires Llama 3.2 1B installed<br>
-    <strong>Cloud:</strong> Slower, online-only, no local setup required
+    <strong>Local:</strong> Fastest, offline-capable, requires Llama 3.2 1B via LM Studio<br>
+    <strong>Cloud:</strong> Slower, online-only, uses GPT-OSS 20B on Cloudflare
   </p>
 </div>
 ```
@@ -624,12 +624,12 @@ def load_model():
 load_model()
 ```
 
-**Performance:**
+**Performance (Local Mode):**
 - Cold start: ~5-10 seconds (first load)
 - Inference: ~200-500ms per parse (CPU)
 - Inference: ~50-150ms per parse (GPU)
 
-### Cloud Mode: Workers AI Setup
+### Cloud Mode: GPT-OSS 20B via Workers AI Setup
 
 **Prerequisites:**
 - Cloudflare account with Workers AI enabled
@@ -650,10 +650,10 @@ binding = "AI"
 - Automatic scaling and optimization
 - Pay-per-request pricing
 
-**Performance:**
+**Performance (Cloud Mode):**
 - Cold start: N/A (serverless)
 - Inference: ~500-1500ms per parse (network + compute)
-- Quota: 10,000 requests/day (free tier)
+- Quota: Check Cloudflare Workers AI pricing
 
 ---
 
@@ -773,9 +773,9 @@ def parse_with_cache(text: str):
 
 **Benefit:** Instant responses for repeated queries
 
-### Model Quantization
+### Model Quantization (Local Mode Only)
 
-**Problem:** Llama 3.2 1B uses ~4GB RAM
+**Problem:** Llama 3.2 1B uses ~4GB RAM in local mode
 
 **Solution:** Use INT8 quantization
 
@@ -895,7 +895,7 @@ We recommend Local Mode for sensitive reminders.
 
 2. **Local NLP Parser Subagent** (~3 hours)
    - Create `server/nlp/parser.py`
-   - Implement model loading (Llama 3.2 1B)
+   - Implement model loading (Llama 3.2 1B via transformers)
    - Implement parse_text() function
    - Add confidence scoring logic
    - Commit: `feat(nlp): implement local Llama 3.2 1B parser`
@@ -909,10 +909,10 @@ We recommend Local Mode for sensitive reminders.
 
 4. **Cloud Parse Endpoint Subagent** (~2 hours)
    - Add `POST /api/voice/parse` to `workers/src/index.ts`
-   - Integrate Workers AI
+   - Integrate Workers AI with GPT-OSS 20B
    - Match local endpoint response format
    - Add error handling
-   - Commit: `feat(cloud): add Workers AI parse endpoint`
+   - Commit: `feat(cloud): add Workers AI parse endpoint with GPT-OSS 20B`
 
 5. **Frontend Parser Integration Subagent** (~3 hours)
    - Create `public/js/voice-parser.js`

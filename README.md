@@ -86,7 +86,6 @@ An offline-first, persistent reminders system designed specifically for ADHD wor
 | Component | Technology | Purpose |
 |-----------|------------|---------|
 | Voice STT | Whisper.cpp / Vosk | Local speech-to-text |
-| NLP | Llama 3.2 1B / Phi-3 Mini | Intent parsing |
 | Mobile | React Native / Native Android | Phone app |
 | E-ink | Android app | Car dashboard |
 
@@ -188,10 +187,10 @@ open public/index.html
 - Browser audio recording
 - 85-90% transcription accuracy
 
-### Phase 8.1: LLM Parsing 📅 NEXT
+### Phase 8.1: LLM Parsing ✅
 - Auto-extract dates, times, priorities
 - Natural language understanding
-- Llama 3.2 1B / Phi-3 Mini
+- Dual-mode: Local (Llama 3.2 1B via LM Studio) + Remote (GPT-OSS 20B via Cloudflare Workers AI)
 
 ---
 

@@ -9,15 +9,15 @@
 
 ## Executive Summary
 
-Cloudflare Workers AI provides a compelling alternative to local Llama 3.2 1B inference for Phase 8.1 NLP parsing. The platform offers:
+Cloudflare Workers AI provides a compelling alternative to local GPT-OSS 20B inference for Phase 8.1 NLP parsing. The platform offers:
 
-- **Llama 3.2 1B model available** at the edge in 190+ locations worldwide
+- **GPT-OSS 20B model available** at the edge in 190+ locations worldwide
 - **Native JSON mode** for structured output (compatible with OpenAI API)
 - **Generous free tier**: 10,000 Neurons/day (~370K LLM tokens)
 - **Low latency**: 300ms Time To First Token, 80+ tokens/second
 - **Zero infrastructure**: No model downloads, no local GPU requirements
 
-**Recommendation:** Use Cloudflare Workers AI for Phase 8.1 as the primary implementation, with local Llama as optional future enhancement.
+**Recommendation:** Use Cloudflare Workers AI for Phase 8.1 as the primary implementation, with local GPT-OSS 20B as optional future enhancement.
 
 ---
 
@@ -67,16 +67,16 @@ Workers AI uses a REST API accessible from any backend, making it compatible wit
 
 ## 2. Available LLM Models {#2-available-models}
 
-### Llama 3.2 1B Instruct
+### GPT-OSS 20B
 
-**Model Identifier:** `@cf/meta/llama-3.2-1b-instruct`
+**Model Identifier:** `@cf/openai/gpt-oss-20b`
 
 #### Specifications
 
-- **Parameters:** 1 billion
-- **Context Window:** 60,000 tokens (updated March 2025)
-- **Optimization:** Multilingual dialogue, agentic retrieval, summarization
-- **Provider:** Meta (official Cloudflare launch partner)
+- **Parameters:** 20 billion
+- **Context Window:** 128,000 tokens
+- **Optimization:** General-purpose reasoning, code generation, instruction following
+- **Provider:** OpenAI (open-source model)
 
 #### Capabilities
 
@@ -89,8 +89,8 @@ Workers AI uses a REST API accessible from any backend, making it compatible wit
 
 #### Pricing
 
-- **Input tokens:** $0.027 per 1,000 tokens (0.027¢ per token)
-- **Output tokens:** $0.201 per 1,000 tokens (0.201¢ per token)
+- **Input tokens:** $0.135 per 1,000 tokens (0.135¢ per token)
+- **Output tokens:** $0.405 per 1,000 tokens (0.405¢ per token)
 
 #### Example Usage
 
@@ -100,7 +100,7 @@ const messages = [
   { role: "user", content: "What is the origin of Hello, World?" }
 ];
 
-const response = await env.AI.run("@cf/meta/llama-3.2-1b-instruct", {
+const response = await env.AI.run("@cf/openai/gpt-oss-20b", {
   messages,
   temperature: 0.7,
   max_tokens: 256
@@ -112,7 +112,7 @@ const response = await env.AI.run("@cf/meta/llama-3.2-1b-instruct", {
 ```python
 import requests
 
-url = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/@cf/meta/llama-3.2-1b-instruct"
+url = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/@cf/openai/gpt-oss-20b"
 headers = {
     "Authorization": f"Bearer {api_token}",
     "Content-Type": "application/json"
@@ -139,7 +139,7 @@ response = requests.post(url, headers=headers, json=payload)
 | Hermes 2 Pro Mistral | 7B | 8K | Function calling |
 | DeepSeek-R1 | Various | Various | Reasoning tasks |
 
-**For Phase 8.1, Llama 3.2 1B is optimal** due to low cost, fast inference, and sufficient capability for reminder parsing.
+**For Phase 8.1, GPT-OSS 20B is optimal** due to balanced performance, strong reasoning capability, and sufficient capacity for reminder parsing.
 
 ---
 
@@ -200,11 +200,12 @@ Add `response_format` to the request with a JSON Schema:
 ### Supported Models
 
 JSON mode is available on:
+- GPT-OSS 20B
 - Llama 3.2 1B, 3B
 - Llama 3.1 8B, 70B
 - Hermes 2 Pro Mistral 7B
 - DeepSeek models
-- ~9 models total (as of March 2025)
+- ~10 models total (as of March 2025)
 
 ### Limitations
 
@@ -256,7 +257,7 @@ schema = {
 
 # Request
 response = cloudflare_ai.run(
-    model="@cf/meta/llama-3.2-1b-instruct",
+    model="@cf/openai/gpt-oss-20b",
     messages=[
         {"role": "system", "content": system},
         {"role": "user", "content": user_input}
@@ -301,7 +302,7 @@ https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/{model}
 
 **Example:**
 ```
-https://api.cloudflare.com/client/v4/accounts/abc123/ai/run/@cf/meta/llama-3.2-1b-instruct
+https://api.cloudflare.com/client/v4/accounts/abc123/ai/run/@cf/openai/gpt-oss-20b
 ```
 
 ### Request Format
@@ -365,7 +366,7 @@ class CloudflareAIClient:
         Run inference on Cloudflare Workers AI
 
         Args:
-            model: Model identifier (e.g., "@cf/meta/llama-3.2-1b-instruct")
+            model: Model identifier (e.g., "@cf/openai/gpt-oss-20b")
             messages: Chat messages array
             temperature: Sampling temperature (0-5)
             max_tokens: Maximum output tokens
@@ -408,7 +409,7 @@ class CloudflareAIClient:
 
 ```python
 try:
-    result = client.run(model="@cf/meta/llama-3.2-1b-instruct", messages=messages)
+    result = client.run(model="@cf/openai/gpt-oss-20b", messages=messages)
 except requests.exceptions.HTTPError as e:
     if e.response.status_code == 429:
         # Rate limit exceeded
@@ -453,12 +454,12 @@ Neurons are Cloudflare's unit of measurement for AI compute. They represent GPU 
 
 ### Model-Specific Pricing (Updated Feb 2025)
 
-#### Llama 3.2 1B Instruct
+#### GPT-OSS 20B
 
 | Resource Type | Cost per Unit | Cost per Neuron |
 |---------------|---------------|-----------------|
-| Input tokens | $0.027 / 1K tokens | ~2.45 neurons/1K tokens |
-| Output tokens | $0.201 / 1K tokens | ~18.3 neurons/1K tokens |
+| Input tokens | $0.135 / 1K tokens | ~12.3 neurons/1K tokens |
+| Output tokens | $0.405 / 1K tokens | ~36.8 neurons/1K tokens |
 
 #### Whisper Large v3 Turbo
 
@@ -470,13 +471,13 @@ Neurons are Cloudflare's unit of measurement for AI compute. They represent GPU 
 
 With **10,000 free Neurons/day**, you can process approximately:
 
-#### LLM (Llama 3.2 1B)
+#### LLM (GPT-OSS 20B)
 
 Assuming 100 input tokens + 100 output tokens per request:
-- Input: 100 tokens × 2.45 neurons/1K = 0.245 neurons
-- Output: 100 tokens × 18.3 neurons/1K = 1.83 neurons
-- **Total per request:** ~2.1 neurons
-- **Daily capacity:** ~4,760 reminder parsing requests
+- Input: 100 tokens × 12.3 neurons/1K = 1.23 neurons
+- Output: 100 tokens × 36.8 neurons/1K = 3.68 neurons
+- **Total per request:** ~4.91 neurons
+- **Daily capacity:** ~2,036 reminder parsing requests
 
 #### Speech-to-Text (Whisper)
 
@@ -488,9 +489,9 @@ Assuming 30-second voice recordings:
 
 Per reminder creation:
 - Whisper (30s): ~23 neurons
-- Llama parsing: ~2.1 neurons
-- **Total:** ~25 neurons per voice reminder
-- **Daily capacity:** ~400 voice reminders/day
+- GPT-OSS 20B parsing: ~4.91 neurons
+- **Total:** ~27.91 neurons per voice reminder
+- **Daily capacity:** ~358 voice reminders/day
 
 **Conclusion:** Free tier is **more than sufficient** for personal use and small-scale deployments.
 
@@ -501,20 +502,20 @@ Per reminder creation:
 | Service | Usage | Cost |
 |---------|-------|------|
 | Whisper | 100 × 30s = 50 minutes | $0.026 |
-| Llama 3.2 1B | 100 × 200 tokens avg | $0.005 |
-| **Monthly Total** | | **$0.031** |
+| GPT-OSS 20B | 100 × 200 tokens avg | $0.027 |
+| **Monthly Total** | | **$0.053** |
 
-**Annual cost:** ~$0.37/year for 100 voice reminders/month
+**Annual cost:** ~$0.64/year for 100 voice reminders/month
 
 #### Scenario: 1,000 voice reminders/month
 
 | Service | Usage | Cost |
 |---------|-------|------|
 | Whisper | 1,000 × 30s = 500 minutes | $0.26 |
-| Llama 3.2 1B | 1,000 × 200 tokens avg | $0.05 |
-| **Monthly Total** | | **$0.31** |
+| GPT-OSS 20B | 1,000 × 200 tokens avg | $0.27 |
+| **Monthly Total** | | **$0.53** |
 
-**Annual cost:** ~$3.72/year for 1,000 voice reminders/month
+**Annual cost:** ~$6.36/year for 1,000 voice reminders/month
 
 **Comparison to local inference costs:**
 - No GPU required ($0-$500 saved)
@@ -547,9 +548,9 @@ Per reminder creation:
 - **Average:** ~800ms
 - **30-second audio:** Typically <2 seconds
 
-#### Llama 3.2 1B Inference
+#### GPT-OSS 20B Inference
 
-- **Estimated:** 300ms TTFT + (256 tokens ÷ 100 TPS) = ~2.8s total
+- **Estimated:** 300ms TTFT + (256 tokens ÷ 80 TPS) = ~3.5s total
 - **JSON mode:** Non-streaming, requires full completion
 
 ### End-to-End Latency Estimate
@@ -558,17 +559,17 @@ Per reminder creation:
 
 1. **Upload audio** (30s recording, ~500KB): 200-500ms
 2. **Whisper transcription**: 800-2,000ms
-3. **Llama parsing** (200 tokens output): 2,000-3,000ms
-4. **Total:** 3-5.5 seconds
+3. **GPT-OSS 20B parsing** (200 tokens output): 3,000-4,000ms
+4. **Total:** 4-6.5 seconds
 
 **Comparison to Phase 8 local Whisper:**
 - Local Whisper.cpp: ~5 seconds for transcription alone
 - Workers AI Whisper: ~1 second for transcription
 - **Advantage:** Workers AI is 3-5× faster for transcription
 
-**Comparison to local Llama:**
-- Local Llama (CPU-only): 5-15 seconds for parsing
-- Workers AI Llama: ~2.5 seconds for parsing
+**Comparison to local GPT-OSS:**
+- Local GPT-OSS 20B (CPU-only): 8-20 seconds for parsing
+- Workers AI GPT-OSS 20B: ~3.5 seconds for parsing
 - **Advantage:** Workers AI is 2-6× faster for LLM inference
 
 ### Performance Improvements (2024-2025)
@@ -615,7 +616,7 @@ Cloudflare has implemented:
 │  │  2. Encode to base64                  │  │
 │  │  3. Call Cloudflare Whisper API       │  │
 │  │  4. Get transcription                 │  │
-│  │  5. Call Cloudflare Llama API         │  │
+│  │  5. Call Cloudflare GPT-OSS API       │  │
 │  │  6. Get structured JSON               │  │
 │  │  7. Return parsed reminder            │  │
 │  └──────────────────────────────────────┘  │
@@ -626,7 +627,7 @@ Cloudflare has implemented:
 ┌──────────────────┐  ┌──────────────────┐
 │ Cloudflare       │  │ Cloudflare       │
 │ Workers AI       │  │ Workers AI       │
-│ (Whisper)        │  │ (Llama 3.2 1B)   │
+│ (Whisper)        │  │ (GPT-OSS 20B)    │
 └──────────────────┘  └──────────────────┘
 ```
 
@@ -688,7 +689,7 @@ class CloudflareVoiceService:
     def __init__(self):
         self.ai_client = CloudflareAIClient()
         self.whisper_model = "@cf/openai/whisper-large-v3-turbo"
-        self.llama_model = "@cf/meta/llama-3.2-1b-instruct"
+        self.gpt_oss_model = "@cf/openai/gpt-oss-20b"
 
     def transcribe_audio(self, audio_bytes: bytes) -> str:
         """Transcribe audio using Whisper"""
@@ -734,7 +735,7 @@ class CloudflareVoiceService:
         }
 
         result = self.ai_client.run(
-            model=self.llama_model,
+            model=self.gpt_oss_model,
             messages=messages,
             response_format={
                 "type": "json_schema",
@@ -925,7 +926,7 @@ os.environ["CLOUDFLARE_API_TOKEN"] = SECRETS.get("cloudflare_api_token", "")
 7. **Network Variability** - Latency depends on internet connection
 8. **Cost at Scale** - Heavy users may incur charges (though minimal)
 
-### Local Llama 3.2 1B
+### Local GPT-OSS 20B
 
 #### Pros ✅
 
@@ -941,14 +942,14 @@ os.environ["CLOUDFLARE_API_TOKEN"] = SECRETS.get("cloudflare_api_token", "")
 #### Cons ❌
 
 1. **Complex Setup** - Requires model downloads, dependencies, compilation
-2. **Hardware Requirements** - Needs decent CPU/GPU (2017+ recommended)
-3. **Slower Inference** - 5-15s on CPU vs 2-3s on Workers AI
-4. **Storage Requirements** - 1+ GB for model files
+2. **Hardware Requirements** - Needs GPU or high-end CPU (8GB+ VRAM recommended)
+3. **Slower Inference** - 8-20s on CPU vs 3-4s on Workers AI
+4. **Storage Requirements** - 40+ GB for model files
 5. **Maintenance Burden** - User must update models manually
 6. **Platform-Specific** - Different setup for Windows/Mac/Linux
 7. **No JSON Mode** - Requires manual prompt engineering and parsing
 8. **Quality Variability** - Depends on local hardware performance
-9. **One-time Setup Cost** - Time investment for installation
+9. **One-time Setup Cost** - Significant time and resource investment
 10. **Troubleshooting** - Users must debug installation issues
 
 ### Hybrid Approach
@@ -964,7 +965,7 @@ class VoiceService:
         if self.use_cloudflare:
             self.service = CloudflareVoiceService()
         else:
-            self.service = LocalLlamaService()
+            self.service = LocalGPTOSSService()
 
     def parse_reminder(self, transcription: str) -> dict:
         """Parse using configured service (cloud or local)"""
@@ -996,12 +997,12 @@ class VoiceService:
 **Use Cloudflare Workers AI for Phase 8.1 MVP** due to:
 
 1. **Faster Time to Market** - No complex setup, works immediately
-2. **Better User Experience** - 2-5s latency vs 8-15s local
-3. **Lower Barrier to Entry** - No GPU required, no 1GB download
-4. **Generous Free Tier** - 400+ voice reminders/day free
+2. **Better User Experience** - 4-6s latency vs 10-25s local
+3. **Lower Barrier to Entry** - No GPU required, no 40GB download
+4. **Generous Free Tier** - 358 voice reminders/day free
 5. **Native JSON Mode** - Structured output without prompt hacking
 6. **Proven Performance** - 190+ edge locations, 300ms TTFT
-7. **Cost Effective** - $0.31/month for 1,000 reminders
+7. **Cost Effective** - $0.53/month for 1,000 reminders
 
 ### Implementation Strategy
 
@@ -1028,9 +1029,9 @@ class VoiceService:
 
 #### Phase 8.2 (Optional Future Enhancement)
 
-1. **Add local Llama 3.2 1B as fallback**
-   - Download and setup Llama.cpp
-   - Implement `LocalLlamaService`
+1. **Add local GPT-OSS 20B as fallback**
+   - Download and setup GPT-OSS 20B with llama.cpp
+   - Implement `LocalGPTOSSService`
    - Add configuration toggle
    - Automatic fallback on network errors
 
@@ -1046,10 +1047,10 @@ class VoiceService:
 **Decision:** Use Cloudflare Workers AI as primary implementation.
 
 **Rationale:**
-- Faster inference (2-5s vs 8-15s local)
+- Faster inference (3-5s vs 10-25s local)
 - Simpler setup (no model downloads)
 - Native JSON mode (structured output)
-- Generous free tier (400+ reminders/day)
+- Generous free tier (358 reminders/day)
 - Better UX (low latency, no installation)
 
 **Consequences:**
@@ -1058,7 +1059,7 @@ class VoiceService:
 - **Mitigation:** Document as cloud-first with optional local fallback
 
 **Alternatives Considered:**
-1. Local Llama 3.2 1B - Slower, complex setup, no JSON mode
+1. Local GPT-OSS 20B - Slower, complex setup, no JSON mode
 2. OpenAI API - Expensive, no free tier, same internet requirement
 3. Anthropic API - Expensive, no free tier, same internet requirement
 
@@ -1132,7 +1133,7 @@ class CloudflareAIClient:
         Run inference on Cloudflare Workers AI
 
         Args:
-            model: Model identifier (e.g., "@cf/meta/llama-3.2-1b-instruct")
+            model: Model identifier (e.g., "@cf/openai/gpt-oss-20b")
             inputs: Direct inputs for non-chat models (e.g., Whisper)
             messages: Chat messages for LLM models
             temperature: Sampling temperature (0-5)
@@ -1225,7 +1226,7 @@ class CloudflareVoiceService:
     """Voice transcription and NLP parsing using Cloudflare Workers AI"""
 
     WHISPER_MODEL = "@cf/openai/whisper-large-v3-turbo"
-    LLAMA_MODEL = "@cf/meta/llama-3.2-1b-instruct"
+    GPT_OSS_MODEL = "@cf/openai/gpt-oss-20b"
 
     REMINDER_SCHEMA = {
         "type": "object",
@@ -1335,7 +1336,7 @@ Output: {{"task": "Check the mail", "datetime": null, "priority": "chill", "loca
         ]
 
         result = self.ai_client.run_with_retry(
-            model=self.LLAMA_MODEL,
+            model=self.GPT_OSS_MODEL,
             messages=messages,
             response_format={
                 "type": "json_schema",
@@ -1446,7 +1447,7 @@ Output: {{"task": "Check the mail", "datetime": null, "priority": "chill", "loca
 ### Official Documentation
 
 - [Cloudflare Workers AI Overview](https://developers.cloudflare.com/workers-ai/)
-- [Llama 3.2 1B Model Docs](https://developers.cloudflare.com/workers-ai/models/llama-3.2-1b-instruct/)
+- [GPT-OSS 20B Model Docs](https://developers.cloudflare.com/workers-ai/models/gpt-oss-20b/)
 - [Whisper Large v3 Turbo Docs](https://developers.cloudflare.com/workers-ai/models/whisper-large-v3-turbo/)
 - [JSON Mode Documentation](https://developers.cloudflare.com/workers-ai/features/json-mode/)
 - [Pricing Information](https://developers.cloudflare.com/workers-ai/platform/pricing/)

@@ -53,7 +53,7 @@ class CloudflareAIParser:
         self,
         account_id: Optional[str] = None,
         api_token: Optional[str] = None,
-        model_name: str = "@cf/meta/llama-3.2-1b-instruct",
+        model_name: str = "@cf/openai/gpt-oss-20b",
         timeout: float = 10.0,
         max_retries: int = 2
     ):

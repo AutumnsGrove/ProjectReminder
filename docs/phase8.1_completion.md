@@ -149,7 +149,7 @@ Latency: ~1.3 seconds
 ### 4. Cloudflare Workers AI Parser
 
 **Configuration:**
-- Model: `@cf/meta/llama-3.2-1b-instruct`
+- Model: `@cf/openai/gpt-oss-20b`
 - Endpoint: `/accounts/{account_id}/ai/run/{model}`
 - Auth: Bearer token from secrets.json
 - Retry logic: 2 retries on 429/5xx errors
@@ -432,7 +432,7 @@ All commits authored by Autumn Brown <autumnbrown23@pm.me> with co-authorship fr
 ### Current Limitations
 
 1. **Cloudflare Mode Untested**: Ready for credentials, not yet validated in production
-2. **Small Model Constraints**: llama-3.2-1b may struggle with very complex/ambiguous inputs
+2. **Cloud Model Notes**: GPT-OSS 20B is more capable than local llama-3.2-1b but requires Cloudflare API access
 3. **Date Ambiguity**: "Friday" could mean this Friday or next Friday (defaults to next)
 4. **Location Parsing**: Not yet implemented (placeholder in response model)
 5. **Recurrence Patterns**: "every Tuesday" not parsed (Phase 8.2)
@@ -448,7 +448,7 @@ All commits authored by Autumn Brown <autumnbrown23@pm.me> with co-authorship fr
 **Medium Priority:**
 1. **Multi-reminder parsing**: "Call mom AND buy milk" → 2 reminders
 2. **Confidence boosting**: User feedback loop to improve accuracy
-3. **Larger models**: Llama 3.2 3B / Phi-3.5 for better parsing
+3. **Larger models**: Phi-3.5 or Llama 3.2 3B for local; GPT-4 option for cloud
 
 **Low Priority:**
 1. **Custom prompt templates**: User-configurable few-shot examples

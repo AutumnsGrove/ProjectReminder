@@ -1,7 +1,7 @@
 # Comprehensive Guide: Implementing Cloudflare Workers AI for Reminders App
 
 ## Overview
-This guide covers migrating your Reminders app from local models (whisper.cpp + Llama) to Cloudflare Workers AI, eliminating the need for users to download 1+ GB of model files.
+This guide covers migrating your Reminders app from local models (whisper.cpp + GPT-OSS) to Cloudflare Workers AI, eliminating the need for users to download 1+ GB of model files.
 
 ---
 
@@ -296,14 +296,14 @@ module.exports = new ChunkedSpeechToTextService();
 
 ## 5. LLM Processing Implementation
 
-### 5.1 Llama 3.2 Integration
+### 5.1 GPT-OSS 20B Integration
 ```javascript
 // services/llm-service.js
 const cloudflareAI = require('../lib/cloudflare-ai-client');
 
 class LLMService {
   constructor() {
-    this.model = '@cf/meta/llama-3.2-1b-instruct';
+    this.model = '@cf/openai/gpt-oss-20b';
     this.defaultParams = {
       temperature: 0.7,
       max_tokens: 256,
@@ -651,8 +651,8 @@ class UsageTracker {
 
     this.prices = {
       whisper: 0.0005, // per minute
-      llamaInput: 0.027 / 1000000, // per token
-      llamaOutput: 0.201 / 1000000, // per token
+      gptOSSInput: 0.027 / 1000000, // per token
+      gptOSSOutput: 0.201 / 1000000, // per token
     };
   }
 
@@ -673,8 +673,8 @@ class UsageTracker {
    * @param {number} outputTokens
    */
   trackLLM(inputTokens, outputTokens) {
-    const cost = (inputTokens * this.prices.llamaInput) + 
-                 (outputTokens * this.prices.llamaOutput);
+    const cost = (inputTokens * this.prices.gptOSSInput) +
+                 (outputTokens * this.prices.gptOSSOutput);
     
     this.usage.llm.inputTokens += inputTokens;
     this.usage.llm.outputTokens += outputTokens;
@@ -768,10 +768,10 @@ class CostOptimizer {
    * @returns {string}
    */
   selectModel(task) {
-    // For simple reminders, use 1B model
-    // For complex tasks, might want to use larger model
-    // (Note: Currently only 1B available on Workers AI)
-    return '@cf/meta/llama-3.2-1b-instruct';
+    // For simple reminders, use GPT-OSS 20B model
+    // For complex tasks, GPT-OSS 20B provides excellent balance
+    // of performance and cost efficiency on Workers AI
+    return '@cf/openai/gpt-oss-20b';
   }
 }
 
@@ -871,7 +871,7 @@ class MockCloudflareAI {
       };
     }
     
-    if (model.includes('llama')) {
+    if (model.includes('gpt')) {
       return {
         result: {
           response: JSON.stringify({
@@ -1268,7 +1268,7 @@ wss.on('connection', (ws) => {
 
 - [Cloudflare Workers AI Docs](https://developers.cloudflare.com/workers-ai/)
 - [Whisper Model Docs](https://developers.cloudflare.com/workers-ai/models/whisper-large-v3-turbo/)
-- [Llama 3.2 Model Docs](https://developers.cloudflare.com/workers-ai/models/llama-3.2-1b-instruct/)
+- [GPT-OSS 20B Model Docs](https://developers.cloudflare.com/workers-ai/models/gpt-oss-20b/)
 - [Pricing Calculator](https://developers.cloudflare.com/workers-ai/platform/pricing/)
 - [API Reference](https://developers.cloudflare.com/api/resources/ai/)
 

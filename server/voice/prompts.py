@@ -3,8 +3,8 @@ System prompts for LLM-based natural language parsing of reminder text.
 
 This module contains carefully engineered prompts for extracting structured
 reminder metadata from natural language input. The prompts use few-shot examples
-to guide small language models (Llama 3.2 1B, Phi-3 Mini) toward consistent
-JSON output with confidence scores.
+to guide small language models (Local: Llama 3.2 1B/Phi-3 Mini, Remote: GPT-OSS 20B)
+toward consistent JSON output with confidence scores.
 
 Design Principles:
 - Few-shot learning: 10+ examples covering common patterns and edge cases
@@ -264,7 +264,7 @@ def get_user_message(reminder_text: str) -> str:
 # Metadata about the prompt for monitoring/debugging
 PROMPT_METADATA: Dict[str, any] = {
     "version": "1.0.0",
-    "model_target": "llama-3.2-1b-instruct",
+    "model_target": "local: llama-3.2-1b-instruct, remote: @cf/openai/gpt-oss-20b",
     "estimated_tokens": 1200,
     "few_shot_examples": 11,
     "supported_priorities": ["urgent", "important", "chill", "someday", "waiting"],

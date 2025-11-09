@@ -15,7 +15,8 @@ An ADHD-friendly, offline-first reminders system with voice input as the primary
 - **Cloud**: Cloudflare Workers + D1 (serverless edge API + cloud SQLite)
 - **Maps**: MapBox GL JS (location-based reminders)
 - **Package Manager**: UV (Python), npm (TypeScript/JavaScript)
-- **Future**: Whisper.cpp (local STT), Llama 3.2 1B / Phi-3 Mini (NLP parsing)
+- **NLP Parsing**: Local: Llama 3.2 1B (via LM Studio), Remote: GPT-OSS 20B (Cloudflare Workers AI)
+- **Future**: Whisper.cpp (local STT)
 
 ## Architecture Notes
 **Three-tier offline-first architecture:**

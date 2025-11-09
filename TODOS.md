@@ -326,8 +326,9 @@
 - ✅ 14 tests (100% passing)
 
 ### Phase 8.1: NLP Parsing
-- ✅ LM Studio integration (llama-3.2-1b-instruct)
-- ✅ Dual-mode (local + Cloudflare Workers AI)
+- ✅ LM Studio integration (local: llama-3.2-1b-instruct)
+- ✅ Cloudflare Workers AI (remote: @cf/openai/gpt-oss-20b)
+- ✅ Dual-mode parser with automatic fallback
 - ✅ Priority extraction (96% accuracy)
 - ✅ Category classification (92% accuracy)
 - ✅ Confidence scoring
