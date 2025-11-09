@@ -1,16 +1,63 @@
+# Secrets and sensitive data
 secrets.json
 config.json
 public/config.json
+
+# Database files
 *.db
 !server/reminders.db
-*.log
+
+# Python
 __pycache__/
-.DS_Store
-.claude/
-.venv/
 *.pyc
-whisper.cpp/
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist/
+build/
+.venv/
+venv/
+ENV/
+
+# Testing artifacts
 htmlcov/
 .coverage
-node_modules/
+.pytest_cache/
+.tox/
+
+# Test data (from testing sessions)
+EXAMPLE_RECORDINGS/
+audio_converted/
+compression_test/
+nlp_results/
+transcriptions/
+*.wav
+*.opus
+*.m4a
+*.webm
+
+# Logs
+*.log
+*.out
+*.err
+
+# IDE
 .vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# System
+.DS_Store
+.claude/
+
+# Dependencies
+node_modules/
+whisper.cpp/
+
+# Build outputs
+workers/dist/
