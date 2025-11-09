@@ -35,19 +35,28 @@ class VoiceRecorder {
     }
 
     /**
-     * Get supported MIME type for MediaRecorder
+     * Get supported MIME type and audio settings for MediaRecorder
+     * Prioritizes Opus codec (24kbps) for optimal compression
      */
     getSupportedMimeType() {
-        const types = [
-            'audio/webm;codecs=opus',
+        const opusType = 'audio/webm;codecs=opus';
+        const fallbackTypes = [
             'audio/webm',
             'audio/ogg;codecs=opus',
             'audio/mp4'
         ];
 
-        for (const type of types) {
+        // Check Opus first (best compression at 24kbps)
+        if (MediaRecorder.isTypeSupported(opusType)) {
+            console.log('Using Opus codec (24kbps) - optimal compression for voice');
+            return { mimeType: opusType, bitrate: 24000 };
+        }
+
+        // Fallback to other supported types with standard bitrate
+        for (const type of fallbackTypes) {
             if (MediaRecorder.isTypeSupported(type)) {
-                return type;
+                console.log(`Opus not supported, falling back to: ${type} (128kbps)`);
+                return { mimeType: type, bitrate: 128000 };
             }
         }
 
@@ -75,13 +84,13 @@ class VoiceRecorder {
                 }
             });
 
-            // Determine MIME type
-            const mimeType = this.getSupportedMimeType();
+            // Determine MIME type and bitrate
+            const { mimeType, bitrate } = this.getSupportedMimeType();
 
-            // Create MediaRecorder
+            // Create MediaRecorder with optimized Opus codec
             this.mediaRecorder = new MediaRecorder(this.stream, {
                 mimeType: mimeType,
-                audioBitsPerSecond: 128000 // 128kbps
+                audioBitsPerSecond: bitrate
             });
 
             // Collect audio chunks
