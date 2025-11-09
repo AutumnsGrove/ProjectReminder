@@ -2,6 +2,10 @@ name = "reminders-api"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
 
+# AI Binding for NLP Model
+[ai]
+binding = "AI"
+
 # D1 Database Binding
 [[d1_databases]]
 binding = "DB"
