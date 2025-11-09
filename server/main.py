@@ -5,7 +5,7 @@ ADHD-Friendly Voice Reminders System
 Phase 1: Core Backend REST API
 """
 
-from fastapi import FastAPI, Depends, HTTPException, Header, Query, File, UploadFile
+from fastapi import FastAPI, Depends, HTTPException, Header, Query, File, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -198,7 +198,7 @@ async def health_check():
     dependencies=[Depends(verify_token)]
 )
 @limiter.limit("10/minute")
-async def create_reminder(reminder: ReminderCreate, request=None):
+async def create_reminder(request: Request, reminder: ReminderCreate):
     """
     Create a new reminder.
 
@@ -293,6 +293,7 @@ async def create_reminder(reminder: ReminderCreate, request=None):
 )
 @limiter.limit("60/minute")
 async def list_reminders(
+    request: Request,
     status: Optional[str] = Query(None, description="Filter by status (pending, completed, snoozed)"),
     category: Optional[str] = Query(None, description="Filter by category"),
     priority: Optional[str] = Query(None, description="Filter by priority (chill, important, urgent)"),
@@ -364,6 +365,7 @@ async def list_reminders(
 )
 @limiter.limit("60/minute")
 async def get_reminders_near_location(
+    request: Request,
     lat: float = Query(..., ge=-90, le=90, description="Latitude of search location"),
     lng: float = Query(..., ge=-180, le=180, description="Longitude of search location"),
     radius: int = Query(1000, ge=10, le=50000, description="Search radius in meters (default: 1000m)")
@@ -444,9 +446,9 @@ async def get_reminders_near_location(
 )
 @limiter.limit("30/minute")
 async def transcribe_voice(
+    request: Request,
     audio: UploadFile = File(..., description="Audio file (WebM/MP4/WAV, max 10MB)"),
-    token: str = Depends(verify_token),
-    request=None
+    token: str = Depends(verify_token)
 ):
     """
     Transcribe audio file to text using local Whisper.cpp.
@@ -558,7 +560,8 @@ async def transcribe_voice(
 )
 @limiter.limit("30/minute")
 async def parse_reminder(
-    request: ReminderParseRequest,
+    request: Request,
+    parse_request: ReminderParseRequest,
     token: str = Depends(verify_token)
 ):
     """
@@ -582,12 +585,12 @@ async def parse_reminder(
         parse_errors = []
 
         # AUTO MODE: Try local → fallback to cloud
-        if request.mode == "auto":
+        if parse_request.mode == "auto":
             # Try local first
             try:
                 print("[Parse] Attempting local LLM parse...")
                 local_parser = LocalLLMParser()
-                result = await local_parser.parse_reminder_text(request.text)
+                result = await local_parser.parse_reminder_text(parse_request.text)
                 await local_parser.close()
 
                 # Check if parse was successful (confidence > 0.2)
@@ -605,7 +608,7 @@ async def parse_reminder(
             try:
                 print("[Parse] Attempting Cloudflare AI parse...")
                 cloud_parser = CloudflareAIParser()
-                result = await cloud_parser.parse_reminder_text(request.text)
+                result = await cloud_parser.parse_reminder_text(parse_request.text)
                 await cloud_parser.close()
 
                 print(f"[Parse] Cloud parse successful (confidence: {result['confidence']})")
@@ -618,7 +621,7 @@ async def parse_reminder(
             # Both failed - return empty parse
             print(f"[Parse] Both parsers failed: {parse_errors}")
             return ReminderParseResponse(
-                text=request.text,
+                text=parse_request.text,
                 due_date=None,
                 due_time=None,
                 time_required=False,
@@ -630,16 +633,16 @@ async def parse_reminder(
             )
 
         # LOCAL MODE ONLY
-        elif request.mode == "local":
+        elif parse_request.mode == "local":
             local_parser = LocalLLMParser()
-            result = await local_parser.parse_reminder_text(request.text)
+            result = await local_parser.parse_reminder_text(parse_request.text)
             await local_parser.close()
             return ReminderParseResponse(**result)
 
         # CLOUD MODE ONLY
-        elif request.mode == "cloud":
+        elif parse_request.mode == "cloud":
             cloud_parser = CloudflareAIParser()
-            result = await cloud_parser.parse_reminder_text(request.text)
+            result = await cloud_parser.parse_reminder_text(parse_request.text)
             await cloud_parser.close()
             return ReminderParseResponse(**result)
 
@@ -665,7 +668,7 @@ async def parse_reminder(
     responses={404: {"model": ErrorResponse, "description": "Reminder not found"}}
 )
 @limiter.limit("60/minute")
-async def get_reminder(reminder_id: str, request=None):
+async def get_reminder(request: Request, reminder_id: str):
     """
     Get a single reminder by ID.
 
@@ -703,7 +706,7 @@ async def get_reminder(reminder_id: str, request=None):
     responses={404: {"model": ErrorResponse, "description": "Reminder not found"}}
 )
 @limiter.limit("20/minute")
-async def update_reminder(reminder_id: str, update: ReminderUpdate, request=None):
+async def update_reminder(request: Request, reminder_id: str, update: ReminderUpdate):
     """
     Update a reminder.
 
@@ -764,7 +767,7 @@ async def update_reminder(reminder_id: str, update: ReminderUpdate, request=None
     responses={404: {"model": ErrorResponse, "description": "Reminder not found"}}
 )
 @limiter.limit("20/minute")
-async def delete_reminder(reminder_id: str, request=None):
+async def delete_reminder(request: Request, reminder_id: str):
     """
     Delete a reminder.
 
@@ -811,7 +814,7 @@ async def delete_reminder(reminder_id: str, request=None):
     dependencies=[Depends(verify_token)]
 )
 @limiter.limit("20/minute")
-async def sync_reminders(sync_request: SyncRequest, request=None):
+async def sync_reminders(request: Request, sync_request: SyncRequest):
     """
     Bidirectional sync endpoint for offline-first synchronization.
 
