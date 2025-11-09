@@ -32,6 +32,41 @@ def load_secrets():
         return {}
 
 
+def validate_required_secrets(api_token, mapbox_token):
+    """
+    Validate that required secrets are configured.
+
+    Args:
+        api_token: The API token value
+        mapbox_token: The MapBox access token value
+
+    Raises:
+        ValueError: If any required secrets are missing or empty
+    """
+    required_secrets = {
+        "API_TOKEN": api_token,
+        "MAPBOX_ACCESS_TOKEN": mapbox_token,
+    }
+
+    missing = []
+    empty = []
+
+    for name, value in required_secrets.items():
+        if value is None:
+            missing.append(name)
+        elif value == "":
+            empty.append(name)
+
+    if missing or empty:
+        error_msg = "Configuration Error:\n"
+        if missing:
+            error_msg += f"  Missing secrets: {', '.join(missing)}\n"
+        if empty:
+            error_msg += f"  Empty secrets: {', '.join(empty)}\n"
+        error_msg += "\nPlease configure these in secrets.json or environment variables."
+        raise ValueError(error_msg)
+
+
 # Load secrets at module import
 SECRETS = load_secrets()
 
@@ -43,6 +78,9 @@ API_TOKEN = SECRETS.get("api_token", os.getenv("API_TOKEN", ""))
 
 # MapBox
 MAPBOX_ACCESS_TOKEN = SECRETS.get("mapbox_access_token", os.getenv("MAPBOX_ACCESS_TOKEN", ""))
+
+# Validate required secrets are configured
+validate_required_secrets(API_TOKEN, MAPBOX_ACCESS_TOKEN)
 
 # CORS (allow local development)
 # Add your Tailscale/VPN IP to this list if needed for remote access
