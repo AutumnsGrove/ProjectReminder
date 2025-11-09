@@ -150,6 +150,7 @@
 }
 
 /* ===== Empty State ===== */
-#upcomingContainer .empty-state {
+#upcomingContainer .empty-state,
+#futureContainer .empty-state {
     margin-top: var(--spacing-xl);
 }
