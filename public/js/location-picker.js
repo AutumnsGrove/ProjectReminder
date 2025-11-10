@@ -112,20 +112,40 @@ const LocationPicker = (() => {
       // Geocode address
       const result = await MapBoxUtils.geocodeAddress(address);
 
-      // Set location
-      setLocation({
-        name: address,
-        address: result.formatted_address,
-        lat: result.lat,
-        lng: result.lng,
-        radius: currentLocation.radius
-      });
+      // Validate geocoding result before using it
+      if (!result || !result.lat || !result.lng) {
+        throw new Error('GEOCODE_NO_RESULTS');
+      }
 
-      // Clear search input
-      els.locationSearch.value = '';
+      // Set location (may throw if map initialization fails, but that's a different error)
+      try {
+        setLocation({
+          name: address,
+          address: result.formatted_address || address,
+          lat: result.lat,
+          lng: result.lng,
+          radius: currentLocation.radius
+        });
+
+        // Clear search input only on success
+        els.locationSearch.value = '';
+      } catch (mapError) {
+        // Map/UI error (not geocoding failure) - log but don't show confusing alert
+        console.error('Map display error after successful geocoding:', mapError);
+        // Restore the address so user can try again
+        els.locationSearch.value = address;
+      }
+
     } catch (error) {
-      console.error('Geocoding error:', error);
-      alert('Could not find that location. Please try a different address.');
+      // Only show alert for actual geocoding failures
+      if (error.message === 'GEOCODE_NO_RESULTS' || error.name === 'GeocodeError') {
+        console.error('Geocoding failed:', error);
+        alert('Could not find that location. Please try a different address.');
+      } else {
+        // Unexpected error - log for debugging but don't show confusing alert
+        console.error('Unexpected error during address search:', error);
+      }
+      // Restore the address so user can try again
       els.locationSearch.value = address;
     } finally {
       els.locationSearch.disabled = false;
