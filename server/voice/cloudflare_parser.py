@@ -21,7 +21,7 @@ Date: 2025-11-04
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Optional, Any
 
 import httpx
@@ -53,7 +53,7 @@ class CloudflareAIParser:
         self,
         account_id: Optional[str] = None,
         api_token: Optional[str] = None,
-        model_name: str = "@cf/openai/gpt-oss-20b",
+        model_name: str = "@cf/meta/llama-3-8b-instruct",
         timeout: float = 10.0,
         max_retries: int = 2
     ):
@@ -190,10 +190,32 @@ class CloudflareAIParser:
         """
         # Get current date for prompt context
         current_date = datetime.now().strftime('%Y-%m-%d')
+        tomorrow_date = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
 
-        # Generate system prompt with few-shot examples
-        system_prompt = get_reminder_parse_prompt(current_date)
-        user_message = get_user_message(text)
+        # Use streamlined prompt for Cloudflare AI (smaller model needs concise instructions)
+        system_prompt = f"""Extract reminder metadata as JSON. Current date: {current_date}.
+
+Output format:
+{{
+  "text": "core reminder text",
+  "due_date": "YYYY-MM-DD" or null,
+  "due_time": "HH:MM:SS" or null,
+  "time_required": true/false,
+  "priority": "urgent"/"important"/"chill"/"someday"/"waiting" or null,
+  "category": "Personal"/"Work"/"Errands"/"Home"/"Health"/"Calls"/"Shopping"/"Projects" or null,
+  "location": "place name" or null,
+  "confidence": 0.0-1.0
+}}
+
+Rules:
+- "tomorrow" = {tomorrow_date}
+- "3pm" = "15:00:00", time_required=true
+- "morning" = "09:00:00", time_required=false
+- "call"/"phone" → Calls category
+- "buy"/"get" → Shopping category
+- Output ONLY the JSON object."""
+
+        user_message = f'Parse: "{text}"'
 
         # Cloudflare Workers AI endpoint
         endpoint = f"/accounts/{self.account_id}/ai/run/{self.model_name}"
@@ -205,7 +227,8 @@ class CloudflareAIParser:
                 {"role": "user", "content": user_message}
             ],
             "temperature": 0.3,
-            "max_tokens": 400
+            "max_tokens": 400,
+            "stream": False  # Explicitly disable streaming
         }
 
         # Call Cloudflare Workers AI
