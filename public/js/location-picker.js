@@ -59,6 +59,9 @@ const LocationPicker = (() => {
 
     // Setup event listeners
     setupEventListeners();
+
+    // Show empty map preview (Issue #7: UX improvement)
+    showEmptyMap();
   }
 
   /**
@@ -260,6 +263,46 @@ const LocationPicker = (() => {
   }
 
   /**
+   * Show empty map with default view (Issue #7: UX improvement)
+   * Displays map immediately without requiring location selection
+   */
+  function showEmptyMap() {
+    // Show map container
+    els.mapContainer.style.display = 'block';
+
+    // Only initialize if map doesn't exist yet
+    if (!map) {
+      map = MapBoxUtils.createMap('locationMap', {
+        center: [-95, 37], // Center of USA
+        zoom: 3 // Wide view showing large area
+      });
+
+      // Wait for style to load before adding interactive elements (prevents "Style is not done loading" error)
+      map.on('load', () => {
+        console.log('Empty map preview loaded and ready');
+      });
+
+      // Add map click handler for location selection
+      map.on('click', async (e) => {
+        const clickedLat = e.lngLat.lat;
+        const clickedLng = e.lngLat.lng;
+
+        // Reverse geocode clicked location
+        const address = await MapBoxUtils.reverseGeocode(clickedLat, clickedLng);
+
+        // Update location
+        setLocation({
+          name: 'Custom Location',
+          address: address,
+          lat: clickedLat,
+          lng: clickedLng,
+          radius: currentLocation.radius
+        });
+      });
+    }
+  }
+
+  /**
    * Show map and add marker at location
    */
   function showMap(lat, lng) {
@@ -303,23 +346,7 @@ const LocationPicker = (() => {
         updateRadiusCircle(lat, lng, currentLocation.radius);
       });
 
-      // Add map click handler (can be added immediately, doesn't require style)
-      map.on('click', async (e) => {
-        const clickedLat = e.lngLat.lat;
-        const clickedLng = e.lngLat.lng;
-
-        // Reverse geocode clicked location
-        const address = await MapBoxUtils.reverseGeocode(clickedLat, clickedLng);
-
-        // Update location
-        setLocation({
-          name: 'Custom Location',
-          address: address,
-          lat: clickedLat,
-          lng: clickedLng,
-          radius: currentLocation.radius
-        });
-      });
+      // Note: Click handler is added in showEmptyMap() to avoid duplication
     } else {
       // Map already exists - fly to new location
       map.flyTo({
@@ -327,13 +354,36 @@ const LocationPicker = (() => {
         zoom: 14
       });
 
-      // Update marker (map already loaded, safe to update immediately)
-      if (marker) {
-        marker.setLngLat([lng, lat]);
-      }
+      // Add or update marker after map has flown to new location
+      setTimeout(() => {
+        if (!marker) {
+          marker = MapBoxUtils.addDraggableMarker(map, lat, lng, async (newCoords) => {
+            // Marker was dragged - reverse geocode new position
+            const address = await MapBoxUtils.reverseGeocode(newCoords.lat, newCoords.lng);
 
-      // Update radius circle (map already loaded, safe to update immediately)
-      updateRadiusCircle(lat, lng, currentLocation.radius);
+            // Update location (without recreating marker)
+            currentLocation.lat = newCoords.lat;
+            currentLocation.lng = newCoords.lng;
+            currentLocation.address = address;
+
+            // Update form fields
+            els.locationAddress.value = address;
+            els.locationLat.value = newCoords.lat;
+            els.locationLng.value = newCoords.lng;
+
+            // Update display
+            els.locationDisplayAddress.textContent = address;
+
+            // Update radius circle
+            updateRadiusCircle(newCoords.lat, newCoords.lng, currentLocation.radius);
+          });
+        } else {
+          marker.setLngLat([lng, lat]);
+        }
+
+        // Update radius circle (map already loaded, safe to update immediately)
+        updateRadiusCircle(lat, lng, currentLocation.radius);
+      }, 100);
     }
   }
 
