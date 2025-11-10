@@ -511,7 +511,14 @@ def apply_sync_change(change_id: str, action: str, data: Optional[Dict[str, Any]
     elif action == "create":
         if not data:
             return False
-        create_reminder(data)
+        # Check if reminder already exists (prevents UNIQUE constraint error)
+        existing = get_reminder_by_id(change_id)
+        if existing:
+            # Treat as update if already exists
+            return update_reminder(change_id, data)
+        else:
+            # True create for new reminder
+            create_reminder(data)
         return True
 
     elif action == "update":
