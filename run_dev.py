@@ -86,11 +86,7 @@ def main():
         # Start backend (FastAPI)
         print_colored("   Starting FastAPI backend on http://localhost:8000", YELLOW)
         backend_process = subprocess.Popen(
-            ["uv", "run", "uvicorn", "server.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1
+            ["uv", "run", "uvicorn", "server.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
         )
         processes.append(backend_process)
 
@@ -100,11 +96,7 @@ def main():
         # Start frontend (simple HTTP server)
         print_colored("   Starting UI server on http://localhost:3077", YELLOW)
         frontend_process = subprocess.Popen(
-            ["python", "serve_ui.py"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1
+            ["python", "serve_ui.py"]
         )
         processes.append(frontend_process)
 
@@ -121,13 +113,8 @@ def main():
         print_colored(f"   ❤️  Health:   http://localhost:8000/api/health", BLUE)
         print_colored("\n⌨️  Press Ctrl+C to stop both servers\n", YELLOW)
 
-        # Keep running and show backend logs
-        while True:
-            line = backend_process.stdout.readline()
-            if line:
-                print(line.strip())
-            if backend_process.poll() is not None:
-                break
+        # Keep running and wait for backend process to end
+        backend_process.wait()
 
     except KeyboardInterrupt:
         print_colored("\n\n🛑 Stopping servers...", YELLOW)
