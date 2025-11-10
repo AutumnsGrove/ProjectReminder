@@ -65,17 +65,65 @@ def transcribe_audio(audio_path: str, timeout: int = 30) -> str:
     if not audio_file.exists():
         raise FileNotFoundError(f"Audio file not found: {audio_path}")
 
-    # TODO: Add ffmpeg conversion for WebM → WAV if Whisper.cpp fails
-    # This would improve compatibility and potentially speed up transcription.
-    # For MVP, we rely on Whisper.cpp's built-in ffmpeg integration.
+    # Convert to WAV for better compatibility with Whisper.cpp
+    # WebM/Opus from browser can sometimes cause issues
+    wav_path = None
+    actual_audio_path = audio_path
 
     try:
+        # Check if FFmpeg is available
+        ffmpeg_check = subprocess.run(
+            ["ffmpeg", "-version"],
+            capture_output=True,
+            check=False
+        )
+
+        if ffmpeg_check.returncode == 0:
+            # FFmpeg available - convert to WAV
+            wav_path = audio_path.replace('.webm', '.wav').replace('.mp4', '.wav')
+
+            print(f"[Whisper] Converting to WAV for better compatibility...")
+            conversion_result = subprocess.run(
+                [
+                    "ffmpeg",
+                    "-i", audio_path,
+                    "-ar", "16000",  # 16kHz sample rate (Whisper's native rate)
+                    "-ac", "1",       # Mono audio
+                    "-c:a", "pcm_s16le",  # PCM 16-bit WAV format
+                    "-y",  # Overwrite output file
+                    wav_path
+                ],
+                capture_output=True,
+                text=True,
+                check=False
+            )
+
+            if conversion_result.returncode == 0:
+                print(f"[Whisper] Conversion successful: {wav_path}")
+                actual_audio_path = wav_path
+            else:
+                print(f"[Whisper] Conversion failed, using original audio: {conversion_result.stderr}")
+        else:
+            print("[Whisper] FFmpeg not available, using original audio format")
+
+    except FileNotFoundError:
+        print("[Whisper] FFmpeg not found, using original audio format")
+    except Exception as e:
+        print(f"[Whisper] Conversion error (using original): {e}")
+
+    try:
+        # Log audio file info for debugging
+        actual_file = Path(actual_audio_path)
+        audio_size_kb = actual_file.stat().st_size / 1024
+        print(f"[Whisper] Transcribing audio file: {actual_audio_path}")
+        print(f"[Whisper] Audio file size: {audio_size_kb:.2f} KB")
+
         # Run Whisper.cpp with optimized flags
         result = subprocess.run(
             [
                 str(WHISPER_BIN),
                 "-m", str(WHISPER_MODEL),
-                "-f", str(audio_path),
+                "-f", str(actual_audio_path),  # Use converted WAV if available
                 "-otxt",  # Plain text output (not SRT/VTT)
                 "--no-timestamps",  # Faster, no word timing needed
                 "-l", "en",  # Force English (base.en model)
@@ -86,6 +134,12 @@ def transcribe_audio(audio_path: str, timeout: int = 30) -> str:
             timeout=timeout,
             check=False  # Don't raise on non-zero exit
         )
+
+        # Log full Whisper output for debugging
+        print(f"[Whisper] Exit code: {result.returncode}")
+        print(f"[Whisper] STDOUT:\n{result.stdout}")
+        if result.stderr:
+            print(f"[Whisper] STDERR:\n{result.stderr}")
 
         # Check for errors
         if result.returncode != 0:
@@ -146,6 +200,14 @@ def transcribe_audio(audio_path: str, timeout: int = 30) -> str:
         if isinstance(e, RuntimeError):
             raise
         raise RuntimeError(f"Transcription failed: {str(e)}")
+    finally:
+        # Clean up temporary WAV file if it was created
+        if wav_path and Path(wav_path).exists():
+            try:
+                Path(wav_path).unlink()
+                print(f"[Whisper] Cleaned up temporary WAV file: {wav_path}")
+            except Exception as e:
+                print(f"[Whisper] Failed to clean up WAV file: {e}")
 
 
 def get_whisper_info() -> dict:
