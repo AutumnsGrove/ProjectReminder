@@ -333,9 +333,24 @@ def update_reminder(reminder_id: str, update_data: Dict[str, Any]) -> bool:
     if not update_data:
         return False
 
-    # Build dynamic UPDATE
-    set_clause = ", ".join([f"{field} = ?" for field in update_data.keys()])
-    values = list(update_data.values())
+    # Define allowed database columns (prevents non-DB fields like 'distance' from being persisted)
+    # This list matches the actual columns in the reminders table schema
+    ALLOWED_FIELDS = {
+        'text', 'due_date', 'due_time', 'time_required',
+        'location_name', 'location_address', 'location_lat', 'location_lng', 'location_radius',
+        'priority', 'category', 'status', 'completed_at', 'snoozed_until',
+        'recurrence_id', 'source', 'created_at', 'updated_at', 'synced_at'
+    }
+
+    # Filter out non-database fields (like computed 'distance' metadata)
+    filtered_data = {k: v for k, v in update_data.items() if k in ALLOWED_FIELDS}
+
+    if not filtered_data:
+        return False
+
+    # Build dynamic UPDATE using filtered data
+    set_clause = ", ".join([f"{field} = ?" for field in filtered_data.keys()])
+    values = list(filtered_data.values())
     values.append(reminder_id)
 
     query = f"UPDATE reminders SET {set_clause} WHERE id = ?"
