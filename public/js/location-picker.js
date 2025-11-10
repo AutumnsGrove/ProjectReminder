@@ -253,7 +253,37 @@ const LocationPicker = (() => {
         zoom: 14
       });
 
-      // Add map click handler
+      // Wait for map style to load before adding layers (prevents "Style is not done loading" error)
+      map.on('load', () => {
+        // Add marker after style loads
+        if (!marker) {
+          marker = MapBoxUtils.addDraggableMarker(map, lat, lng, async (newCoords) => {
+            // Marker was dragged - reverse geocode new position
+            const address = await MapBoxUtils.reverseGeocode(newCoords.lat, newCoords.lng);
+
+            // Update location (without recreating marker)
+            currentLocation.lat = newCoords.lat;
+            currentLocation.lng = newCoords.lng;
+            currentLocation.address = address;
+
+            // Update form fields
+            els.locationAddress.value = address;
+            els.locationLat.value = newCoords.lat;
+            els.locationLng.value = newCoords.lng;
+
+            // Update display
+            els.locationDisplayAddress.textContent = address;
+
+            // Update radius circle
+            updateRadiusCircle(newCoords.lat, newCoords.lng, currentLocation.radius);
+          });
+        }
+
+        // Add radius circle after style loads
+        updateRadiusCircle(lat, lng, currentLocation.radius);
+      });
+
+      // Add map click handler (can be added immediately, doesn't require style)
       map.on('click', async (e) => {
         const clickedLat = e.lngLat.lat;
         const clickedLng = e.lngLat.lng;
@@ -271,41 +301,20 @@ const LocationPicker = (() => {
         });
       });
     } else {
-      // Fly to new location
+      // Map already exists - fly to new location
       map.flyTo({
         center: [lng, lat],
         zoom: 14
       });
+
+      // Update marker (map already loaded, safe to update immediately)
+      if (marker) {
+        marker.setLngLat([lng, lat]);
+      }
+
+      // Update radius circle (map already loaded, safe to update immediately)
+      updateRadiusCircle(lat, lng, currentLocation.radius);
     }
-
-    // Add or update marker
-    if (marker) {
-      marker.setLngLat([lng, lat]);
-    } else {
-      marker = MapBoxUtils.addDraggableMarker(map, lat, lng, async (newCoords) => {
-        // Marker was dragged - reverse geocode new position
-        const address = await MapBoxUtils.reverseGeocode(newCoords.lat, newCoords.lng);
-
-        // Update location (without recreating marker)
-        currentLocation.lat = newCoords.lat;
-        currentLocation.lng = newCoords.lng;
-        currentLocation.address = address;
-
-        // Update form fields
-        els.locationAddress.value = address;
-        els.locationLat.value = newCoords.lat;
-        els.locationLng.value = newCoords.lng;
-
-        // Update display
-        els.locationDisplayAddress.textContent = address;
-
-        // Update radius circle
-        updateRadiusCircle(newCoords.lat, newCoords.lng, currentLocation.radius);
-      });
-    }
-
-    // Add or update radius circle
-    updateRadiusCircle(lat, lng, currentLocation.radius);
   }
 
   /**
