@@ -15,6 +15,15 @@ from pathlib import Path
 # Database configuration
 DB_PATH = Path(__file__).parent.parent / "reminders.db"
 
+# Allowed database columns for reminders table (prevents non-DB fields like 'distance' from being persisted)
+# This whitelist matches the actual columns in the reminders table schema
+ALLOWED_REMINDER_FIELDS = {
+    'id', 'text', 'due_date', 'due_time', 'time_required',
+    'location_name', 'location_address', 'location_lat', 'location_lng', 'location_radius',
+    'priority', 'category', 'status', 'completed_at', 'snoozed_until',
+    'recurrence_id', 'source', 'created_at', 'updated_at', 'synced_at'
+}
+
 
 def _get_default_db_path(override: Optional[str] = None) -> str:
     """
@@ -306,11 +315,14 @@ def create_reminder(reminder_data: Dict[str, Any]) -> str:
     Returns:
         Reminder ID (UUID)
     """
-    # Build dynamic INSERT based on provided fields
-    fields = list(reminder_data.keys())
+    # Filter out non-database fields (like computed 'distance' metadata)
+    filtered_data = {k: v for k, v in reminder_data.items() if k in ALLOWED_REMINDER_FIELDS}
+
+    # Build dynamic INSERT based on allowed fields only
+    fields = list(filtered_data.keys())
     placeholders = ", ".join(["?"] * len(fields))
     field_names = ", ".join(fields)
-    values = tuple(reminder_data[field] for field in fields)
+    values = tuple(filtered_data[field] for field in fields)
 
     query = f"INSERT INTO reminders ({field_names}) VALUES ({placeholders})"
     db_execute(query, values)
@@ -333,17 +345,8 @@ def update_reminder(reminder_id: str, update_data: Dict[str, Any]) -> bool:
     if not update_data:
         return False
 
-    # Define allowed database columns (prevents non-DB fields like 'distance' from being persisted)
-    # This list matches the actual columns in the reminders table schema
-    ALLOWED_FIELDS = {
-        'text', 'due_date', 'due_time', 'time_required',
-        'location_name', 'location_address', 'location_lat', 'location_lng', 'location_radius',
-        'priority', 'category', 'status', 'completed_at', 'snoozed_until',
-        'recurrence_id', 'source', 'created_at', 'updated_at', 'synced_at'
-    }
-
     # Filter out non-database fields (like computed 'distance' metadata)
-    filtered_data = {k: v for k, v in update_data.items() if k in ALLOWED_FIELDS}
+    filtered_data = {k: v for k, v in update_data.items() if k in ALLOWED_REMINDER_FIELDS}
 
     if not filtered_data:
         return False
