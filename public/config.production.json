@@ -1,0 +1,24 @@
+{
+  "api": {
+    "local_endpoint": "http://localhost:8000/api",
+    "cloud_endpoint": "https://reminders.m7jv4v7npb.workers.dev/api",
+    "use_cloud": true,
+    "token": "YOUR_API_TOKEN_HERE"
+  },
+  "sync": {
+    "enabled": true,
+    "interval_minutes": 5
+  },
+  "ui": {
+    "theme": "light",
+    "animations_enabled": true
+  },
+  "location": {
+    "enabled": true,
+    "mapbox_token": "YOUR_MAPBOX_TOKEN_HERE"
+  },
+  "nlp": {
+    "mode": "cloud"
+  },
+  "_comment": "Production configuration for Cloudflare Pages deployment. Replace tokens before deploying. NLP mode set to cloud since local LM Studio won't be available."
+}

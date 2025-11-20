@@ -34,7 +34,11 @@ const app = new Hono<{ Bindings: Bindings }>()
  * Enables credentials for authentication
  */
 app.use('/*', cors({
-  origin: ['http://localhost:3077', 'http://127.0.0.1:3077'],
+  origin: [
+    'http://localhost:3077',
+    'http://127.0.0.1:3077',
+    'https://reminders.autumnsgrove.com'
+  ],
   allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
