@@ -1,7 +1,7 @@
 {
   "api": {
     "local_endpoint": "http://localhost:8000/api",
-    "cloud_endpoint": "https://reminders-api.m7jv4v7npb.workers.dev/api",
+    "cloud_endpoint": "https://reminders.m7jv4v7npb.workers.dev/api",
     "use_cloud": false,
     "token": "e007b2cb0c7506bbd04eb31ed6f0821c8f6780f9e4742172f35add101b21f434"
   },
