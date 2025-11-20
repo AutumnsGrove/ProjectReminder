@@ -37,32 +37,32 @@ if [ -n "$python_files" ]; then
     echo "Files: $(echo $python_files | tr '\n' ' ')"
     echo ""
 
-    # Black formatter check
-    if command -v black &> /dev/null; then
+    # Black formatter check (using UV)
+    if uv run black --version &> /dev/null; then
         echo "  Running Black formatter..."
-        if black --check --quiet $python_files 2>&1; then
+        if uv run black --check --quiet $python_files 2>&1; then
             echo -e "  ${GREEN}✓ Black formatting passed${NC}"
         else
             echo -e "  ${RED}✗ Black formatting failed${NC}"
-            echo -e "  ${YELLOW}Fix with: black ${python_files}${NC}"
+            echo -e "  ${YELLOW}Fix with: uv run black ${python_files}${NC}"
             checks_failed=1
         fi
     else
-        echo -e "  ${YELLOW}⚠ Black not installed (pip install black)${NC}"
+        echo -e "  ${YELLOW}⚠ Black not installed (uv pip install black)${NC}"
     fi
 
-    # Ruff linter check
-    if command -v ruff &> /dev/null; then
+    # Ruff linter check (using UV)
+    if uv run ruff --version &> /dev/null; then
         echo "  Running Ruff linter..."
-        if ruff check $python_files --quiet 2>&1; then
+        if uv run ruff check $python_files --quiet 2>&1; then
             echo -e "  ${GREEN}✓ Ruff linting passed${NC}"
         else
             echo -e "  ${RED}✗ Ruff linting failed${NC}"
-            echo -e "  ${YELLOW}Fix with: ruff check --fix ${python_files}${NC}"
+            echo -e "  ${YELLOW}Fix with: uv run ruff check --fix ${python_files}${NC}"
             checks_failed=1
         fi
     else
-        echo -e "  ${YELLOW}⚠ Ruff not installed (pip install ruff)${NC}"
+        echo -e "  ${YELLOW}⚠ Ruff not installed (uv pip install ruff)${NC}"
     fi
 
     echo ""

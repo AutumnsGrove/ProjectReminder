@@ -1,6 +1,6 @@
-# Claude Usage Guide Index
+# Agent Usage Guide Index
 
-This directory contains comprehensive guides for working with Claude on development projects. Each guide is self-contained and focused on specific workflows or technologies.
+This directory contains comprehensive guides for working with AI agents on development projects. Each guide is self-contained and focused on specific workflows or technologies.
 
 ## Quick Reference
 
@@ -26,6 +26,7 @@ This directory contains comprehensive guides for working with Claude on developm
 | [code_style_guide.md](code_style_guide.md) | General code style principles | Writing clean, maintainable code |
 | [project_structure.md](project_structure.md) | Directory layouts, file organization | Starting new projects |
 | [project_setup.md](project_setup.md) | Project initialization patterns | Setting up new projects from template |
+| [rich_formatting.md](rich_formatting.md) | Terminal output with Rich library | Building CLI tools, enhancing print output |
 
 ### Documentation
 
@@ -59,7 +60,7 @@ This directory contains comprehensive guides for working with Claude on developm
 1. **On-Demand Reference**: Read guides when you need specific knowledge
 2. **Self-Contained**: Each guide stands alone with complete information
 3. **Cross-Referenced**: Related topics link to each other
-4. **Start with TEMPLATE_CLAUDE.md**: Check parent directory for trigger patterns
+4. **Start with AGENT.md**: Check parent directory for trigger patterns
 
 ## Guide Structure
 
@@ -97,4 +98,4 @@ For new projects, reference these guides in order:
 ---
 
 *Last updated: 2025-10-19*
-*Total guides: 18*
+*Total guides: 19*

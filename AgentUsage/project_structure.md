@@ -459,3 +459,4 @@ data/backup-*/
 - [UV Usage Guide](uv_usage.md) - Package management and virtual environments
 - [Documentation Standards](documentation_standards.md) - How to document your code
 - [Testing Strategies](testing_strategies.md) - Testing best practices
+- [Rich Formatting](rich_formatting.md) - Terminal output for CLI applications

@@ -31,7 +31,7 @@ bash setup_new_project.sh
 
 **The script handles:**
 - Removes old git history
-- Renames TEMPLATE_CLAUDE.md → CLAUDE.md
+- Updates AGENT.md with project details
 - Creates fresh TODOS.md
 - Initializes new git repository
 - Prompts for project details
@@ -54,14 +54,12 @@ cd ~/Projects/YourProjectName/
 rm -rf .git
 ```
 
-### Step 3: Customize CLAUDE.md
+### Step 3: Customize AGENT.md
 
 ```bash
-# Rename template to active file
-mv TEMPLATE_CLAUDE.md CLAUDE.md
-
 # Edit with your project details
 # Fill in: Project Purpose, Tech Stack, Architecture Notes
+nano AGENT.md
 ```
 
 **Example customization:**
@@ -97,14 +95,14 @@ cat .gitignore
 git add .
 git commit -m "Initial commit: Setup YourProjectName from BaseProject
 
-- Copied BaseProject structure with ClaudeUsage guides
-- Configured CLAUDE.md for this specific project
+- Copied BaseProject structure with AgentUsage guides
+- Configured AGENT.md for this specific project
 - Initialized git repository
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 via [Happy](https://happy.engineering)
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: [Model Name] <agent@localhost>
 Co-Authored-By: Happy <yesreply@happy.engineering>"
 ```
 
@@ -146,7 +144,7 @@ EOF
 uv init
 
 # 2. Create pyproject.toml (use template as base)
-cp ClaudeUsage/templates/pyproject.toml.example pyproject.toml
+cp AgentUsage/templates/pyproject.toml.example pyproject.toml
 
 # Edit pyproject.toml with your project details
 nano pyproject.toml
@@ -238,7 +236,7 @@ cargo build
 
 ```bash
 # Use provided template or create custom
-cp ClaudeUsage/templates/secrets_template.json secrets_template.json
+cp AgentUsage/templates/secrets_template.json secrets_template.json
 
 # Edit with your required keys
 nano secrets_template.json
@@ -307,7 +305,7 @@ API_KEY = SECRETS.get("api_key", os.getenv("API_KEY", ""))
 
 ```bash
 # 1. Navigate to hooks directory
-cd ClaudeUsage/pre_commit_hooks/
+cd AgentUsage/pre_commit_hooks/
 
 # 2. Make hooks executable
 chmod +x pre-commit commit-msg
@@ -392,7 +390,7 @@ mkdir -p .github/workflows
 touch .github/workflows/ci.yml
 
 # 3. Configure based on your stack
-# See ClaudeUsage/ci_cd_patterns.md for examples
+# See AgentUsage/ci_cd_patterns.md for examples
 ```
 
 **See:** [ci_cd_patterns.md](ci_cd_patterns.md) for detailed workflows
@@ -405,8 +403,8 @@ After setup, verify these items:
 # ✅ Git initialized and clean
 git status
 
-# ✅ CLAUDE.md customized (no [Fill in:] markers)
-grep "\[Fill in:" CLAUDE.md
+# ✅ AGENT.md customized (no [Fill in:] markers)
+grep "\[Fill in:" AGENT.md
 
 # ✅ TODOS.md exists with project tasks
 cat TODOS.md
@@ -473,7 +471,7 @@ Based on your tech stack, review:
 
 ```bash
 chmod +x setup_new_project.sh
-chmod +x ClaudeUsage/pre_commit_hooks/*
+chmod +x AgentUsage/pre_commit_hooks/*
 ```
 
 ### Git commit fails
@@ -524,7 +522,7 @@ cargo clean
 
 **Key Takeaways:**
 - Use automated setup script for standard projects
-- Customize CLAUDE.md with project-specific details
+- Customize AGENT.md with project-specific details
 - Set up secrets management before writing code
 - Initialize git early and commit often
 - Choose setup method based on project complexity

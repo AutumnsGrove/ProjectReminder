@@ -54,7 +54,7 @@ git reset HEAD~1                # Undo last commit (keep changes)
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: [Model Name] <agent@localhost>
 ```
 
 ### Common Commit Types
@@ -158,7 +158,7 @@ git commit -m "chore: initialize repository
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
-Co-Authored-By: Claude <noreply@anthropic.com>"
+Co-Authored-By: [Model Name] <agent@localhost>"
 ```
 
 #### Step 3: Clean Up Backup
@@ -194,7 +194,7 @@ git commit -m "feat: add new feature
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
-Co-Authored-By: Claude <noreply@anthropic.com>"
+Co-Authored-By: [Model Name] <agent@localhost>"
 
 # Verify
 git status
@@ -222,7 +222,7 @@ documentation projects.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: [Model Name] <agent@localhost>
 ```
 
 **Triggers**: Minor version bump (1.0.0 → 1.1.0)
@@ -245,7 +245,7 @@ Closes #123
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: [Model Name] <agent@localhost>
 ```
 
 **Triggers**: Patch version bump (1.0.0 → 1.0.1)
@@ -263,7 +263,7 @@ docs: Add API documentation for file_handler module
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: [Model Name] <agent@localhost>
 ```
 
 **No version bump**
@@ -284,7 +284,7 @@ makes the validator reusable across modules.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: [Model Name] <agent@localhost>
 ```
 
 **No version bump**
@@ -305,7 +305,7 @@ Benchmarks:
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: [Model Name] <agent@localhost>
 ```
 
 **Triggers**: Patch version bump (1.0.0 → 1.0.1)
@@ -327,7 +327,7 @@ Test coverage increased from 67% to 94%
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: [Model Name] <agent@localhost>
 ```
 
 **No version bump**
@@ -345,7 +345,7 @@ chore: Update Python dependencies
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: [Model Name] <agent@localhost>
 ```
 
 **No version bump**
@@ -370,7 +370,7 @@ Migration:
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: [Model Name] <agent@localhost>
 ```
 
 ### Method 2: Exclamation Mark
@@ -385,7 +385,7 @@ See migration guide in docs/migration/xml-to-yaml.md
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: [Model Name] <agent@localhost>
 ```
 
 **Triggers**: Major version bump (1.0.0 → 2.0.0)
@@ -592,7 +592,7 @@ git log --graph --oneline --all
 git log --grep="authentication"
 
 # By author
-git log --author="Claude"
+git log --author="[Model Name]"
 
 # Date range
 git log --since="2025-01-01"
@@ -752,7 +752,7 @@ Resolves #456
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: [Model Name] <agent@localhost>
 ```
 
 ### Footer (Optional)
@@ -843,7 +843,7 @@ refactor(db): Update connection pooling configuration
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: [Model Name] <agent@localhost>
 ```
 
 ---

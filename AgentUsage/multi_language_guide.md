@@ -418,7 +418,7 @@ console.log(output);
 
 - [UV Usage Guide](uv_usage.md) - Complete Python package management reference
 - [Project Structure Guide](project_structure.md) - Standard project layouts
-- [Git Workflow](../CLAUDE.md#git-workflow-and-version-control-guidelines) - Version control practices
+- [Git Workflow](git_guide.md) - Version control practices
 
 ## Quick Start Cheatsheet
 

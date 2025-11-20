@@ -361,6 +361,7 @@ For automated testing in CI/CD pipelines, see [ci_cd_patterns.md](ci_cd_patterns
 - **[uv_usage.md](uv_usage.md)** - Dependency management
 - **[code_quality.md](code_quality.md)** - Linting and formatting
 - **[ci_cd_patterns.md](ci_cd_patterns.md)** - CI/CD pipelines
+- **[rich_formatting.md](rich_formatting.md)** - Enhanced test output with Rich
 
 ---
 

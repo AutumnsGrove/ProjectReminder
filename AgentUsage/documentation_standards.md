@@ -411,7 +411,7 @@ def filter_records_by_value(
 
 - **project_structure.md**: Organizing code and directories
 - **code_quality.md**: Writing clean, maintainable code
-- **CLAUDE.md**: Full project guidelines including git workflow
+- **../AGENT.md**: Full project guidelines including git workflow
 
 ---
 

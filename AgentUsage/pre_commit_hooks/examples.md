@@ -39,7 +39,7 @@ Recommended actions:
   1. Remove the secret from your code
   2. Store in secrets.json (which is gitignored)
   3. Use environment variables for sensitive data
-  4. Check ClaudeUsage/secrets_management.md for guidance
+  4. Check AgentUsage/secrets_management.md for guidance
 ```
 
 ---
@@ -184,7 +184,7 @@ Automatically updates dependencies when switching branches.
 ```
 
 #### prepare-commit-msg
-Adds branch context and Claude attribution to commits automatically.
+Adds branch context and AI agent attribution to commits automatically.
 
 **Example workflow:**
 ```bash
@@ -197,7 +197,7 @@ git commit -m "add JWT authentication"
 # 🤖 Generated with Claude Code
 # via Happy
 #
-# Co-Authored-By: Claude <noreply@anthropic.com>
+# Co-Authored-By: [Model Name] <agent@localhost>
 # Co-Authored-By: Happy <yesreply@happy.engineering>
 ```
 

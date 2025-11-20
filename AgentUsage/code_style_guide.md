@@ -493,3 +493,4 @@ For detailed patterns in specific languages:
 - [testing_strategies.md](testing_strategies.md) - Testing best practices
 - [multi_language_guide.md](multi_language_guide.md) - Language-specific patterns
 - [project_structure.md](project_structure.md) - File organization
+- [rich_formatting.md](rich_formatting.md) - Enhanced terminal output for CLI tools

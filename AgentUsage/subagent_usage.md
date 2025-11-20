@@ -1,4 +1,4 @@
-# Subagent Usage Guide for Claude Code
+# Subagent Usage Guide
 
 ## Core Principle: Subagent-First Development
 

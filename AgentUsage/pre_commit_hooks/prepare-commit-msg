@@ -1,7 +1,7 @@
 #!/bin/bash
 # Prepare-commit-msg hook - Branch context injector
 # Automatically adds branch name/ticket context to commit messages
-# Adds Claude co-authorship attribution
+# Adds AI agent co-authorship attribution
 
 COMMIT_MSG_FILE=$1
 COMMIT_SOURCE=$2
@@ -81,11 +81,11 @@ fi
 # ============================================================================
 # ADD CLAUDE CO-AUTHORSHIP (if not already present)
 # ============================================================================
-# Only add if this looks like a Claude-assisted commit
-# (Skip for manual commits that don't mention Claude)
+# Only add if this looks like an AI-assisted commit
+# (Skip for manual commits)
 
-# Check if Claude attribution already exists
-if ! grep -q "Co-Authored-By: Claude" "$COMMIT_MSG_FILE"; then
+# Check if agent attribution already exists
+if ! grep -q "Co-Authored-By: \[Model Name\]" "$COMMIT_MSG_FILE"; then
     # Check if message is substantive (not just a default message)
     if [ -s "$COMMIT_MSG_FILE" ] && ! grep -q "^#" "$COMMIT_MSG_FILE"; then
         # Add co-authorship footer
@@ -93,10 +93,10 @@ if ! grep -q "Co-Authored-By: Claude" "$COMMIT_MSG_FILE"; then
         echo "🤖 Generated with [Claude Code](https://claude.ai/code)" >> "$COMMIT_MSG_FILE"
         echo "via [Happy](https://happy.engineering)" >> "$COMMIT_MSG_FILE"
         echo "" >> "$COMMIT_MSG_FILE"
-        echo "Co-Authored-By: Claude <noreply@anthropic.com>" >> "$COMMIT_MSG_FILE"
+        echo "Co-Authored-By: [Model Name] <agent@localhost>" >> "$COMMIT_MSG_FILE"
         echo "Co-Authored-By: Happy <yesreply@happy.engineering>" >> "$COMMIT_MSG_FILE"
 
-        echo -e "${GREEN}✓ Added Claude co-authorship${NC}" >&2
+        echo -e "${GREEN}✓ Added AI agent co-authorship${NC}" >&2
     fi
 fi
 

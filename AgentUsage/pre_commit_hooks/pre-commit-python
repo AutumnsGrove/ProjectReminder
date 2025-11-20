@@ -26,28 +26,28 @@ echo ""
 # Track if any checks fail
 checks_failed=0
 
-# Check if Black is installed
-if ! command -v black &> /dev/null; then
-    echo -e "${RED}✗ Black is not installed. Install with: pip install black${NC}"
+# Check if Black is installed (using UV)
+if ! uv run black --version &> /dev/null; then
+    echo -e "${RED}✗ Black is not installed. Install with: uv pip install black${NC}"
     exit 1
 fi
 
-# Check if Ruff is installed
-if ! command -v ruff &> /dev/null; then
-    echo -e "${RED}✗ Ruff is not installed. Install with: pip install ruff${NC}"
+# Check if Ruff is installed (using UV)
+if ! uv run ruff --version &> /dev/null; then
+    echo -e "${RED}✗ Ruff is not installed. Install with: uv pip install ruff${NC}"
     exit 1
 fi
 
 # Run Black check
 echo -e "${YELLOW}Running Black formatter check...${NC}"
-if black --check --quiet $python_files 2>&1; then
+if uv run black --check --quiet $python_files 2>&1; then
     echo -e "${GREEN}✓ Black formatting passed${NC}"
 else
     echo -e "${RED}✗ Black formatting failed${NC}"
     echo -e "${YELLOW}Files need formatting:${NC}"
-    black --check $python_files 2>&1 | grep "would reformat" || true
+    uv run black --check $python_files 2>&1 | grep "would reformat" || true
     echo ""
-    echo -e "${YELLOW}To fix: run 'black .' or 'black <filename>'${NC}"
+    echo -e "${YELLOW}To fix: run 'uv run black .' or 'uv run black <filename>'${NC}"
     checks_failed=1
 fi
 
@@ -55,14 +55,14 @@ echo ""
 
 # Run Ruff linting
 echo -e "${YELLOW}Running Ruff linter check...${NC}"
-if ruff check $python_files --quiet; then
+if uv run ruff check $python_files --quiet; then
     echo -e "${GREEN}✓ Ruff linting passed${NC}"
 else
     echo -e "${RED}✗ Ruff linting failed${NC}"
     echo -e "${YELLOW}Linting violations found:${NC}"
-    ruff check $python_files
+    uv run ruff check $python_files
     echo ""
-    echo -e "${YELLOW}To fix: run 'ruff check --fix .' or fix violations manually${NC}"
+    echo -e "${YELLOW}To fix: run 'uv run ruff check --fix .' or fix violations manually${NC}"
     checks_failed=1
 fi
 

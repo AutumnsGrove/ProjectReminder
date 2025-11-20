@@ -1,6 +1,6 @@
 #!/bin/bash
 # Commit message validation hook
-# Validates against conventional commits format from ClaudeUsage/git_guide.md
+# Validates against conventional commits format from AgentUsage/git_guide.md
 
 # Read commit message from file
 commit_msg_file="$1"
@@ -24,8 +24,8 @@ if echo "$first_line" | grep -qE "^($valid_actions) "; then
     is_valid=true
 
     # Optional: Check for Co-Authored-By line (recommended but not required)
-    if ! echo "$commit_msg" | grep -q "Co-Authored-By: Claude"; then
-        echo "Note: Consider adding 'Co-Authored-By: Claude <noreply@anthropic.com>' to your commit message"
+    if ! echo "$commit_msg" | grep -q "Co-Authored-By: [Model Name]"; then
+        echo "Note: Consider adding 'Co-Authored-By: [Model Name] <agent@localhost>' to your commit message"
     fi
 fi
 
@@ -52,7 +52,7 @@ if [ "$is_valid" = false ]; then
     echo "   Valid types: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert"
     echo "   Example: feat: add user authentication"
     echo ""
-    echo "See ClaudeUsage/git_guide.md for detailed guidelines"
+    echo "See AgentUsage/git_guide.md for detailed guidelines"
     echo ""
     echo "To bypass this check, use: git commit --no-verify"
     exit 1

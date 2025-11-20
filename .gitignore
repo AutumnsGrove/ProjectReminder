@@ -66,3 +66,6 @@ whisper.cpp/
 
 # Build outputs
 workers/dist/
+
+# Temporary research files (delete after use)
+AI_TOOLS_RESEARCH.md

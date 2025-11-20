@@ -87,7 +87,7 @@
 - **house-coder**: 0-250 lines changed
 - **house-planner**: 3+ files or complex/ambiguous
 
-### Use Main Claude If:
+### Use Main Agent If:
 - Single file, known location
 - Quick command (<10 lines output)
 - Small diff (<50 lines, single file)
@@ -103,11 +103,11 @@
 User: "Fix the authentication timeout bug"
 ↓
 house-research → finds auth code
-Main Claude → analyzes and plans fix
+Main Agent → analyzes and plans fix
 house-coder → implements fix (<250 lines)
 house-bash → runs auth tests
 house-git → reviews changes
-Main Claude → commits
+Main Agent → commits
 ```
 
 ### Feature Development Flow
@@ -121,7 +121,7 @@ house-coder → updates login endpoint (60 lines)
 house-coder → adds tests (100 lines)
 house-bash → runs test suite
 house-git → reviews all changes
-Main Claude → commits
+Main Agent → commits
 ```
 
 ### Simple Task Flow
@@ -131,7 +131,7 @@ User: "Fix import error in utils.py"
 house-coder → instantly invoked (auto)
            → fixes import
            → returns summary
-Main Claude → done!
+Main Agent → done!
 ```
 
 ---
@@ -139,7 +139,7 @@ Main Claude → done!
 ## Don't Use Agents For
 
 - Single file reads (use Read tool)
-- Simple one-line changes (main Claude faster)
+- Simple one-line changes (main agent faster)
 - Interactive debugging (need tight feedback)
 - When user wants to see full output
 - Learning/exploration tasks
@@ -160,7 +160,7 @@ Main Claude → done!
 
 - **subagent_usage.md** - Different use cases and patterns
 - **git_guide.md** - Git commit standards and workflows
-- **CLAUDE.md** - Project coding standards
+- **../AGENT.md** - Project coding standards
 
 ---
 
