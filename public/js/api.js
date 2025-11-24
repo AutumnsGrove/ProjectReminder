@@ -35,14 +35,23 @@ const API = (function() {
 
     /**
      * Get authorization headers
+     * Uses session token from Auth module when available (cloud API),
+     * falls back to static token from config (local dev)
      */
     function getHeaders() {
         const headers = {
             'Content-Type': 'application/json'
         };
-        if (config && config.api.token) {
+
+        // First, try session token from Auth module (for cloud API)
+        if (window.Auth && window.Auth.getSessionToken()) {
+            headers['Authorization'] = `Bearer ${window.Auth.getSessionToken()}`;
+        }
+        // Fallback to static token from config (for local dev)
+        else if (config && config.api.token) {
             headers['Authorization'] = `Bearer ${config.api.token}`;
         }
+
         return headers;
     }
 
@@ -434,11 +443,15 @@ const API = (function() {
         formData.append('audio', audioBlob, 'recording.webm');
 
         try {
+            const token = getAuthToken();
+            const headers = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await fetch(`${getEndpoint()}/voice/transcribe`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${config.api.token}`
-                },
+                headers: headers,
                 body: formData
             });
 
@@ -462,12 +475,17 @@ const API = (function() {
      */
     async function parseReminderText(text, mode = 'auto') {
         try {
+            const token = getAuthToken();
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await fetch(`${getEndpoint()}/voice/parse`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${config.api.token}`,
-                    'Content-Type': 'application/json'
-                },
+                headers: headers,
                 body: JSON.stringify({ text, mode })
             });
 
@@ -484,10 +502,16 @@ const API = (function() {
     }
 
     /**
-     * Get authentication token from config
+     * Get authentication token
+     * Returns session token if available, otherwise config token
      * @returns {string|null} API token
      */
     function getAuthToken() {
+        // Prefer session token from Auth module
+        if (window.Auth && window.Auth.getSessionToken()) {
+            return window.Auth.getSessionToken();
+        }
+        // Fallback to static config token
         return config?.api?.token || null;
     }
 

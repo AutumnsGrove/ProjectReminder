@@ -18,8 +18,23 @@ import { cors } from 'hono/cors'
  */
 type Bindings = {
   DB: D1Database           // D1 database binding
-  API_TOKEN: string        // Bearer token for authentication
+  API_TOKEN: string        // Bearer token for authentication (legacy, will be removed)
+  RESEND_API_KEY: string   // Resend API key for sending magic codes
+  ALLOWED_EMAIL: string    // Single allowed email address
+  RESEND_FROM_EMAIL: string // From email for Resend
   ENVIRONMENT?: string     // Optional environment indicator
+}
+
+/**
+ * Session data stored in context
+ */
+type SessionData = {
+  id: string
+  email: string
+  created_at: string
+  expires_at: string
+  last_used_at: string | null
+  user_agent: string | null
 }
 
 /**
@@ -73,6 +88,256 @@ const authMiddleware = async (c: any, next: any) => {
 
   // Token is valid, continue to route handler
   await next()
+}
+
+/**
+ * =============================================================================
+ * Authentication Helper Functions (Magic Code Auth)
+ * =============================================================================
+ */
+
+/**
+ * Generate a 6-digit numeric code
+ */
+function generateMagicCode(): string {
+  const array = new Uint32Array(1)
+  crypto.getRandomValues(array)
+  return String(array[0] % 1000000).padStart(6, '0')
+}
+
+/**
+ * Generate a secure session token (64 hex characters = 256 bits)
+ */
+function generateSessionToken(): string {
+  const array = new Uint8Array(32)
+  crypto.getRandomValues(array)
+  return Array.from(array).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+/**
+ * Check if email is the allowed email (case-insensitive)
+ */
+function isAllowedEmail(email: string, allowedEmail: string): boolean {
+  return email.toLowerCase().trim() === allowedEmail.toLowerCase().trim()
+}
+
+/**
+ * Send magic code via Resend
+ */
+async function sendMagicCodeEmail(
+  resendApiKey: string,
+  fromEmail: string,
+  toEmail: string,
+  code: string
+): Promise<boolean> {
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: [toEmail],
+        subject: 'Your login code for Reminders',
+        html: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 400px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #1f2937; margin-bottom: 16px;">Your login code</h2>
+            <p style="color: #6b7280; margin-bottom: 24px;">Enter this code to sign in to Reminders:</p>
+            <div style="background: #f3f4f6; border-radius: 8px; padding: 24px; text-align: center; margin-bottom: 24px;">
+              <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #1f2937;">${code}</span>
+            </div>
+            <p style="color: #9ca3af; font-size: 14px;">This code expires in 10 minutes.</p>
+            <p style="color: #9ca3af; font-size: 14px;">If you didn't request this code, you can safely ignore this email.</p>
+          </div>
+        `
+      })
+    })
+
+    if (!response.ok) {
+      const error = await response.text()
+      console.error('Resend API error:', error)
+      return false
+    }
+
+    return true
+  } catch (error) {
+    console.error('Failed to send magic code email:', error)
+    return false
+  }
+}
+
+/**
+ * Check and update rate limit
+ * Returns: { allowed: boolean, retryAfter?: number }
+ */
+async function checkRateLimit(
+  db: D1Database,
+  identifier: string,
+  type: 'email' | 'ip',
+  maxRequests: number = 5,
+  windowMinutes: number = 15
+): Promise<{ allowed: boolean; retryAfter?: number }> {
+  const now = new Date()
+  const windowStart = new Date(now.getTime() - windowMinutes * 60 * 1000).toISOString()
+
+  // Check existing rate limit record
+  const existing = await db.prepare(
+    'SELECT * FROM rate_limits WHERE id = ? AND type = ?'
+  ).bind(identifier, type).first()
+
+  if (existing) {
+    // Check if blocked
+    if (existing.blocked_until && (existing.blocked_until as string) > now.toISOString()) {
+      const retryAfter = Math.ceil(
+        (new Date(existing.blocked_until as string).getTime() - now.getTime()) / 1000
+      )
+      return { allowed: false, retryAfter }
+    }
+
+    // Check if within current window
+    if ((existing.window_start as string) > windowStart) {
+      const requests = (existing.requests as number) + 1
+
+      if (requests > maxRequests) {
+        // Block for 15 minutes
+        const blockedUntil = new Date(now.getTime() + 15 * 60 * 1000).toISOString()
+        await db.prepare(
+          'UPDATE rate_limits SET requests = ?, blocked_until = ? WHERE id = ? AND type = ?'
+        ).bind(requests, blockedUntil, identifier, type).run()
+        return { allowed: false, retryAfter: 15 * 60 }
+      }
+
+      // Update request count
+      await db.prepare(
+        'UPDATE rate_limits SET requests = ? WHERE id = ? AND type = ?'
+      ).bind(requests, identifier, type).run()
+      return { allowed: true }
+    }
+  }
+
+  // New window or expired - reset/insert
+  await db.prepare(`
+    INSERT INTO rate_limits (id, type, requests, window_start, blocked_until)
+    VALUES (?, ?, 1, ?, NULL)
+    ON CONFLICT(id) DO UPDATE SET requests = 1, window_start = excluded.window_start, blocked_until = NULL
+  `).bind(identifier, type, now.toISOString()).run()
+
+  return { allowed: true }
+}
+
+/**
+ * Clean up expired magic codes and sessions
+ */
+async function cleanupExpiredRecords(db: D1Database): Promise<void> {
+  const now = new Date().toISOString()
+
+  try {
+    // Delete expired magic codes
+    await db.prepare('DELETE FROM magic_codes WHERE expires_at < ?').bind(now).run()
+
+    // Delete expired sessions
+    await db.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(now).run()
+
+    // Clean up old rate limit windows (older than 1 hour)
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+    await db.prepare('DELETE FROM rate_limits WHERE window_start < ? AND blocked_until IS NULL').bind(oneHourAgo).run()
+  } catch (error) {
+    console.error('Cleanup error:', error)
+  }
+}
+
+/**
+ * Session-based Authentication Middleware
+ * Validates session token from Authorization header
+ */
+const sessionAuthMiddleware = async (c: any, next: any) => {
+  // Try Authorization header first
+  let sessionToken: string | null = null
+  const authHeader = c.req.header('Authorization')
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    sessionToken = authHeader.substring(7)
+  }
+
+  if (!sessionToken) {
+    return c.json({
+      error: 'Unauthorized',
+      message: 'No session token provided',
+      code: 'NO_SESSION'
+    }, 401)
+  }
+
+  // Validate session
+  const now = new Date().toISOString()
+  const session = await c.env.DB.prepare(`
+    SELECT * FROM sessions WHERE id = ? AND expires_at > ?
+  `).bind(sessionToken, now).first()
+
+  if (!session) {
+    return c.json({
+      error: 'Unauthorized',
+      message: 'Invalid or expired session',
+      code: 'INVALID_SESSION'
+    }, 401)
+  }
+
+  // Update last_used_at
+  await c.env.DB.prepare(
+    'UPDATE sessions SET last_used_at = ? WHERE id = ?'
+  ).bind(now, sessionToken).run()
+
+  // Store session info in context for route handlers
+  c.set('session', session as SessionData)
+
+  await next()
+}
+
+/**
+ * Combined Auth Middleware (supports both legacy token and session)
+ * This allows gradual migration from static tokens to sessions
+ */
+const combinedAuthMiddleware = async (c: any, next: any) => {
+  const authHeader = c.req.header('Authorization')
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({
+      error: 'Unauthorized',
+      message: 'Missing or invalid Authorization header'
+    }, 401)
+  }
+
+  const token = authHeader.substring(7)
+
+  // First, try legacy API token (for backward compatibility)
+  if (c.env.API_TOKEN && token === c.env.API_TOKEN) {
+    await next()
+    return
+  }
+
+  // Then, try session token
+  const now = new Date().toISOString()
+  const session = await c.env.DB.prepare(`
+    SELECT * FROM sessions WHERE id = ? AND expires_at > ?
+  `).bind(token, now).first()
+
+  if (session) {
+    // Update last_used_at
+    await c.env.DB.prepare(
+      'UPDATE sessions SET last_used_at = ? WHERE id = ?'
+    ).bind(now, token).run()
+
+    c.set('session', session as SessionData)
+    await next()
+    return
+  }
+
+  // Neither worked
+  return c.json({
+    error: 'Unauthorized',
+    message: 'Invalid token or session'
+  }, 401)
 }
 
 /**
@@ -305,6 +570,12 @@ app.get('/', async (c) => {
     description: 'ADHD-Friendly Voice Reminders System - Cloudflare Workers API',
     endpoints: {
       health: '/api/health',
+      auth: {
+        requestCode: 'POST /api/auth/request-code (send magic code)',
+        verifyCode: 'POST /api/auth/verify-code (verify and create session)',
+        session: 'GET /api/auth/session (check current session)',
+        logout: 'POST /api/auth/logout (invalidate session)'
+      },
       listReminders: 'GET /api/reminders (with filtering and pagination)',
       getReminder: 'GET /api/reminders/:id',
       createReminder: 'POST /api/reminders',
@@ -330,6 +601,243 @@ app.get('/api/test-auth', authMiddleware, async (c) => {
 })
 
 /**
+ * =============================================================================
+ * Authentication Endpoints (Magic Code Flow)
+ * =============================================================================
+ */
+
+/**
+ * POST /api/auth/request-code
+ * Request a magic code to be sent to email
+ * NO authentication required
+ */
+app.post('/api/auth/request-code', async (c) => {
+  try {
+    const body = await c.req.json()
+    const email = body.email?.trim().toLowerCase()
+
+    // Validate email format
+    if (!email || !email.includes('@')) {
+      return c.json({
+        error: 'Validation error',
+        message: 'Valid email address required'
+      }, 400)
+    }
+
+    // Check if email is allowed (but don't reveal this to prevent enumeration)
+    const isAllowed = isAllowedEmail(email, c.env.ALLOWED_EMAIL)
+
+    // Rate limit check (apply regardless of email validity)
+    const rateLimit = await checkRateLimit(c.env.DB, email, 'email', 5, 15)
+    if (!rateLimit.allowed) {
+      return c.json({
+        error: 'Too many requests',
+        message: 'Please wait before requesting another code',
+        retryAfter: rateLimit.retryAfter
+      }, 429)
+    }
+
+    // Only proceed if email is allowed
+    if (isAllowed) {
+      // Generate code
+      const code = generateMagicCode()
+      const now = new Date()
+      const expiresAt = new Date(now.getTime() + 10 * 60 * 1000) // 10 minutes
+
+      // Invalidate any existing codes for this email
+      await c.env.DB.prepare(
+        'UPDATE magic_codes SET used = 1 WHERE email = ? AND used = 0'
+      ).bind(email).run()
+
+      // Store new code
+      await c.env.DB.prepare(`
+        INSERT INTO magic_codes (id, email, code, created_at, expires_at, attempts, used)
+        VALUES (?, ?, ?, ?, ?, 0, 0)
+      `).bind(
+        crypto.randomUUID(),
+        email,
+        code,
+        now.toISOString(),
+        expiresAt.toISOString()
+      ).run()
+
+      // Send email
+      const sent = await sendMagicCodeEmail(
+        c.env.RESEND_API_KEY,
+        c.env.RESEND_FROM_EMAIL,
+        email,
+        code
+      )
+
+      if (!sent) {
+        console.error('Failed to send magic code email to:', email)
+        // Still return success to prevent enumeration
+      }
+    }
+
+    // Always return success (prevents email enumeration)
+    return c.json({
+      success: true,
+      message: 'If this email is registered, a code has been sent'
+    })
+
+  } catch (error) {
+    console.error('Request code error:', error)
+    return c.json({
+      error: 'Internal Server Error',
+      message: 'Failed to process request'
+    }, 500)
+  }
+})
+
+/**
+ * POST /api/auth/verify-code
+ * Verify magic code and create session
+ * NO authentication required
+ */
+app.post('/api/auth/verify-code', async (c) => {
+  try {
+    const body = await c.req.json()
+    const email = body.email?.trim().toLowerCase()
+    const code = body.code?.trim()
+
+    // Validate inputs
+    if (!email || !code) {
+      return c.json({
+        error: 'Validation error',
+        message: 'Email and code are required'
+      }, 400)
+    }
+
+    // Validate code format (6 digits)
+    if (!/^\d{6}$/.test(code)) {
+      return c.json({
+        error: 'Validation error',
+        message: 'Invalid code format'
+      }, 400)
+    }
+
+    const now = new Date().toISOString()
+
+    // Find valid magic code
+    const magicCode = await c.env.DB.prepare(`
+      SELECT * FROM magic_codes
+      WHERE email = ? AND used = 0 AND expires_at > ?
+      ORDER BY created_at DESC LIMIT 1
+    `).bind(email, now).first()
+
+    if (!magicCode) {
+      return c.json({
+        error: 'Invalid code',
+        message: 'Code expired or not found. Please request a new code.'
+      }, 400)
+    }
+
+    // Check attempts (brute force protection)
+    if ((magicCode.attempts as number) >= 5) {
+      // Mark code as used to prevent further attempts
+      await c.env.DB.prepare(
+        'UPDATE magic_codes SET used = 1 WHERE id = ?'
+      ).bind(magicCode.id).run()
+
+      return c.json({
+        error: 'Too many attempts',
+        message: 'Too many failed attempts. Please request a new code.'
+      }, 400)
+    }
+
+    // Verify code
+    if (magicCode.code !== code) {
+      // Increment attempts
+      await c.env.DB.prepare(
+        'UPDATE magic_codes SET attempts = attempts + 1 WHERE id = ?'
+      ).bind(magicCode.id).run()
+
+      const remainingAttempts = 5 - (magicCode.attempts as number) - 1
+
+      return c.json({
+        error: 'Invalid code',
+        message: `Incorrect code. ${remainingAttempts} attempts remaining.`
+      }, 400)
+    }
+
+    // Code is valid - mark as used
+    await c.env.DB.prepare(
+      'UPDATE magic_codes SET used = 1 WHERE id = ?'
+    ).bind(magicCode.id).run()
+
+    // Create session
+    const sessionToken = generateSessionToken()
+    const sessionExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+
+    await c.env.DB.prepare(`
+      INSERT INTO sessions (id, email, created_at, expires_at, last_used_at, user_agent)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(
+      sessionToken,
+      email,
+      now,
+      sessionExpires.toISOString(),
+      now,
+      c.req.header('User-Agent') || null
+    ).run()
+
+    // Cleanup old records periodically (1 in 10 requests)
+    if (Math.random() < 0.1) {
+      cleanupExpiredRecords(c.env.DB)
+    }
+
+    return c.json({
+      success: true,
+      session_token: sessionToken,
+      expires_at: sessionExpires.toISOString()
+    })
+
+  } catch (error) {
+    console.error('Verify code error:', error)
+    return c.json({
+      error: 'Internal Server Error',
+      message: 'Failed to verify code'
+    }, 500)
+  }
+})
+
+/**
+ * GET /api/auth/session
+ * Check current session status
+ * REQUIRES session authentication
+ */
+app.get('/api/auth/session', sessionAuthMiddleware, async (c) => {
+  const session = c.get('session') as SessionData
+
+  return c.json({
+    authenticated: true,
+    email: session.email,
+    expires_at: session.expires_at,
+    created_at: session.created_at
+  })
+})
+
+/**
+ * POST /api/auth/logout
+ * Invalidate current session
+ * REQUIRES session authentication
+ */
+app.post('/api/auth/logout', sessionAuthMiddleware, async (c) => {
+  const session = c.get('session') as SessionData
+
+  // Delete session
+  await c.env.DB.prepare(
+    'DELETE FROM sessions WHERE id = ?'
+  ).bind(session.id).run()
+
+  return c.json({
+    success: true,
+    message: 'Logged out successfully'
+  })
+})
+
+/**
  * List Reminders Endpoint
  *
  * GET /api/reminders
@@ -350,7 +858,7 @@ app.get('/api/test-auth', authMiddleware, async (c) => {
  *   "offset": 0
  * }
  */
-app.get('/api/reminders', authMiddleware, async (c) => {
+app.get('/api/reminders', combinedAuthMiddleware, async (c) => {
   try {
     // Parse query parameters
     const status = c.req.query('status')
@@ -485,7 +993,7 @@ app.get('/api/reminders', authMiddleware, async (c) => {
  *   "pagination": { "total": N, "limit": N, "offset": 0, "returned": N } 
  * }
  */
-app.get('/api/reminders/near-location', authMiddleware, async (c) => {
+app.get('/api/reminders/near-location', combinedAuthMiddleware, async (c) => {
   try {
     // Parse query parameters
     const lat = parseFloat(c.req.query('lat') || '')
@@ -566,7 +1074,7 @@ app.get('/api/reminders/near-location', authMiddleware, async (c) => {
     }, 500)
   }
 })
-app.get('/api/reminders/:id', authMiddleware, async (c) => {
+app.get('/api/reminders/:id', combinedAuthMiddleware, async (c) => {
   try {
     const id = c.req.param('id')
 
@@ -624,7 +1132,7 @@ app.get('/api/reminders/:id', authMiddleware, async (c) => {
  *   "message": "Missing required field: text"
  * }
  */
-app.post('/api/reminders', authMiddleware, async (c) => {
+app.post('/api/reminders', combinedAuthMiddleware, async (c) => {
   try {
     const body = await c.req.json()
 
@@ -827,7 +1335,7 @@ app.post('/api/reminders', authMiddleware, async (c) => {
  *   "error": "Reminder not found"
  * }
  */
-app.patch('/api/reminders/:id', authMiddleware, async (c) => {
+app.patch('/api/reminders/:id', combinedAuthMiddleware, async (c) => {
   try {
     const id = c.req.param('id')
     const body = await c.req.json()
@@ -1016,7 +1524,7 @@ app.patch('/api/reminders/:id', authMiddleware, async (c) => {
  *   "error": "Reminder not found"
  * }
  */
-app.delete('/api/reminders/:id', authMiddleware, async (c) => {
+app.delete('/api/reminders/:id', combinedAuthMiddleware, async (c) => {
   try {
     const id = c.req.param('id')
 
@@ -1081,7 +1589,7 @@ app.delete('/api/reminders/:id', authMiddleware, async (c) => {
  *   "applied_count": 3
  * }
  */
-app.post('/api/sync', authMiddleware, async (c) => {
+app.post('/api/sync', combinedAuthMiddleware, async (c) => {
   try {
     const body = await c.req.json()
     const currentTime = new Date().toISOString()
@@ -1292,6 +1800,10 @@ app.notFound((c) => {
     availableEndpoints: [
       'GET /',
       'GET /api/health',
+      'POST /api/auth/request-code',
+      'POST /api/auth/verify-code',
+      'GET /api/auth/session',
+      'POST /api/auth/logout',
       'GET /api/reminders',
       'GET /api/reminders/:id',
       'POST /api/reminders',
@@ -1335,7 +1847,7 @@ app.onError((err, c) => {
  *   "pagination": { "total": N, "limit": N, "offset": 0, "returned": N } 
  * }
  */
-app.get('/api/reminders/near-location', authMiddleware, async (c) => {
+app.get('/api/reminders/near-location', combinedAuthMiddleware, async (c) => {
   try {
     // Parse query parameters
     const lat = parseFloat(c.req.query('lat') || '')
@@ -1432,7 +1944,7 @@ app.get('/api/reminders/near-location', authMiddleware, async (c) => {
  *   "available_on": "local_only"
  * }
  */
-app.post('/api/voice/transcribe', authMiddleware, async (c) => {
+app.post('/api/voice/transcribe', combinedAuthMiddleware, async (c) => {
   return c.json(
     {
       detail: "Voice transcription requires local server. Please connect to local API at http://localhost:8000",
