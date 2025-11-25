@@ -1,6 +1,6 @@
 /**
  * Authentication Module
- * Handles authentication via Cloudflare Access (Zero Trust)
+ * Handles magic code login flow and session management
  *
  * @module Auth
  */
@@ -9,12 +9,67 @@ const Auth = (function() {
     'use strict';
 
     const STORAGE_KEYS = {
-        USER_EMAIL: 'auth_user_email',
-        AUTH_METHOD: 'auth_method'
+        SESSION_TOKEN: 'auth_session_token',
+        SESSION_EXPIRES: 'auth_session_expires',
+        USER_EMAIL: 'auth_user_email'
     };
 
-    // Cache for CF Access status (checked once per page load)
-    let cfAccessStatus = null;
+    /**
+     * Check if user is authenticated
+     * @returns {boolean}
+     */
+    function isAuthenticated() {
+        const token = localStorage.getItem(STORAGE_KEYS.SESSION_TOKEN);
+        const expires = localStorage.getItem(STORAGE_KEYS.SESSION_EXPIRES);
+
+        if (!token || !expires) return false;
+
+        // Check if session expired
+        if (new Date(expires) < new Date()) {
+            clearSession();
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get current session token
+     * @returns {string|null}
+     */
+    function getSessionToken() {
+        if (!isAuthenticated()) return null;
+        return localStorage.getItem(STORAGE_KEYS.SESSION_TOKEN);
+    }
+
+    /**
+     * Get current user email
+     * @returns {string|null}
+     */
+    function getUserEmail() {
+        return localStorage.getItem(STORAGE_KEYS.USER_EMAIL);
+    }
+
+    /**
+     * Save session to localStorage
+     * @param {string} token - Session token
+     * @param {string} expiresAt - ISO date string
+     * @param {string} email - User email
+     */
+    function saveSession(token, expiresAt, email) {
+        localStorage.setItem(STORAGE_KEYS.SESSION_TOKEN, token);
+        localStorage.setItem(STORAGE_KEYS.SESSION_EXPIRES, expiresAt);
+        localStorage.setItem(STORAGE_KEYS.USER_EMAIL, email);
+    }
+
+    /**
+     * Clear session from localStorage
+     */
+    function clearSession() {
+        localStorage.removeItem(STORAGE_KEYS.SESSION_TOKEN);
+        localStorage.removeItem(STORAGE_KEYS.SESSION_EXPIRES);
+        localStorage.removeItem(STORAGE_KEYS.USER_EMAIL);
+    }
 
     /**
      * Get API endpoint from config
@@ -25,6 +80,147 @@ const Auth = (function() {
         return config.api.use_cloud
             ? config.api.cloud_endpoint
             : config.api.local_endpoint;
+    }
+
+    /**
+     * Request a magic code to be sent to email
+     * @param {string} email - Email address
+     * @returns {Promise<{success: boolean, message: string, error?: string, retryAfter?: number}>}
+     */
+    async function requestCode(email) {
+        try {
+            const endpoint = await getEndpoint();
+
+            const response = await fetch(`${endpoint}/auth/request-code`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                return {
+                    success: false,
+                    message: data.message || 'Failed to send code',
+                    error: data.error,
+                    retryAfter: data.retryAfter
+                };
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Request code error:', error);
+            return {
+                success: false,
+                message: 'Network error. Please check your connection.',
+                error: 'network_error'
+            };
+        }
+    }
+
+    /**
+     * Verify code and create session
+     * @param {string} email - Email address
+     * @param {string} code - 6-digit code
+     * @returns {Promise<{success: boolean, message?: string, session_token?: string, expires_at?: string}>}
+     */
+    async function verifyCode(email, code) {
+        try {
+            const endpoint = await getEndpoint();
+
+            const response = await fetch(`${endpoint}/auth/verify-code`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, code })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                return {
+                    success: false,
+                    message: data.message || 'Verification failed',
+                    error: data.error
+                };
+            }
+
+            // Save session on success
+            if (data.success && data.session_token) {
+                saveSession(data.session_token, data.expires_at, email);
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Verify code error:', error);
+            return {
+                success: false,
+                message: 'Network error. Please check your connection.',
+                error: 'network_error'
+            };
+        }
+    }
+
+    /**
+     * Check current session status with server
+     * @returns {Promise<{authenticated: boolean, email?: string, expires_at?: string}>}
+     */
+    async function checkSession() {
+        const token = getSessionToken();
+        if (!token) {
+            return { authenticated: false };
+        }
+
+        try {
+            const endpoint = await getEndpoint();
+
+            const response = await fetch(`${endpoint}/auth/session`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                // Session invalid on server, clear local
+                clearSession();
+                return { authenticated: false };
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Check session error:', error);
+            // Network error - keep local session, might be offline
+            return { authenticated: isAuthenticated() };
+        }
+    }
+
+    /**
+     * Logout and invalidate session
+     * @returns {Promise<void>}
+     */
+    async function logout() {
+        const token = getSessionToken();
+
+        if (token) {
+            try {
+                const endpoint = await getEndpoint();
+
+                await fetch(`${endpoint}/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+            } catch (error) {
+                console.error('Logout error:', error);
+                // Continue with local logout even if server fails
+            }
+        }
+
+        clearSession();
     }
 
     /**
@@ -41,99 +237,44 @@ const Auth = (function() {
     }
 
     /**
-     * Get current user email
-     * @returns {string|null}
-     */
-    function getUserEmail() {
-        return localStorage.getItem(STORAGE_KEYS.USER_EMAIL);
-    }
-
-    /**
-     * Check authentication status from server
-     * @returns {Promise<{authenticated: boolean, method: string|null, email?: string}>}
-     */
-    async function checkAuthStatus() {
-        // Return cached status if available
-        if (cfAccessStatus !== null) {
-            return cfAccessStatus;
-        }
-
-        try {
-            const endpoint = await getEndpoint();
-
-            const response = await fetch(`${endpoint}/auth/status`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include'  // Important for CF Access cookies
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                cfAccessStatus = data;
-
-                // Store email if authenticated
-                if (data.authenticated && data.email) {
-                    localStorage.setItem(STORAGE_KEYS.AUTH_METHOD, data.method);
-                    localStorage.setItem(STORAGE_KEYS.USER_EMAIL, data.email);
-                }
-
-                return data;
-            }
-        } catch (error) {
-            console.error('Auth status check error:', error);
-        }
-
-        return { authenticated: false, method: null };
-    }
-
-    /**
-     * Check if authenticated
-     * @returns {Promise<boolean>}
-     */
-    async function isAuthenticated() {
-        const status = await checkAuthStatus();
-        return status.authenticated;
-    }
-
-    /**
-     * Require authentication - check CF Access
+     * Require authentication - redirect to login if not authenticated
+     * Only applies when using cloud API
      * @returns {Promise<boolean>} - true if authenticated or using local API
      */
     async function requireAuth() {
         const usingCloud = await isUsingCloudAPI();
 
-        // Local API doesn't require auth
+        // Local API doesn't require session auth
         if (!usingCloud) {
             return true;
         }
 
-        // Check Cloudflare Access authentication
-        const authStatus = await checkAuthStatus();
-        return authStatus.authenticated;
+        if (!isAuthenticated()) {
+            window.location.href = 'login.html';
+            return false;
+        }
+
+        return true;
     }
 
     /**
-     * Initialize auth - check CF Access
+     * Initialize auth - check session and redirect if needed
+     * Call this on protected pages
      * @returns {Promise<boolean>}
      */
     async function init() {
         return await requireAuth();
     }
 
-    /**
-     * Clear local storage (for logout)
-     */
-    function clearSession() {
-        localStorage.removeItem(STORAGE_KEYS.USER_EMAIL);
-        localStorage.removeItem(STORAGE_KEYS.AUTH_METHOD);
-        cfAccessStatus = null;
-    }
-
     // Public API
     return {
         isAuthenticated,
+        getSessionToken,
         getUserEmail,
-        checkAuthStatus,
+        requestCode,
+        verifyCode,
+        checkSession,
+        logout,
         requireAuth,
         isUsingCloudAPI,
         init,
