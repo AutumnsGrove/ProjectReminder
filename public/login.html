@@ -235,36 +235,12 @@
     <script src="js/storage.js"></script>
     <script src="js/auth.js"></script>
     <script>
-        // Check authentication status and redirect if already logged in
-        // This handles both Cloudflare Access and magic code sessions
+        // Redirect if already logged in (when using cloud API)
         (async function() {
             const usingCloud = await Auth.isUsingCloudAPI();
-            if (!usingCloud) {
-                // Not using cloud API, redirect to app
+            if (usingCloud && Auth.isAuthenticated()) {
                 window.location.href = 'index.html';
-                return;
             }
-
-            // Check for existing session
-            if (Auth.isAuthenticated()) {
-                window.location.href = 'index.html';
-                return;
-            }
-
-            // Check server-side auth status (detects Cloudflare Access)
-            try {
-                const authStatus = await Auth.checkAuthStatus();
-                if (authStatus.authenticated) {
-                    // User is authenticated via CF Access or other method
-                    console.log('Authenticated via:', authStatus.method);
-                    window.location.href = 'index.html';
-                    return;
-                }
-            } catch (error) {
-                console.error('Auth check failed:', error);
-            }
-
-            // Not authenticated, show login form
         })();
 
         let currentEmail = '';
