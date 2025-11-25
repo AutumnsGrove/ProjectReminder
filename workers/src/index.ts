@@ -19,10 +19,18 @@ import { cors } from 'hono/cors'
 type Bindings = {
   DB: D1Database           // D1 database binding
   API_TOKEN: string        // Bearer token for authentication (legacy, will be removed)
-  RESEND_API_KEY: string   // Resend API key for sending magic codes
-  ALLOWED_EMAIL: string    // Single allowed email address
-  RESEND_FROM_EMAIL: string // From email for Resend
+  RESEND_API_KEY?: string  // Resend API key for sending magic codes (optional with CF Access)
+  ALLOWED_EMAIL?: string   // Single allowed email address (optional with CF Access)
+  RESEND_FROM_EMAIL?: string // From email for Resend (optional with CF Access)
   ENVIRONMENT?: string     // Optional environment indicator
+}
+
+/**
+ * Cloudflare Access user data from headers
+ */
+type CFAccessUser = {
+  email: string
+  authenticated: boolean
 }
 
 /**
@@ -38,9 +46,17 @@ type SessionData = {
 }
 
 /**
+ * Context variables set by middlewares
+ */
+type Variables = {
+  session: SessionData
+  cfAccessUser: CFAccessUser
+}
+
+/**
  * Initialize Hono app with TypeScript bindings
  */
-const app = new Hono<{ Bindings: Bindings }>()
+const app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
 /**
  * CORS Middleware
@@ -52,10 +68,11 @@ app.use('/*', cors({
   origin: [
     'http://localhost:3077',
     'http://127.0.0.1:3077',
-    'https://reminders.autumnsgrove.com'
+    'https://reminders.autumnsgrove.com',
+    'https://reminders.m7jv4v7npb.workers.dev'
   ],
   allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization'],
+  allowHeaders: ['Content-Type', 'Authorization', 'CF-Access-Authenticated-User-Email'],
   credentials: true,
 }))
 
@@ -295,28 +312,59 @@ const sessionAuthMiddleware = async (c: any, next: any) => {
 }
 
 /**
- * Combined Auth Middleware (supports both legacy token and session)
- * This allows gradual migration from static tokens to sessions
+ * Check for Cloudflare Access authentication
+ * Returns user info if authenticated via CF Access, null otherwise
+ */
+function getCFAccessUser(c: any): CFAccessUser | null {
+  // Cloudflare Access sets these headers when a user is authenticated
+  const cfAccessEmail = c.req.header('CF-Access-Authenticated-User-Email')
+
+  if (cfAccessEmail) {
+    return {
+      email: cfAccessEmail,
+      authenticated: true
+    }
+  }
+
+  return null
+}
+
+/**
+ * Combined Auth Middleware (supports CF Access, legacy token, and session)
+ * Priority order:
+ * 1. Cloudflare Access headers (CF-Access-Authenticated-User-Email)
+ * 2. Legacy API token (Bearer token matching API_TOKEN)
+ * 3. Session token (Bearer token matching a valid session in DB)
  */
 const combinedAuthMiddleware = async (c: any, next: any) => {
+  // Priority 1: Check for Cloudflare Access authentication
+  const cfUser = getCFAccessUser(c)
+  if (cfUser) {
+    // User authenticated via Cloudflare Access - no additional auth needed
+    c.set('cfAccessUser', cfUser)
+    await next()
+    return
+  }
+
+  // Priority 2 & 3: Check for Bearer token (API token or session)
   const authHeader = c.req.header('Authorization')
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return c.json({
       error: 'Unauthorized',
-      message: 'Missing or invalid Authorization header'
+      message: 'Missing or invalid Authorization header. Enable Cloudflare Access or provide a Bearer token.'
     }, 401)
   }
 
   const token = authHeader.substring(7)
 
-  // First, try legacy API token (for backward compatibility)
+  // Priority 2: Try legacy API token (for backward compatibility)
   if (c.env.API_TOKEN && token === c.env.API_TOKEN) {
     await next()
     return
   }
 
-  // Then, try session token
+  // Priority 3: Try session token
   const now = new Date().toISOString()
   const session = await c.env.DB.prepare(`
     SELECT * FROM sessions WHERE id = ? AND expires_at > ?
@@ -333,7 +381,7 @@ const combinedAuthMiddleware = async (c: any, next: any) => {
     return
   }
 
-  // Neither worked
+  // No valid authentication found
   return c.json({
     error: 'Unauthorized',
     message: 'Invalid token or session'
@@ -624,6 +672,14 @@ app.post('/api/auth/request-code', async (c) => {
       }, 400)
     }
 
+    // Check if magic code auth is configured
+    if (!c.env.ALLOWED_EMAIL || !c.env.RESEND_API_KEY || !c.env.RESEND_FROM_EMAIL) {
+      return c.json({
+        error: 'Configuration error',
+        message: 'Magic code authentication is not configured. Use Cloudflare Access instead.'
+      }, 503)
+    }
+
     // Check if email is allowed (but don't reveal this to prevent enumeration)
     const isAllowed = isAllowedEmail(email, c.env.ALLOWED_EMAIL)
 
@@ -800,6 +856,58 @@ app.post('/api/auth/verify-code', async (c) => {
       message: 'Failed to verify code'
     }, 500)
   }
+})
+
+/**
+ * GET /api/auth/status
+ * Check authentication status (works with CF Access, API token, or session)
+ * NO authentication middleware - this endpoint checks auth itself
+ */
+app.get('/api/auth/status', async (c) => {
+  // Check for Cloudflare Access first
+  const cfUser = getCFAccessUser(c)
+  if (cfUser) {
+    return c.json({
+      authenticated: true,
+      method: 'cloudflare_access',
+      email: cfUser.email
+    })
+  }
+
+  // Check for Bearer token
+  const authHeader = c.req.header('Authorization')
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7)
+
+    // Check legacy API token
+    if (c.env.API_TOKEN && token === c.env.API_TOKEN) {
+      return c.json({
+        authenticated: true,
+        method: 'api_token'
+      })
+    }
+
+    // Check session token
+    const now = new Date().toISOString()
+    const session = await c.env.DB.prepare(`
+      SELECT * FROM sessions WHERE id = ? AND expires_at > ?
+    `).bind(token, now).first()
+
+    if (session) {
+      return c.json({
+        authenticated: true,
+        method: 'session',
+        email: (session as any).email,
+        expires_at: (session as any).expires_at
+      })
+    }
+  }
+
+  // Not authenticated
+  return c.json({
+    authenticated: false,
+    method: null
+  })
 })
 
 /**

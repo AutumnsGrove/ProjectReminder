@@ -1,6 +1,10 @@
 /**
  * Authentication Module
- * Handles magic code login flow and session management
+ * Handles authentication via Cloudflare Access or magic code login
+ *
+ * Priority:
+ * 1. Cloudflare Access (Zero Trust) - automatic, no login page needed
+ * 2. Session token from magic code login - fallback for non-CF Access deployments
  *
  * @module Auth
  */
@@ -11,8 +15,12 @@ const Auth = (function() {
     const STORAGE_KEYS = {
         SESSION_TOKEN: 'auth_session_token',
         SESSION_EXPIRES: 'auth_session_expires',
-        USER_EMAIL: 'auth_user_email'
+        USER_EMAIL: 'auth_user_email',
+        AUTH_METHOD: 'auth_method'  // 'cloudflare_access', 'session', or 'api_token'
     };
+
+    // Cache for CF Access status (checked once per page load)
+    let cfAccessStatus = null;
 
     /**
      * Check if user is authenticated
@@ -237,8 +245,73 @@ const Auth = (function() {
     }
 
     /**
+     * Check authentication status from server
+     * This detects Cloudflare Access, session tokens, and API tokens
+     * @returns {Promise<{authenticated: boolean, method: string|null, email?: string}>}
+     */
+    async function checkAuthStatus() {
+        // Return cached status if available
+        if (cfAccessStatus !== null) {
+            return cfAccessStatus;
+        }
+
+        try {
+            const endpoint = await getEndpoint();
+            const headers = { 'Content-Type': 'application/json' };
+
+            // Include session token if we have one
+            const token = localStorage.getItem(STORAGE_KEYS.SESSION_TOKEN);
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(`${endpoint}/auth/status`, {
+                method: 'GET',
+                headers: headers,
+                credentials: 'include'  // Important for CF Access cookies
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                cfAccessStatus = data;
+
+                // Store auth method and email if authenticated
+                if (data.authenticated) {
+                    localStorage.setItem(STORAGE_KEYS.AUTH_METHOD, data.method);
+                    if (data.email) {
+                        localStorage.setItem(STORAGE_KEYS.USER_EMAIL, data.email);
+                    }
+                }
+
+                return data;
+            }
+        } catch (error) {
+            console.error('Auth status check error:', error);
+        }
+
+        return { authenticated: false, method: null };
+    }
+
+    /**
+     * Get current authentication method
+     * @returns {string|null} - 'cloudflare_access', 'session', 'api_token', or null
+     */
+    function getAuthMethod() {
+        return localStorage.getItem(STORAGE_KEYS.AUTH_METHOD);
+    }
+
+    /**
+     * Check if using Cloudflare Access
+     * @returns {boolean}
+     */
+    function isUsingCFAccess() {
+        return getAuthMethod() === 'cloudflare_access';
+    }
+
+    /**
      * Require authentication - redirect to login if not authenticated
      * Only applies when using cloud API
+     * Cloudflare Access users skip login page entirely
      * @returns {Promise<boolean>} - true if authenticated or using local API
      */
     async function requireAuth() {
@@ -249,12 +322,22 @@ const Auth = (function() {
             return true;
         }
 
-        if (!isAuthenticated()) {
-            window.location.href = 'login.html';
-            return false;
+        // Check server-side auth status (detects CF Access)
+        const authStatus = await checkAuthStatus();
+
+        if (authStatus.authenticated) {
+            // User is authenticated (via CF Access, session, or API token)
+            return true;
         }
 
-        return true;
+        // Check local session as fallback
+        if (isAuthenticated()) {
+            return true;
+        }
+
+        // Not authenticated - redirect to login
+        window.location.href = 'login.html';
+        return false;
     }
 
     /**
@@ -274,6 +357,9 @@ const Auth = (function() {
         requestCode,
         verifyCode,
         checkSession,
+        checkAuthStatus,
+        getAuthMethod,
+        isUsingCFAccess,
         logout,
         requireAuth,
         isUsingCloudAPI,
