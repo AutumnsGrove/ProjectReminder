@@ -585,13 +585,31 @@ const App = (function() {
         }
     }
 
+    // Track submission state to prevent double-clicks
+    let isSubmitting = false;
+
     /**
      * Handle reminder form submit
      */
     async function handleReminderSubmit(event) {
         event.preventDefault();
 
+        // Prevent double submissions
+        if (isSubmitting) {
+            console.log('Submission already in progress, ignoring');
+            return;
+        }
+
         const form = event.target;
+        const saveBtn = document.getElementById('saveBtn');
+
+        // Disable button and set submitting state
+        isSubmitting = true;
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+        }
+
         const formData = new FormData(form);
 
         const data = {
@@ -635,6 +653,12 @@ const App = (function() {
         } catch (error) {
             console.error('Error saving reminder:', error);
             showError('Failed to save reminder');
+            // Re-enable the button on error so user can retry
+            isSubmitting = false;
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save';
+            }
         }
     }
 

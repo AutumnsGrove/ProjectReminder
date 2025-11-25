@@ -18,6 +18,7 @@ import { cors } from 'hono/cors'
  */
 type Bindings = {
   DB: D1Database           // D1 database binding
+  AI: Ai                   // Workers AI binding for STT and NLP
   API_TOKEN: string        // Bearer token for authentication (legacy, will be removed)
   RESEND_API_KEY: string   // Resend API key for sending magic codes
   ALLOWED_EMAIL: string    // Single allowed email address
@@ -582,7 +583,7 @@ app.get('/', async (c) => {
       updateReminder: 'PATCH /api/reminders/:id',
       deleteReminder: 'DELETE /api/reminders/:id',
       testAuth: '/api/test-auth (protected endpoint for testing)',
-      voiceTranscribe: 'POST /api/voice/transcribe (local-only, 501 Not Implemented)'
+      voiceTranscribe: 'POST /api/voice/transcribe (uses Cloudflare Workers AI Whisper)'
     },
     documentation: 'See workers/ARCHITECTURE.md for full API specification'
   })
@@ -1656,9 +1657,15 @@ app.post('/api/sync', combinedAuthMiddleware, async (c) => {
           } else if (change.action === 'create') {
             if (!change.data) continue
 
+            // Skip if reminder already exists (e.g., created directly on cloud)
+            if (existing) {
+              console.log(`Skipping create for ${change.id}: already exists on server`)
+              continue
+            }
+
             const data = change.data
             const result = await c.env.DB.prepare(`
-              INSERT INTO reminders (
+              INSERT OR IGNORE INTO reminders (
                 id, text, notes, due_date, due_time, time_required,
                 location_name, location_address, location_lat, location_lng, location_radius,
                 priority, category, status, completed_at, snoozed_until, snooze_count,
@@ -1933,38 +1940,113 @@ app.get('/api/reminders/near-location', combinedAuthMiddleware, async (c) => {
   }
 })
 /**
- * Voice Transcription Endpoint (501 Not Implemented)
+ * Voice Transcription Endpoint
  *
  * POST /api/voice/transcribe
  *
- * Stub endpoint to maintain API parity
+ * Transcribes audio using Cloudflare Workers AI Whisper model
  *
- * Response format (501 Not Implemented):
+ * Request: multipart/form-data with 'audio' file field
+ * Supported formats: webm, wav, mp3, m4a, ogg, flac
+ * Max size: 10MB
+ *
+ * Response format:
  * {
- *   "detail": "Voice transcription requires local server",
- *   "error": "not_implemented",
- *   "suggestion": "Ensure local FastAPI server is running with Whisper.cpp",
- *   "feature": "voice_transcription",
- *   "available_on": "local_only"
+ *   "text": "transcribed text here",
+ *   "model": "@cf/openai/whisper",
+ *   "language": "en",
+ *   "file_size": 12345
  * }
  */
 app.post('/api/voice/transcribe', combinedAuthMiddleware, async (c) => {
-  return c.json(
-    {
-      detail: "Voice transcription requires local server. Please connect to local API at http://localhost:8000",
-      error: "not_implemented",
-      suggestion: "Ensure your local FastAPI server is running with Whisper.cpp installed",
-      feature: "voice_transcription",
-      available_on: "local_only"
-    },
-    {
-      status: 501,
-      headers: {
-        'X-Feature-Availability': 'local-only',
-        'X-Reason': 'Whisper.cpp requires native binaries (incompatible with Workers runtime)'
-      }
+  try {
+    // Parse multipart form data
+    const formData = await c.req.formData()
+    const audioFile = formData.get('audio') as File | null
+
+    // Check if we got a file (has arrayBuffer method and size property)
+    if (!audioFile || typeof audioFile === 'string' || !audioFile.arrayBuffer) {
+      return c.json({
+        error: 'Bad Request',
+        message: 'Missing audio file. Expected multipart/form-data with "audio" field'
+      }, 400)
     }
-  )
+
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024
+    if (audioFile.size > maxSize) {
+      return c.json({
+        error: 'Payload Too Large',
+        message: `Audio file too large. Maximum size is 10MB, got ${(audioFile.size / 1024 / 1024).toFixed(2)}MB`
+      }, 413)
+    }
+
+    // Validate minimum size (at least 1KB to contain actual audio)
+    if (audioFile.size < 1024) {
+      return c.json({
+        error: 'Bad Request',
+        message: 'Audio file too small. Minimum size is 1KB'
+      }, 400)
+    }
+
+    // Validate content type (must be audio)
+    const contentType = audioFile.type || ''
+    const validAudioTypes = [
+      'audio/webm', 'audio/wav', 'audio/wave', 'audio/x-wav',
+      'audio/mp3', 'audio/mpeg', 'audio/m4a', 'audio/mp4',
+      'audio/ogg', 'audio/flac', 'audio/x-flac'
+    ]
+
+    if (!contentType.startsWith('audio/') && !validAudioTypes.includes(contentType)) {
+      return c.json({
+        error: 'Unsupported Media Type',
+        message: `Invalid content type: ${contentType}. Expected audio file (webm, wav, mp3, m4a, ogg, flac)`
+      }, 415)
+    }
+
+    // Get audio data as ArrayBuffer
+    const audioData = await audioFile.arrayBuffer()
+
+    // Call Cloudflare Workers AI Whisper model
+    const response = await c.env.AI.run('@cf/openai/whisper', {
+      audio: [...new Uint8Array(audioData)]
+    })
+
+    // Handle empty transcription (no speech detected)
+    if (!response.text || response.text.trim() === '') {
+      return c.json({
+        error: 'Unprocessable Entity',
+        message: 'No speech detected in audio. Please try speaking more clearly or check your microphone.'
+      }, 422)
+    }
+
+    // Return successful transcription
+    return c.json({
+      text: response.text.trim(),
+      model: '@cf/openai/whisper',
+      language: 'en',
+      file_size: audioFile.size
+    })
+
+  } catch (error) {
+    console.error('Voice transcription error:', error)
+
+    // Handle specific error types
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+
+    if (errorMessage.includes('AI binding')) {
+      return c.json({
+        error: 'Service Unavailable',
+        message: 'AI service not configured. Please check Workers AI binding.'
+      }, 503)
+    }
+
+    return c.json({
+      error: 'Internal Server Error',
+      message: 'Failed to transcribe audio',
+      detail: errorMessage
+    }, 500)
+  }
 })
 
 export default app
