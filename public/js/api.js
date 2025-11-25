@@ -394,6 +394,37 @@ const API = (function() {
     }
 
     /**
+     * Get completed reminders
+     * @returns {Promise<Array>} Array of completed reminders sorted by completion date (most recent first)
+     */
+    async function getCompletedReminders() {
+        try {
+            // Fetch all completed reminders
+            const response = await request('GET', '/reminders?status=completed');
+            const reminders = response.data || [];
+
+            // Sort by completed_at descending (most recent first)
+            reminders.sort((a, b) => {
+                if (a.completed_at && b.completed_at) {
+                    return b.completed_at.localeCompare(a.completed_at);
+                }
+                // Fallback to updated_at if completed_at not set
+                if (a.updated_at && b.updated_at) {
+                    return b.updated_at.localeCompare(a.updated_at);
+                }
+                return 0;
+            });
+
+            return reminders;
+
+        } catch (error) {
+            const message = formatErrorMessage(error);
+            showError(`Failed to load completed reminders: ${message}`);
+            throw error;
+        }
+    }
+
+    /**
      * Health check endpoint
      * @returns {Promise<Object>} Health status object
      */
@@ -529,6 +560,7 @@ const API = (function() {
         getTodayReminders,
         getUpcomingReminders,
         getFutureReminders,
+        getCompletedReminders,
         getNearbyReminders,
         healthCheck,
         transcribeAudio,
