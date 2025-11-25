@@ -34,25 +34,13 @@ const API = (function() {
     }
 
     /**
-     * Get authorization headers
-     * Uses session token from Auth module when available (cloud API),
-     * falls back to static token from config (local dev)
+     * Get request headers
+     * Cloudflare Access uses cookies - no Authorization header needed
      */
     function getHeaders() {
-        const headers = {
+        return {
             'Content-Type': 'application/json'
         };
-
-        // First, try session token from Auth module (for cloud API)
-        if (window.Auth && window.Auth.getSessionToken()) {
-            headers['Authorization'] = `Bearer ${window.Auth.getSessionToken()}`;
-        }
-        // Fallback to static token from config (for local dev)
-        else if (config && config.api.token) {
-            headers['Authorization'] = `Bearer ${config.api.token}`;
-        }
-
-        return headers;
     }
 
     /**
@@ -82,7 +70,8 @@ const API = (function() {
         const url = `${getEndpoint()}${path}`;
         const options = {
             method: method,
-            headers: getHeaders()
+            headers: getHeaders(),
+            credentials: 'include'  // Required for Cloudflare Access cookies
         };
 
         if (data !== null) {
