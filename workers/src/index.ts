@@ -448,11 +448,15 @@ app.get('/api/reminders', authMiddleware, async (c) => {
     const total = countResult ? (countResult.total as number) : 0
 
     // Return response matching FastAPI format
+    const reminders = result.results || []
     return c.json({
-      reminders: result.results || [],
-      total: total,
-      limit: limit,
-      offset: offset
+      data: reminders,
+      pagination: {
+        total: total,
+        limit: limit,
+        offset: offset,
+        returned: reminders.length
+      }
     })
   } catch (error) {
     console.error('Error fetching reminders:', error)
