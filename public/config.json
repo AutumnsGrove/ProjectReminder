@@ -2,7 +2,8 @@
   "api": {
     "local_endpoint": "http://localhost:8000/api",
     "cloud_endpoint": "https://reminders.autumnsgrove.com/api",
-    "use_cloud": true
+    "use_cloud": true,
+    "token": "e007b2cb0c7506bbd04eb31ed6f0821c8f6780f9e4742172f35add101b21f434"
   },
   "sync": {
     "enabled": false,
@@ -19,5 +20,5 @@
   "nlp": {
     "mode": "auto"
   },
-  "_comment": "Configuration for the reminders app. Set use_cloud to true to use Cloudflare Workers API (requires Cloudflare Access for auth). NLP mode: auto (try local→cloud), local (LM Studio only), cloud (Cloudflare AI only)."
+  "_comment": "Configuration for the reminders app. Edit as needed for your setup. Set use_cloud to true to use Cloudflare Workers API instead of local backend. NLP mode: auto (try local→cloud), local (LM Studio only), cloud (Cloudflare AI only)."
 }

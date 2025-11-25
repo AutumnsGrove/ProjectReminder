@@ -34,13 +34,41 @@ const API = (function() {
     }
 
     /**
-     * Get request headers
-     * Cloudflare Access uses cookies - no Authorization header needed
+     * Get authorization headers
+     * Priority:
+     * 1. Cloudflare Access - no Authorization header needed (uses cookies)
+     * 2. Session token from Auth module (cloud API with magic code)
+     * 3. Static token from config (local dev)
      */
     function getHeaders() {
-        return {
+        const headers = {
             'Content-Type': 'application/json'
         };
+
+        // Check if using Cloudflare Access (no Bearer token needed)
+        if (window.Auth && window.Auth.isUsingCFAccess()) {
+            // CF Access uses cookies, no Authorization header needed
+            return headers;
+        }
+
+        // Try session token from Auth module (for cloud API with magic code)
+        if (window.Auth && window.Auth.getSessionToken()) {
+            headers['Authorization'] = `Bearer ${window.Auth.getSessionToken()}`;
+        }
+        // Fallback to static token from config (for local dev)
+        else if (config && config.api.token) {
+            headers['Authorization'] = `Bearer ${config.api.token}`;
+        }
+
+        return headers;
+    }
+
+    /**
+     * Check if we need credentials (cookies) for requests
+     * Required for Cloudflare Access
+     */
+    function needsCredentials() {
+        return window.Auth && window.Auth.isUsingCFAccess();
     }
 
     /**
