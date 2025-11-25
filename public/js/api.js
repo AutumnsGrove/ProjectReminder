@@ -28,7 +28,7 @@ const API = (function() {
                 return parsedConfig.api.use_cloud ? parsedConfig.api.cloud_endpoint : parsedConfig.api.local_endpoint;
             }
             console.warn('API not initialized and no saved config, using default endpoint');
-            return 'http://100.114.120.17:8000/api'; // Match current deployment
+            return 'http://localhost:8000/api'; // Default to local development
         }
         return config.api.use_cloud ? config.api.cloud_endpoint : config.api.local_endpoint;
     }

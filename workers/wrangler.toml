@@ -24,7 +24,9 @@ vars = { ENVIRONMENT = "development" }
 [build]
 command = ""  # No build step, Hono handles it
 
-# Custom routes (optional, defaults to workers.dev subdomain)
-# routes = [
-#   { pattern = "api.yourproject.com", zone_name = "yourproject.com" }
-# ]
+# Custom routes - Required for Cloudflare Access authentication to work
+# The API must be served from the same domain as the frontend, or a subdomain
+# protected by the same Access Application
+routes = [
+  { pattern = "reminders.autumnsgrove.com/api/*", zone_name = "autumnsgrove.com" }
+]
