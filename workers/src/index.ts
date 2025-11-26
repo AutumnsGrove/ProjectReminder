@@ -53,7 +53,7 @@ app.use('/*', cors({
   origin: [
     'http://localhost:3077',
     'http://127.0.0.1:3077',
-    'https://reminders.autumnsgrove.com'
+    'https://reminders.groce.place'
   ],
   allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
