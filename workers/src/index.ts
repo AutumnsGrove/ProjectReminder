@@ -2014,7 +2014,7 @@ Rules:
     const userMessage = `Parse: "${text}"`
 
     // Call Cloudflare Workers AI
-    const response = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
+    const response = await c.env.AI.run('@cf/meta/llama-3.2-1b-instruct', {
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userMessage }
