@@ -518,6 +518,201 @@ const App = (function() {
     }
 
     /**
+     * Initialize Completed View
+     */
+    async function initCompletedView() {
+        console.log('Initializing Completed view...');
+
+        try {
+            const reminders = await API.getCompletedReminders();
+            console.log('Completed reminders:', reminders);
+
+            const container = document.getElementById('completedContainer');
+            if (!container) return;
+
+            if (reminders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>No completed reminders yet</p>
+                        <p class="empty-subtitle">Complete some tasks to see them here</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Group by completion date
+            const groupedByDate = groupCompletedByDate(reminders);
+
+            // Render date groups
+            container.innerHTML = '';
+            groupedByDate.forEach(group => {
+                const dateGroup = createCompletedDateGroup(group);
+                container.appendChild(dateGroup);
+            });
+
+        } catch (error) {
+            console.error('Error loading completed view:', error);
+            showError('Failed to load completed reminders');
+        }
+    }
+
+    /**
+     * Group completed reminders by completion date
+     */
+    function groupCompletedByDate(reminders) {
+        const groups = {};
+
+        reminders.forEach(reminder => {
+            // Use completed_at date, fallback to updated_at
+            const dateTime = reminder.completed_at || reminder.updated_at;
+            const date = dateTime ? dateTime.split('T')[0] : 'Unknown';
+
+            if (!groups[date]) {
+                groups[date] = [];
+            }
+            groups[date].push(reminder);
+        });
+
+        // Convert to array and sort by date (most recent first)
+        return Object.keys(groups)
+            .sort((a, b) => b.localeCompare(a))
+            .map(date => ({
+                date: date,
+                reminders: groups[date]
+            }));
+    }
+
+    /**
+     * Create a date group element for completed tasks
+     */
+    function createCompletedDateGroup(group) {
+        const container = document.createElement('div');
+        container.className = 'date-group';
+
+        // Date header
+        const header = document.createElement('div');
+        header.className = 'date-header';
+
+        const title = document.createElement('div');
+        title.className = 'date-title';
+        title.textContent = formatCompletedDate(group.date);
+
+        const subtitle = document.createElement('div');
+        subtitle.className = 'date-subtitle';
+        subtitle.textContent = `${group.reminders.length} task${group.reminders.length !== 1 ? 's' : ''} completed`;
+
+        header.appendChild(title);
+        header.appendChild(subtitle);
+
+        // Reminders list
+        const list = document.createElement('div');
+        list.className = 'reminders-list';
+
+        group.reminders.forEach(reminder => {
+            const card = createCompletedReminderCard(reminder);
+            list.appendChild(card);
+        });
+
+        container.appendChild(header);
+        container.appendChild(list);
+
+        return container;
+    }
+
+    /**
+     * Create completed reminder card (with checkmark, no checkbox)
+     */
+    function createCompletedReminderCard(reminder) {
+        const card = document.createElement('div');
+        card.className = `reminder-card priority-${reminder.priority} completed`;
+        card.dataset.id = reminder.id;
+
+        // Checkmark indicator
+        const checkmark = document.createElement('div');
+        checkmark.className = 'reminder-checkmark';
+        checkmark.innerHTML = '<span class="checkmark-icon">&#10003;</span>';
+
+        // Content
+        const content = document.createElement('div');
+        content.className = 'reminder-content';
+
+        const text = document.createElement('div');
+        text.className = 'reminder-text completed-text';
+        text.textContent = reminder.text;
+
+        const meta = document.createElement('div');
+        meta.className = 'reminder-meta';
+
+        // Add completion time if available
+        if (reminder.completed_at) {
+            const timeItem = document.createElement('span');
+            timeItem.className = 'meta-item';
+            const completedTime = new Date(reminder.completed_at);
+            const formattedTime = completedTime.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+            timeItem.textContent = `Completed at ${formattedTime}`;
+            meta.appendChild(timeItem);
+        }
+
+        // Add category if present
+        if (reminder.category) {
+            const categoryItem = document.createElement('span');
+            categoryItem.className = 'meta-item category-badge';
+            categoryItem.textContent = reminder.category;
+            meta.appendChild(categoryItem);
+        }
+
+        content.appendChild(text);
+        content.appendChild(meta);
+
+        // Priority badge
+        const priority = document.createElement('div');
+        priority.className = 'reminder-priority';
+        const priorityBadgeHTML = createPriorityBadge(reminder.priority);
+        const priorityTemplate = document.createElement('div');
+        priorityTemplate.innerHTML = priorityBadgeHTML;
+        priority.appendChild(priorityTemplate.firstChild);
+
+        // Assemble card
+        card.appendChild(checkmark);
+        card.appendChild(content);
+        card.appendChild(priority);
+
+        return card;
+    }
+
+    /**
+     * Format date for completed view display
+     */
+    function formatCompletedDate(dateStr) {
+        if (dateStr === 'Unknown') return 'Unknown Date';
+
+        const date = new Date(dateStr + 'T00:00:00');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        if (date.getTime() === today.getTime()) {
+            return 'Today';
+        }
+
+        if (date.getTime() === yesterday.getTime()) {
+            return 'Yesterday';
+        }
+
+        const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
+        const month = date.toLocaleDateString('en-US', { month: 'short' });
+        const day = date.getDate();
+
+        return `${dayOfWeek}, ${month} ${day}`;
+    }
+
+    /**
      * Initialize Edit View
      */
     async function initEditView() {
@@ -871,6 +1066,7 @@ const App = (function() {
         initTodayView,
         initUpcomingView,
         initFutureView,
+        initCompletedView,
         initEditView,
         handleReminderSubmit,
         handleReminderDelete,

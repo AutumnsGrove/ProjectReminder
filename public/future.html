@@ -25,17 +25,18 @@
                 <button class="btn-icon" id="refreshBtn" aria-label="Refresh" title="Refresh">
                     <span class="icon">↻</span>
                 </button>
-                <button class="btn-icon" id="logoutBtn" aria-label="Logout" title="Logout" style="display: none;">
-                    <span class="icon">⏻</span>
+                <button class="btn-icon" id="settingsBtn" aria-label="Settings" title="Settings">
+                    <span class="icon">⚙</span>
                 </button>
             </div>
         </header>
 
         <!-- Navigation -->
-        <nav class="app-nav">
+        <nav class="app-nav" id="appNav">
             <a href="index.html" class="nav-link">Today</a>
             <a href="upcoming.html" class="nav-link">Upcoming</a>
             <a href="future.html" class="nav-link active" aria-current="page">Future</a>
+            <a href="completed.html" class="nav-link" id="completedNavLink" style="display: none;">Completed</a>
         </nav>
 
         <!-- Main Content -->
@@ -49,6 +50,38 @@
         <a href="edit.html" class="fab" aria-label="Create new reminder">
             <span class="fab-icon">+</span>
         </a>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="btn-icon modal-close" id="closeSettingsBtn" aria-label="Close">
+                    <span class="icon">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-item">
+                    <label class="toggle-label">
+                        <span class="toggle-text">Show Completed Panel</span>
+                        <input type="checkbox" id="showCompletedToggle" class="toggle-input">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="settings-description">Display a tab for completed tasks in navigation</p>
+                </div>
+                <div class="settings-item" id="logoutSection" style="display: none;">
+                    <button class="btn btn-secondary btn-logout" id="modalLogoutBtn">
+                        <span class="icon">⏻</span> Logout
+                    </button>
+                </div>
+                <div class="settings-item">
+                    <a href="settings.html" class="btn btn-secondary">
+                        Advanced Settings
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Toast Notification Container -->
@@ -148,13 +181,54 @@
             }
         });
 
-        // Logout button handler (only shown when using cloud API with session auth)
+        // Settings modal handling
         (async function() {
+            const settingsBtn = document.getElementById('settingsBtn');
+            const settingsModal = document.getElementById('settingsModal');
+            const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+            const showCompletedToggle = document.getElementById('showCompletedToggle');
+            const completedNavLink = document.getElementById('completedNavLink');
+            const logoutSection = document.getElementById('logoutSection');
+            const modalLogoutBtn = document.getElementById('modalLogoutBtn');
+
+            // Load saved preference for completed panel
+            const showCompleted = localStorage.getItem('show_completed_panel') === 'true';
+            showCompletedToggle.checked = showCompleted;
+            if (showCompleted && completedNavLink) {
+                completedNavLink.style.display = '';
+            }
+
+            // Open settings modal
+            settingsBtn?.addEventListener('click', () => {
+                settingsModal.style.display = 'flex';
+            });
+
+            // Close settings modal
+            closeSettingsBtn?.addEventListener('click', () => {
+                settingsModal.style.display = 'none';
+            });
+
+            // Close modal on overlay click
+            settingsModal?.addEventListener('click', (e) => {
+                if (e.target === settingsModal) {
+                    settingsModal.style.display = 'none';
+                }
+            });
+
+            // Toggle completed panel visibility
+            showCompletedToggle?.addEventListener('change', () => {
+                const isChecked = showCompletedToggle.checked;
+                localStorage.setItem('show_completed_panel', isChecked.toString());
+                if (completedNavLink) {
+                    completedNavLink.style.display = isChecked ? '' : 'none';
+                }
+            });
+
+            // Show logout button if using cloud API
             const usingCloud = await Auth.isUsingCloudAPI();
-            const logoutBtn = document.getElementById('logoutBtn');
-            if (usingCloud && Auth.isAuthenticated() && logoutBtn) {
-                logoutBtn.style.display = 'inline-flex';
-                logoutBtn.addEventListener('click', async () => {
+            if (usingCloud && Auth.isAuthenticated() && logoutSection) {
+                logoutSection.style.display = 'block';
+                modalLogoutBtn?.addEventListener('click', async () => {
                     await Auth.logout();
                     window.location.href = 'login.html';
                 });

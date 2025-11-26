@@ -151,6 +151,50 @@
 
 /* ===== Empty State ===== */
 #upcomingContainer .empty-state,
-#futureContainer .empty-state {
+#futureContainer .empty-state,
+#completedContainer .empty-state {
     margin-top: var(--spacing-xl);
+}
+
+/* ===== Completed Cards ===== */
+.reminder-card.completed {
+    opacity: 0.8;
+    background-color: var(--color-bg-tertiary);
+}
+
+.reminder-card.completed:hover {
+    opacity: 1;
+}
+
+.reminder-card.completed .reminder-text.completed-text {
+    text-decoration: line-through;
+    color: var(--color-text-secondary);
+}
+
+/* Checkmark indicator for completed tasks */
+.reminder-checkmark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background-color: var(--color-success);
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.checkmark-icon {
+    color: white;
+    font-size: var(--font-size-sm);
+    font-weight: bold;
+    line-height: 1;
+}
+
+/* Priority border for completed cards */
+.date-group .reminder-card.priority-someday::before {
+    background-color: var(--color-someday);
+}
+
+.date-group .reminder-card.priority-waiting::before {
+    background-color: var(--color-waiting);
 }
