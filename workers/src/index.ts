@@ -583,7 +583,8 @@ app.get('/', async (c) => {
       updateReminder: 'PATCH /api/reminders/:id',
       deleteReminder: 'DELETE /api/reminders/:id',
       testAuth: '/api/test-auth (protected endpoint for testing)',
-      voiceTranscribe: 'POST /api/voice/transcribe (uses Cloudflare Workers AI Whisper)'
+      voiceTranscribe: 'POST /api/voice/transcribe (uses Cloudflare Workers AI Whisper)',
+      voiceParse: 'POST /api/voice/parse (parse reminder text with Workers AI)'
     },
     documentation: 'See workers/ARCHITECTURE.md for full API specification'
   })
@@ -1823,7 +1824,8 @@ app.notFound((c) => {
       'POST /api/sync',
       'GET /api/reminders/near-location',
       'GET /api/test-auth',
-      'POST /api/voice/transcribe'
+      'POST /api/voice/transcribe',
+      'POST /api/voice/parse'
     ]
   }, 404)
 })
@@ -1939,6 +1941,193 @@ app.get('/api/reminders/near-location', combinedAuthMiddleware, async (c) => {
     }, 500)
   }
 })
+/**
+ * Voice Parse Endpoint
+ *
+ * POST /api/voice/parse
+ *
+ * Parses natural language reminder text using Cloudflare Workers AI
+ * Extracts structured metadata like dates, times, priorities, categories
+ *
+ * Request body:
+ * {
+ *   "text": "Call mom tomorrow at 3pm",
+ *   "mode": "auto" | "local" | "cloud"  // optional, defaults to "cloud"
+ * }
+ *
+ * Response format:
+ * {
+ *   "text": "Call mom",
+ *   "due_date": "2025-11-27",
+ *   "due_time": "15:00:00",
+ *   "time_required": true,
+ *   "priority": null,
+ *   "category": "Calls",
+ *   "location": null,
+ *   "confidence": 0.85,
+ *   "parse_mode": "cloud"
+ * }
+ */
+app.post('/api/voice/parse', combinedAuthMiddleware, async (c) => {
+  try {
+    const body = await c.req.json()
+    const text = body.text?.trim()
+
+    // Validate input
+    if (!text) {
+      return c.json({
+        error: 'Bad Request',
+        message: 'Missing required field: text'
+      }, 400)
+    }
+
+    // Get current date for context
+    const now = new Date()
+    const currentDate = now.toISOString().split('T')[0]
+    const tomorrow = new Date(now)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const tomorrowDate = tomorrow.toISOString().split('T')[0]
+
+    // Build prompt for Workers AI
+    const systemPrompt = `Extract reminder metadata as JSON. Current date: ${currentDate}.
+
+Output format:
+{
+  "text": "core reminder text",
+  "due_date": "YYYY-MM-DD" or null,
+  "due_time": "HH:MM:SS" or null,
+  "time_required": true/false,
+  "priority": "urgent"/"important"/"chill"/"someday"/"waiting" or null,
+  "category": "Personal"/"Work"/"Errands"/"Home"/"Health"/"Calls"/"Shopping"/"Projects" or null,
+  "location": "place name" or null,
+  "confidence": 0.0-1.0
+}
+
+Rules:
+- "tomorrow" = ${tomorrowDate}
+- "3pm" = "15:00:00", time_required=true
+- "morning" = "09:00:00", time_required=false
+- "call"/"phone" → Calls category
+- "buy"/"get" → Shopping category
+- Output ONLY the JSON object.`
+
+    const userMessage = `Parse: "${text}"`
+
+    // Call Cloudflare Workers AI
+    const response = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+      ],
+      temperature: 0.3,
+      max_tokens: 400
+    })
+
+    // Extract response text
+    const llmResponse = response.response || ''
+
+    // Try to parse JSON from response
+    let parsedJson: any = null
+
+    // Try direct parse first
+    try {
+      parsedJson = JSON.parse(llmResponse.trim())
+    } catch {
+      // Try extracting from code blocks
+      if (llmResponse.includes('```json')) {
+        const start = llmResponse.indexOf('```json') + 7
+        const end = llmResponse.indexOf('```', start)
+        if (end !== -1) {
+          try {
+            parsedJson = JSON.parse(llmResponse.slice(start, end).trim())
+          } catch {}
+        }
+      }
+
+      // Try brace extraction
+      if (!parsedJson) {
+        const start = llmResponse.indexOf('{')
+        const end = llmResponse.lastIndexOf('}')
+        if (start !== -1 && end !== -1 && end > start) {
+          try {
+            parsedJson = JSON.parse(llmResponse.slice(start, end + 1))
+          } catch {}
+        }
+      }
+    }
+
+    // If parsing failed, return minimal result
+    if (!parsedJson) {
+      console.log('Failed to parse LLM response:', llmResponse.slice(0, 200))
+      return c.json({
+        text: text,
+        due_date: null,
+        due_time: null,
+        time_required: false,
+        priority: null,
+        category: null,
+        location: null,
+        confidence: 0.2,
+        parse_mode: 'cloud'
+      })
+    }
+
+    // Validate and normalize result
+    const validPriorities = new Set(['urgent', 'important', 'chill', 'someday', 'waiting'])
+    const validCategories = new Set(['Personal', 'Work', 'Errands', 'Home', 'Health', 'Calls', 'Shopping', 'Projects'])
+
+    let confidence = parsedJson.confidence || 0.5
+
+    // Validate priority
+    let priority = parsedJson.priority
+    if (priority && !validPriorities.has(priority.toLowerCase())) {
+      priority = null
+      confidence *= 0.9
+    }
+
+    // Validate category
+    let category = parsedJson.category
+    if (category && !validCategories.has(category)) {
+      category = null
+      confidence *= 0.9
+    }
+
+    // Clamp confidence
+    confidence = Math.max(0.0, Math.min(1.0, confidence))
+
+    // Return parsed result
+    return c.json({
+      text: parsedJson.text || text,
+      due_date: parsedJson.due_date || null,
+      due_time: parsedJson.due_time || null,
+      time_required: parsedJson.time_required || false,
+      priority: priority ? priority.toLowerCase() : null,
+      category: category,
+      location: parsedJson.location || null,
+      confidence: confidence,
+      parse_mode: 'cloud'
+    })
+
+  } catch (error) {
+    console.error('Voice parse error:', error)
+
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+
+    if (errorMessage.includes('AI binding')) {
+      return c.json({
+        error: 'Service Unavailable',
+        message: 'AI service not configured. Please check Workers AI binding.'
+      }, 503)
+    }
+
+    return c.json({
+      error: 'Internal Server Error',
+      message: 'Failed to parse reminder text',
+      detail: errorMessage
+    }, 500)
+  }
+})
+
 /**
  * Voice Transcription Endpoint
  *
