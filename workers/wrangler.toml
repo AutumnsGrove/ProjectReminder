@@ -28,5 +28,5 @@ command = ""  # No build step, Hono handles it
 # The API must be served from the same domain as the frontend, or a subdomain
 # protected by the same Access Application
 routes = [
-  { pattern = "reminders.groce.place/api/*", zone_name = "groce.place" }
+  { pattern = "reminders.grove.place/api/*", zone_name = "grove.place" }
 ]
