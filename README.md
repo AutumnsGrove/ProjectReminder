@@ -1,11 +1,19 @@
+# ⏸️ PROJECT STATUS: ON HOLD - INDEFINITELY
+
+> **Note:** This project is on hold indefinitely. The Cloudflare cloud infrastructure has been decommissioned. The codebase remains functional for local development, but cloud sync features are unavailable.
+>
+> **Reason:** Building integrations with iOS built-in apps requires the $100/year Apple Developer Program fee. This project was a fun idea but not practical to maintain at this time.
+
+---
+
 # 🎤 ADHD-Friendly Voice Reminders System
 
 An offline-first, persistent reminders system designed specifically for ADHD workflows. Voice input is the primary interaction method, with visual persistence across multiple devices (desktop, mobile, e-ink displays).
 
 **Developer:** Autumn Brown
 **Version:** 1.0 MVP
-**Status:** 🚀 100% Production Ready - MVP Complete!
-**Latest:** ✨ Phase 9.0 Complete - Security hardened, fully tested, ready to launch
+**Status:** ⏸️ ON HOLD - INDEFINITELY
+**Latest:** Cloud infrastructure decommissioned December 2025
 
 ---
 
@@ -461,6 +469,6 @@ For questions or issues, refer to project documentation or create GitHub issue.
 
 ---
 
-**Last Updated:** November 4, 2025
-**Version:** 1.0 MVP (In Development - 87.5% Complete)
-**Next Milestone:** Phase 8.1 - LLM Natural Language Parsing
+**Last Updated:** December 8, 2025
+**Version:** 1.0 MVP
+**Status:** ON HOLD - INDEFINITELY
